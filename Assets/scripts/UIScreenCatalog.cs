@@ -15,21 +15,21 @@ public sealed class WidgetSpec
     public string onClickRoute; // 버튼이면 라우트
 }
 
+public enum ScreenKey { Home, Shop }
+
 public class UIScreenCatalog : MonoBehaviour
 {
-    [SerializeField] private GameObject defaultTemplate;
-    
-    public Dictionary<string, UIScreenSpec> Screens { get; private set; }
+    [SerializeField] private GameObject defaultTemplatePrefab;
+
+    private readonly Dictionary<ScreenKey, UIScreenSpec> _screenSpecsByKey = new();
     private void Awake()
     {
-        LoadScreenSpec(defaultTemplate);
+        RegisterScreenSpecs(defaultTemplatePrefab);
     }
 
-    public void LoadScreenSpec(GameObject templatePrefab)
+    private void RegisterScreenSpecs(GameObject templatePrefab)
     {
-        Screens = new Dictionary<string, UIScreenSpec>();
-        
-        Screens["home"] = new UIScreenSpec()
+        _screenSpecsByKey[ScreenKey.Home] = new UIScreenSpec()
         {
             name = "Home",
             templatePrefab = templatePrefab,
@@ -41,7 +41,7 @@ public class UIScreenCatalog : MonoBehaviour
             }
         };
 
-        Screens["shop"] = new UIScreenSpec
+        _screenSpecsByKey[ScreenKey.Shop] = new UIScreenSpec
         {
             name = "Shop",
             templatePrefab = templatePrefab,
@@ -52,5 +52,10 @@ public class UIScreenCatalog : MonoBehaviour
                 ["Footer"] = new() { new WidgetSpec { widgetType="button", text="Back Home", onClickRoute="home" } },
             }
         };
+    }
+    
+    public UIScreenSpec GetScreenSpec(ScreenKey key)
+    {
+        return _screenSpecsByKey[key];
     }
 }
