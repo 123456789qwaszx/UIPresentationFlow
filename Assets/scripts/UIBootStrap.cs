@@ -11,6 +11,9 @@ public class UIBootStrap : MonoBehaviour
 
     [SerializeField]private UIScreenCatalog catalog;
     
+    private UIOpener _uiOpener;
+    public UIOpener Opener => _uiOpener;
+    
     private void Awake()
     {
         if (uiRoot == null) uiRoot = transform;
@@ -25,5 +28,8 @@ public class UIBootStrap : MonoBehaviour
         UIResolver resolver = new (catalog);
         UIScreenFactory factory  = new (uiRoot, binder, patcher, composer);
         UIRouter router   = new (resolver, factory);
+        
+        
+        _uiOpener = new UIOpener(router);
     }
 }
