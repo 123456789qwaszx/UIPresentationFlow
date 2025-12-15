@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class UIScreenFactory : MonoBehaviour
+public class UIScreenFactory
 {
     private readonly Transform _uiRoot;
     private readonly UIBinder _binder;
@@ -17,7 +17,7 @@ public class UIScreenFactory : MonoBehaviour
 
     public UIScreen Create(UIResolveResult result, UIRouter router)
     {
-        GameObject go = Instantiate(result.Spec.templatePrefab, _uiRoot);
+        GameObject go = Object.Instantiate(result.Spec.templatePrefab, _uiRoot);
         UIScreen screen = go.GetComponent<UIScreen>();
 
         screen.Build(_binder);
