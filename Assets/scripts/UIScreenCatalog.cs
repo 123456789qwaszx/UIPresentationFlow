@@ -1,61 +1,81 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
 public class UIScreenSpec
 {
     public string name;
     public GameObject templatePrefab;
-    public Dictionary<string, List<WidgetSpec>> slotWidgets = new();
+    public List<SlotSpec> slots = new();
 }
 
+[Serializable]
+public class SlotSpec
+{
+    public string slotName; // "Header" / "Body" / "Footer"
+    public List<WidgetSpec> widgets = new();
+}
+
+[Serializable]
 public sealed class WidgetSpec
 {
-    public string widgetType;   // "text" or "button"
-    public string text;         // label
-    public string onClickRoute; // 버튼이면 라우트
+    public WidgetType widgetType;
+    public string text;
+    public string onClickRoute;
 }
 
+public enum WidgetType { Text, Button }
 public enum ScreenKey { Home, Shop }
 
-public class UIScreenCatalog : MonoBehaviour
+[CreateAssetMenu(menuName = "UI/Screen Catalog", fileName = "UIScreenCatalog")]
+public class UIScreenCatalog : ScriptableObject
 {
-    [SerializeField] private GameObject defaultTemplatePrefab;
-
-    private readonly Dictionary<ScreenKey, UIScreenSpec> _screenSpecsByKey = new();
-    private void Awake()
+    [Serializable]
+    public class Entry
     {
-        RegisterScreenSpecs(defaultTemplatePrefab);
+        public ScreenKey key;
+        public UIScreenSpec spec;
     }
 
-    private void RegisterScreenSpecs(GameObject templatePrefab)
-    {
-        _screenSpecsByKey[ScreenKey.Home] = new UIScreenSpec()
-        {
-            name = "Home",
-            templatePrefab = templatePrefab,
-            slotWidgets = new Dictionary<string, List<WidgetSpec>>()
-            {
-                ["Header"] = new () { new WidgetSpec { widgetType="text", text="HOME" } },
-                ["Body"]   = new() { new WidgetSpec { widgetType="text", text="Welcome!" } },
-                ["Footer"] = new() { new WidgetSpec { widgetType="button", text="Go Shop", onClickRoute="shop" } },
-            }
-        };
+    [Header("Registered Screens")]
+    public List<Entry> entries = new();
 
-        _screenSpecsByKey[ScreenKey.Shop] = new UIScreenSpec
-        {
-            name = "Shop",
-            templatePrefab = templatePrefab,
-            slotWidgets = new Dictionary<string, List<WidgetSpec>>()
-            {
-                ["Header"] = new() { new WidgetSpec { widgetType="text", text="SHOP" } },
-                ["Body"]   = new() { new WidgetSpec { widgetType="text", text="Buy something..." } },
-                ["Footer"] = new() { new WidgetSpec { widgetType="button", text="Back Home", onClickRoute="home" } },
-            }
-        };
+    // 런타임용 캐시 (에셋에 저장되지 않음)
+    private Dictionary<ScreenKey, UIScreenSpec> _map;
+
+    private void OnEnable()
+    {
+        BuildCache();
     }
-    
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // 에디터에서 값 바뀔 때도 다시 빌드
+        BuildCache();
+    }
+#endif
+
+    private void BuildCache()
+    {
+        _map = new Dictionary<ScreenKey, UIScreenSpec>();
+
+        foreach (var e in entries)
+        {
+            if (e == null || e.spec == null) continue;
+            _map[e.key] = e.spec;
+        }
+    }
+
     public UIScreenSpec GetScreenSpec(ScreenKey key)
     {
-        return _screenSpecsByKey[key];
+        if (_map == null)
+            BuildCache();
+
+        if (_map.TryGetValue(key, out var spec))
+            return spec;
+
+        throw new KeyNotFoundException($"UIScreenSpec not found for key: {key}");
     }
 }

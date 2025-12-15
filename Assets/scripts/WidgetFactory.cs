@@ -15,14 +15,14 @@ public class WidgetFactory
     {
         switch (spec.widgetType)
         {
-            case "text":
+            case WidgetType.Text:
             {
                 GameObject go = Object.Instantiate(_textPrefab, parent);
                 TextWidget textWidget  = go.GetComponent<TextWidget>();
                 textWidget.SetText(spec.text);
                 return textWidget;
             }
-            case "button":
+            case WidgetType.Button:
             {
                 GameObject go = Object.Instantiate(_buttonPrefab, parent);
                 ButtonWidget buttonWidget  = go.GetComponent<ButtonWidget>();

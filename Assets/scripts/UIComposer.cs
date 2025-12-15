@@ -11,9 +11,9 @@ public class UIComposer
 
     public void Compose(UIScreen screen, UIScreenSpec spec, UIRouter router)
     {
-        foreach (var keyValuePair in spec.slotWidgets)
+        foreach (SlotSpec slotSpec in spec.slots)
         {
-            string slotName = keyValuePair.Key;
+            string slotName = slotSpec.slotName;
             RectTransform slot = screen.GetSlot(slotName);
 
             for (int i = slot.childCount - 1; i >= 0; i--)
@@ -21,7 +21,7 @@ public class UIComposer
                 Object.Destroy(slot.GetChild(i).gameObject);
             }
 
-            foreach (WidgetSpec widgetSpec in keyValuePair.Value)
+            foreach (WidgetSpec widgetSpec in slotSpec.widgets)
             {
                 MonoBehaviour widget = _widgets.Create(widgetSpec, slot);
             }
