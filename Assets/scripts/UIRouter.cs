@@ -5,20 +5,16 @@ public class UIRouter
     private readonly UIResolver _resolver;
     private readonly UIScreenFactory _factory;
     
-    private readonly Dictionary<string, ScreenKey> _routes;
+    private readonly IReadOnlyDictionary<string, ScreenKey> _routes;
     
     private readonly ScreenKey _defaultKey = ScreenKey.Home;
     private UIScreen _current;
     
-    public UIRouter(UIResolver resolver, UIScreenFactory factory)
+    public UIRouter(UIResolver resolver, UIScreenFactory factory, IReadOnlyDictionary<string, ScreenKey> routes)
     {
         _resolver = resolver;
         _factory  = factory;
-        _routes = new Dictionary<string, ScreenKey>()
-        {
-            { "home", ScreenKey.Home },
-            { "shop", ScreenKey.Shop },
-        };
+        _routes = routes;
     }
     
     public void Navigate(UIRequest request)

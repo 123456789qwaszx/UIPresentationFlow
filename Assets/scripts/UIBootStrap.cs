@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIBootStrap : MonoBehaviour
@@ -19,9 +20,9 @@ public class UIBootStrap : MonoBehaviour
         if (uiRoot == null) uiRoot = transform;
         if (catalog == null) catalog = FindFirstObjectByType<UIScreenCatalog>();
 
-        UIBinder       binder  = new();
-        UIPatchApplier patcher = new();
-        WidgetFactory  widgets = new(textWidgetPrefab, buttonWidgetPrefab);
+        UIBinder       binder   = new();
+        UIPatchApplier patcher  = new();
+        WidgetFactory  widgets  = new(textWidgetPrefab, buttonWidgetPrefab);
         UIComposer     composer = new(widgets);
 
         // === Create UIContext ===
@@ -30,9 +31,16 @@ public class UIBootStrap : MonoBehaviour
         UIContext context = UIContext.Default;
         // ex: UIContext context = new UIContext("Dark", "ko-KR", experiments, overrides);
 
-        UIResolver     resolver = new(catalog, context);
+        UIResolver     resolver  = new(catalog, context);
         UIScreenFactory factory  = new(uiRoot, binder, patcher, composer);
-        UIRouter        router   = new(resolver, factory);
+        
+        Dictionary<string, ScreenKey> routeKeys = new (System.StringComparer.OrdinalIgnoreCase);
+        foreach (var e in catalog.entries)
+        {
+            if (e == null) continue;
+            routeKeys[e.key.ToString()] = e.key;
+        }
+        UIRouter router = new(resolver, factory, routeKeys);
 
         _uiOpener = new UIOpener(router);
     }
