@@ -56,6 +56,11 @@ public class UIResolver
 
         // 1) Take UIScreenSpec from catalog
         UIScreenSpec baseSpec = _catalog.GetScreenSpec(screenKey);
+        if (baseSpec == null)
+        {
+            trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}.");
+            Debug.LogError(trace.Dump());
+        }
 
         // 2) Resolve final prefab / theme / layout via VariantResolver
         ResolvedUIScreen resolved = _variantResolver.Resolve(baseSpec, _context);

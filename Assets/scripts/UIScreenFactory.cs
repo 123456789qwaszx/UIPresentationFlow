@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class UIScreenFactory
 {
@@ -6,17 +8,20 @@ public class UIScreenFactory
     private readonly UIBinder  _binder;
     private readonly UIPatchApplier _patcher;
     private readonly UIComposer _composer;
+    private readonly bool _strict;
 
     public UIScreenFactory(
         Transform uiRoot,
         UIBinder binder,
         UIPatchApplier patcher,
-        UIComposer composer)
+        UIComposer composer,
+        bool strict = true)
     {
         _uiRoot   = uiRoot;
         _binder   = binder;
         _patcher  = patcher;
         _composer = composer;
+        _strict   = strict;
     }
 
     public UIScreen Create(UIResolveResult result, UIRouter router)
@@ -26,12 +31,25 @@ public class UIScreenFactory
         GameObject prefab = resolved.Prefab;
         if (prefab == null)
         {
-            Debug.LogError($"Resolved prefab is null for screenId={resolved.ScreenId}");
+            if (_strict)throw new InvalidOperationException($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenId}");
+            Debug.LogWarning($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenId}");
             return null;
         }
 
         GameObject go = Object.Instantiate(prefab, _uiRoot);
         UIScreen screen = go.GetComponent<UIScreen>();
+        if (screen == null)
+        {
+            if (_strict)
+                throw new InvalidOperationException(
+                    $"[UIScreenFactory] Prefab '{prefab.name}' must have {nameof(UIScreen)} component. " +
+                    $"screenId={resolved.ScreenId}");
+            Debug.LogError(
+                $"[UIScreenFactory] Prefab '{prefab.name}' must have {nameof(UIScreen)} component. " +
+                $"screenId={resolved.ScreenId}");
+            Object.Destroy(go);
+            return null;
+        }
 
         screen.Build(_binder);
 

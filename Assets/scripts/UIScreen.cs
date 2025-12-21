@@ -5,29 +5,17 @@ using UnityEngine;
 public class UIScreen : MonoBehaviour
 {
     private Dictionary<string, RectTransform> _slots;
-    public RectTransform GetSlot(string name)
+
+    public void Build(UIBinder binder, IEnumerable<string> requiredSlots = null)
     {
-        return _slots[name];
+        _slots = binder.BuildSlots(transform, requiredSlots);
     }
 
-    public void Build(UIBinder binder)
+    public RectTransform GetSlot(string slotName)
     {
-        _slots = binder.BuildSlots(transform);
+        return _slots[slotName];
     }
 
-    public void Open()  => gameObject.SetActive(true);
+    public void Open() => gameObject.SetActive(true);
     public void Close() => Destroy(gameObject);
-}
-
-public class UIBinder
-{
-    private string[] SlotNames = { "Header", "Body", "Footer" };
-
-    public Dictionary<string, RectTransform> BuildSlots(Transform root)
-    {
-        Dictionary<string, RectTransform> dict = new();
-        foreach (String name in SlotNames)
-            dict[name] = root.Find(name) as RectTransform;
-        return dict;
-    }
 }
