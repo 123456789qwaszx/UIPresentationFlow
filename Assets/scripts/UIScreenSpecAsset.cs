@@ -36,9 +36,16 @@ public class SlotSpec
 [Serializable]
 public sealed class WidgetSpec
 {
+    //[Tooltip("디자이너/스크립터용 네임 태그 (예: MainCTA, SubTitle 등)")]
+    public string nameTag;
+    
     public WidgetType widgetType;
     public string text;
     public string onClickRoute;
+    
+    //[Tooltip("Optional: this widget only. If set, overrides the default prefab for this widgetType.\n" +
+    //         "Use for exceptional per-widget visuals, NOT for theme/variant-driven styling.")]
+    public GameObject prefabOverride;
 }
 
 public enum WidgetType { Text, Button }
