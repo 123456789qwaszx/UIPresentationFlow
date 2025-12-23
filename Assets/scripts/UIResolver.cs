@@ -58,7 +58,7 @@ public class UIResolver
         UIScreenSpec baseSpec = _catalog.GetScreenSpec(screenKey);
         if (baseSpec == null)
         {
-            trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}.");
+            trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}. It may be removed during runtime from catalog.");
             Debug.LogError(trace.Dump());
         }
 

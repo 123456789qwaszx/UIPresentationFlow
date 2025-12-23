@@ -18,11 +18,7 @@ public sealed class UIBinder
     /// 1) UISlot 마커 기반으로 바인딩 시도
     /// 2) 마커가 하나도 없으면 이름 기반(root.Find)으로 폴백
     /// </summary>
-    public Dictionary<string, RectTransform> BuildSlots(
-        Transform root,
-        IEnumerable<string> requiredSlotIds = null,
-        bool strict = true // true = 즉시 터뜨림, false warning만 찍고 계속 진행
-    )
+    public Dictionary<string, RectTransform> BuildSlots(Transform root, IEnumerable<string> requiredSlotIds = null, bool strict = true)
     {
         if (root == null) throw new ArgumentNullException(nameof(root));
 
@@ -92,12 +88,7 @@ public sealed class UIBinder
         return map;
     }
 
-    private static void ValidateRequired(
-        Transform root,
-        Dictionary<string, RectTransform> map,
-        IEnumerable<string> requiredSlotIds,
-        bool strict
-    )
+    private void ValidateRequired(Transform root, Dictionary<string, RectTransform> map, IEnumerable<string> requiredSlotIds, bool strict)
     {
         if (requiredSlotIds == null) return;
 

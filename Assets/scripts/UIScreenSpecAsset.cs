@@ -36,16 +36,26 @@ public class SlotSpec
 [Serializable]
 public sealed class WidgetSpec
 {
-    //[Tooltip("디자이너/스크립터용 네임 태그 (예: MainCTA, SubTitle 등)")]
-    public string nameTag;
-    
     public WidgetType widgetType;
+    public string nameTag;
     public string text;
     public string onClickRoute;
-    
-    //[Tooltip("Optional: this widget only. If set, overrides the default prefab for this widgetType.\n" +
-    //         "Use for exceptional per-widget visuals, NOT for theme/variant-driven styling.")]
     public GameObject prefabOverride;
+    
+    public WidgetRectMode rectMode = WidgetRectMode.PrefabDefault;
+
+    // 아래 값들은 rectMode == OverrideInSlot일 때만 사용
+    public Vector2 anchorMin   = new Vector2(0.5f, 0.5f);
+    public Vector2 anchorMax   = new Vector2(0.5f, 0.5f);
+    public Vector2 pivot       = new Vector2(0.5f, 0.5f);
+    public Vector2 anchoredPosition = Vector2.zero;
+    public Vector2 sizeDelta   = new Vector2(300f, 80f);
 }
 
 public enum WidgetType { Text, Button }
+
+public enum WidgetRectMode
+{
+    PrefabDefault,   // 프리팹/슬롯 LayoutGroup에 맡김 (기본)
+    OverrideInSlot   // 이 슬롯 안에서만 위치/크기를 직접 지정
+}

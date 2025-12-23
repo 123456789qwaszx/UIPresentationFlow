@@ -22,69 +22,77 @@ MonoBehaviour:
     slots:
     - slotName: Header
       widgets:
-      - nameTag: 
-        widgetType: 0
-        text: 
+      - widgetType: 0
+        nameTag: 
+        text: Right 200
         onClickRoute: 
-        prefabOverride: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
-      - nameTag: 
-        widgetType: 1
-        text: Kasumi
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 200, y: 0}
+        sizeDelta: {x: 1, y: 1}
+      - widgetType: 0
+        nameTag: 
+        text: 'Right -400
+
+          www'
         onClickRoute: 
-        prefabOverride: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0.5, y: 0}
+        anchorMax: {x: 0.5, y: 0}
+        pivot: {x: 1, y: 1}
+        anchoredPosition: {x: 400, y: 0}
+        sizeDelta: {x: 1, y: 1}
+      - widgetType: 1
+        nameTag: 
+        text: 'Right -400
+
+          www'
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0.5, y: 0}
+        anchorMax: {x: 0.5, y: 0}
+        pivot: {x: 1, y: 1}
+        anchoredPosition: {x: 400, y: 0}
+        sizeDelta: {x: 1, y: 1}
     - slotName: Footer
       widgets:
-      - nameTag: 
-        widgetType: 0
-        text: 
-        onClickRoute: 
+      - widgetType: 1
+        nameTag: 
+        text: FootBtn01
+        onClickRoute: 123
         prefabOverride: {fileID: 0}
+        rectMode: 0
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 0, y: 0}
+      - widgetType: 1
+        nameTag: 
+        text: FootBtn01
+        onClickRoute: 44
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 200, y: 200}
     - slotName: Body
       widgets:
-      - nameTag: 
-        widgetType: 0
-        text: 
+      - widgetType: 0
+        nameTag: 
+        text: Text1234
         onClickRoute: 
         prefabOverride: {fileID: 0}
-      - nameTag: Widget 1
-        widgetType: 0
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: Widget 1
-        widgetType: 0
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: 
-        widgetType: 1
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: 
-        widgetType: 1
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: 
-        widgetType: 1
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: 
-        widgetType: 1
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-    - slotName: Header
-      widgets:
-      - nameTag: 
-        widgetType: 0
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-      - nameTag: 
-        widgetType: 0
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 0, y: 0}

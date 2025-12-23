@@ -22,7 +22,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private int _selectedSlotIndex = -1;
 
-    // (선택) 네가 RouteCatalog 같은 걸 가지고 있다면 여기 연결해서 드롭다운 제공 가능
+    // RouteCatalog 같은 걸 가지고 있다면 여기 연결해서 드롭다운 제공 가능
     // public RouteCatalog routeCatalog;
 
     [MenuItem("Tools/UI/UIScreen Spec Editor")]
@@ -104,6 +104,35 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             BuildWidgetsList();
         };
 
+        // 🔹 여기 추가
+        _slotsList.onRemoveCallback = list =>
+        {
+            if (list.index < 0 || list.index >= _slotsProp.arraySize)
+                return;
+
+            // 현재 선택된 슬롯이 지워지는 상황 고려
+            int removeIndex = list.index;
+
+            _slotsProp.DeleteArrayElementAtIndex(removeIndex);
+            _so.ApplyModifiedProperties();
+
+            // 슬롯이 하나도 안 남았으면
+            if (_slotsProp.arraySize == 0)
+            {
+                _selectedSlotIndex = -1;
+                _widgetsList = null;
+                return;
+            }
+
+            // 남아있는 슬롯 범위 내에서 선택 인덱스 다시 잡기
+            int newIndex = Mathf.Clamp(removeIndex, 0, _slotsProp.arraySize - 1);
+            _selectedSlotIndex = newIndex;
+
+            // 새 슬롯의 widgets 기준으로 ReorderableList 재생성
+            BuildWidgetsList();
+            Repaint();
+        };
+
         _slotsList.elementHeightCallback = index =>
             EditorGUIUtility.singleLineHeight + 6f;
 
@@ -166,7 +195,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var widgetsProp = slot.FindPropertyRelative("widgets");
 
         _widgetsList = new ReorderableList(_so, widgetsProp, true, true, true, true);
-        
+
         _widgetsList.drawElementBackgroundCallback = (rect, index, isActive, isFocused) =>
         {
             const float padding = 2f;
@@ -175,12 +204,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             Rect bgRect = new Rect(
                 rect.x + padding,
                 rect.y + padding,
-                rect.width  - padding * 2f,
+                rect.width - padding * 2f,
                 rect.height - padding * 2f
             );
 
             // 공통 배경 컬러 (선택 전/후만 농도 차이)
-            Color normalBg   = new Color(0.3f, 0.3f, 0.3f, 0.5f); // 기본
+            Color normalBg = new Color(0.3f, 0.3f, 0.3f, 0.5f); // 기본
             Color selectedBg = new Color(0f, 0f, 0f, 0.24f); // 선택 시 약간 더 진하게
 
             EditorGUI.DrawRect(bgRect, isActive ? selectedBg : normalBg);
@@ -206,25 +235,39 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _widgetsList.elementHeightCallback = index =>
         {
-            var w = widgetsProp.GetArrayElementAtIndex(index);
-            var type = (WidgetType)w.FindPropertyRelative("widgetType").enumValueIndex;
-
             float lineH = EditorGUIUtility.singleLineHeight;
             float vGap = 2f;
+            float borderPadding = 2f;
 
-            // 1줄: name+type
-            float h = lineH + vGap;
+            int lines = 0;
 
-            // TextArea 높이 (🔸 여기서도 2줄로 맞추기)
-            int textLines = 2;
-            float textHeight = (lineH + 2f) * textLines;
-            h += textHeight + vGap;
+            // 1줄: Name + Type
+            lines += 1;
 
-            int extraLines = (type == WidgetType.Button) ? 2 : 1;
-            h += extraLines * (lineH + vGap);
+            // 2줄: Text 멀티라인
+            lines += 2;
 
-            h += 4f;
-            return h;
+            // Route + Prefab
+            var w = widgetsProp.GetArrayElementAtIndex(index);
+            var typeProp = w.FindPropertyRelative("widgetType");
+            var widgetType = (WidgetType)typeProp.enumValueIndex;
+            lines += (widgetType == WidgetType.Button) ? 2 : 1;
+
+            // Layout Mode (항상 1줄)
+            lines += 1;
+
+            // OverrideInSlot일 때만 추가 5줄 (AnchorMin, AnchorMax, Pivot, Size, Position)
+            var rectModeProp = w.FindPropertyRelative("rectMode");
+            var rectMode = (WidgetRectMode)rectModeProp.enumValueIndex;
+            if (rectMode == WidgetRectMode.OverrideInSlot)
+            {
+                lines += 5;
+            }
+
+            float contentHeight = lines * (lineH + vGap) + vGap;
+
+            // 여유 조금 더 주기 위해 +4f 정도
+            return contentHeight + borderPadding * 2f + 4f;
         };
 
         _widgetsList.drawElementCallback = (rect, index, isActive, isFocused) =>
@@ -265,11 +308,17 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             float y = rect.y;
 
             var w = widgetsProp.GetArrayElementAtIndex(index);
-            var nameProp = w.FindPropertyRelative("nameTag");
             var typeProp = w.FindPropertyRelative("widgetType");
+            var nameProp = w.FindPropertyRelative("nameTag");
             var textProp = w.FindPropertyRelative("text");
             var routeProp = w.FindPropertyRelative("onClickRoute");
             var prefabProp = w.FindPropertyRelative("prefabOverride");
+            var rectModeProp = w.FindPropertyRelative("rectMode");
+            var anchorMinProp = w.FindPropertyRelative("anchorMin");
+            var anchorMaxProp = w.FindPropertyRelative("anchorMax");
+            var pivotProp = w.FindPropertyRelative("pivot");
+            var anchoredPosProp = w.FindPropertyRelative("anchoredPosition");
+            var sizeDeltaProp = w.FindPropertyRelative("sizeDelta");
 
             // 🔹 우클릭 메뉴 (Add / Delete) – 기존에 쓰던 거 있으면 그대로 유지
             if (e.type == EventType.ContextClick && borderRect.Contains(e.mousePosition))
@@ -354,6 +403,104 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 EditorGUI.PropertyField(prefabRect, prefabProp, new GUIContent("Prefab Override"));
                 y += lineH + vGap;
             }
+
+            // 1) RectMode 드롭다운
+            var layoutModeRect = new Rect(rect.x, y, rect.width, lineH);
+            EditorGUI.PropertyField(layoutModeRect, rectModeProp, new GUIContent("Layout Mode"));
+            y += lineH + vGap;
+
+// enum 값 읽기
+            var rectMode = (WidgetRectMode)rectModeProp.enumValueIndex;
+
+// 2) OverrideInSlot일 때만 상세값 노출
+            if (rectMode == WidgetRectMode.OverrideInSlot)
+            {
+                float labelWidth = 90f; // 라벨이 차지할 폭
+                float fieldGap = 4f; // 라벨과 값 사이 간격
+                float rowHeight = lineH; // 한 줄 높이(그냥 singleLineHeight로 유지)
+
+                Rect MakeRowRect() => new Rect(rect.x, y, rect.width, rowHeight);
+
+                // --- Anchor Min ---
+                var rowRect = MakeRowRect();
+                var labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                var valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
+
+                EditorGUI.LabelField(labelRect, "Anchor Min");
+                var anchorMinValue = anchorMinProp.vector2Value;
+                anchorMinValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMinValue);
+                anchorMinProp.vector2Value = anchorMinValue;
+                y += rowHeight + vGap;
+
+                // --- Anchor Max ---
+                rowRect = MakeRowRect();
+                labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
+
+                EditorGUI.LabelField(labelRect, "Anchor Max");
+                var anchorMaxValue = anchorMaxProp.vector2Value;
+                anchorMaxValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMaxValue);
+                anchorMaxProp.vector2Value = anchorMaxValue;
+                y += rowHeight + vGap;
+
+                // --- Pivot ---
+                rowRect = MakeRowRect();
+                labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
+
+                EditorGUI.LabelField(labelRect, "Pivot");
+                var pivotValue = pivotProp.vector2Value;
+                pivotValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, pivotValue);
+                pivotProp.vector2Value = pivotValue;
+                y += rowHeight + vGap;
+
+                // --- Size ---
+                rowRect = MakeRowRect();
+                labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
+
+                EditorGUI.LabelField(labelRect, "Size");
+                var sizeValue = sizeDeltaProp.vector2Value;
+                sizeValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, sizeValue);
+                sizeDeltaProp.vector2Value = sizeValue;
+                y += rowHeight + vGap;
+
+                // --- Position ---
+                rowRect = MakeRowRect();
+                labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
+
+                EditorGUI.LabelField(labelRect, "Position");
+                var posValue = anchoredPosProp.vector2Value;
+                posValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, posValue);
+                anchoredPosProp.vector2Value = posValue;
+                y += rowHeight + vGap;
+            }
         };
     }
 
@@ -415,6 +562,22 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
             {
                 _widgetsScroll = EditorGUILayout.BeginScrollView(_widgetsScroll);
+
+                // 🔹 슬롯 개수가 바뀐 뒤 인덱스가 꼬인 경우 방어
+                if (_slotsProp != null)
+                {
+                    int slotCount = _slotsProp.arraySize;
+                    if (slotCount == 0)
+                    {
+                        _selectedSlotIndex = -1;
+                        _widgetsList = null;
+                    }
+                    else if (_selectedSlotIndex < 0 || _selectedSlotIndex >= slotCount)
+                    {
+                        _selectedSlotIndex = Mathf.Clamp(_selectedSlotIndex, 0, slotCount - 1);
+                        BuildWidgetsList();
+                    }
+                }
 
                 if (_widgetsList == null)
                 {
