@@ -5,24 +5,19 @@ using UnityEngine;
 public sealed class UIBinder
 {
     private readonly bool _includeInactive;
-    private readonly StringComparer _comparer;
-    private readonly string[] _defaultSlotIds = { "Header", "Body", "Footer" };
 
-    public UIBinder(bool includeInactive = true, StringComparer comparer = null)
+    public UIBinder(bool includeInactive = true)
     {
         _includeInactive = includeInactive;
-        _comparer = comparer ?? StringComparer.Ordinal; // 대소문자 구분(빠르고 안전)
     }
 
     /// <summary>
     /// 1) UISlot 마커 기반으로 바인딩 시도
     /// 2) 마커가 하나도 없으면 이름 기반(root.Find)으로 폴백
     /// </summary>
-    public Dictionary<string, RectTransform> BuildSlots(Transform root, IEnumerable<string> requiredSlotIds = null, bool strict = true)
+    public Dictionary<string, RectTransform> BuildSlots(Transform root, IEnumerable<string> requiredSlotIds, bool strict = true)
     {
-        if (root == null) throw new ArgumentNullException(nameof(root));
-
-        var map = new Dictionary<string, RectTransform>(_comparer);
+        var map = new Dictionary<string, RectTransform>(StringComparer.Ordinal);
 
         // 1) Marker-based
         UISlot[] markers = root.GetComponentsInChildren<UISlot>(_includeInactive);
@@ -62,10 +57,6 @@ public sealed class UIBinder
             ValidateRequired(root, map, requiredSlotIds, strict);
             return map;
         }
-
-        // 2) 마커가 없으면: requiredSlotIds가 없을 경우 기본값 사용
-        if (requiredSlotIds == null)
-            requiredSlotIds = _defaultSlotIds;
 
         foreach (string raw in requiredSlotIds)
         {

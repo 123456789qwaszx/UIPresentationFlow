@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
@@ -6,13 +7,16 @@ using UnityEngine;
 
 public sealed class UIScreenSpecEditorWindow : EditorWindow
 {
-    private static readonly string[] DefaultSlotNames = { "Header", "Body", "Footer" };
 
     private UIScreenSpecAsset _asset;
     private SerializedObject _so;
 
     private SerializedProperty _specProp;
     private SerializedProperty _slotsProp;
+    
+    // 🔹 추가: 현재 prefab에서 발견된 UISlot id 목록 캐시
+    private string[] _slotIdOptions = Array.Empty<string>();
+    private GameObject _cachedTemplatePrefab;
 
     private ReorderableList _slotsList;
     private ReorderableList _widgetsList;
@@ -71,8 +75,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _slotsProp = _specProp.FindPropertyRelative("slots");
 
+        // 여기서 한 번
+        RefreshSlotIdOptionsFromPrefab();
+
         BuildSlotsList();
-        BuildWidgetsList(); // selected slot 기준으로 빌드됨
+        BuildWidgetsList();
     }
 
     private void BuildSlotsList()
@@ -93,8 +100,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             int i = _slotsProp.arraySize;
             _slotsProp.InsertArrayElementAtIndex(i);
             var slot = _slotsProp.GetArrayElementAtIndex(i);
-            slot.FindPropertyRelative("slotName").stringValue =
-                DefaultSlotNames.Length > 0 ? DefaultSlotNames[0] : "Body";
+
+            var options = _slotIdOptions;
+            string initialName =
+                (options != null && options.Length > 0)
+                    ? options[0]
+                    : string.Empty; // 이제 Header/Body/Footer 없이 비워두는 게 맞음
+
+            slot.FindPropertyRelative("slotName").stringValue = initialName;
 
             var widgets = slot.FindPropertyRelative("widgets");
             widgets.ClearArray();
@@ -173,14 +186,26 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             var popupRect = new Rect(popupX, rect.y, popupWidth, rect.height);
             var textRect = new Rect(textX, rect.y, textWidth, rect.height);
+            
+            var options = _slotIdOptions;
 
-            int popupIndex = IndexOf(DefaultSlotNames, nameProp.stringValue);
-            int newIndex = EditorGUI.Popup(popupRect, popupIndex < 0 ? 0 : popupIndex, DefaultSlotNames);
+            if (options == null || options.Length == 0)
+            {
+                // 템플릿 프리팹에 UISlot이 없는 상태
+                EditorGUI.LabelField(popupRect, "(No UISlot in Prefab)");
+            }
+            else
+            {
+                int popupIndex = IndexOf(options, nameProp.stringValue);
+                if (popupIndex < 0) popupIndex = 0;
 
-            if (newIndex >= 0 && newIndex < DefaultSlotNames.Length)
-                nameProp.stringValue = DefaultSlotNames[newIndex];
+                int newIndex = EditorGUI.Popup(popupRect, popupIndex, options);
+                if (newIndex >= 0 && newIndex < options.Length)
+                    nameProp.stringValue = options[newIndex];
+            }
 
-            nameProp.stringValue = EditorGUI.TextField(textRect, nameProp.stringValue);
+            //직접 타이핑 하기를 원한다면.
+            //nameProp.stringValue = EditorGUI.TextField(textRect, nameProp.stringValue);
         };
     }
 
@@ -531,15 +556,22 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _so.Update();
 
-        // 상단 기본 정보
         var screenId = _specProp.FindPropertyRelative("screenId");
         var nameProp = _specProp.FindPropertyRelative("name");
-        var prefab = _specProp.FindPropertyRelative("templatePrefab");
+        var prefabProp = _specProp.FindPropertyRelative("templatePrefab");
 
         EditorGUILayout.LabelField("Base", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(screenId);
         EditorGUILayout.PropertyField(nameProp);
-        EditorGUILayout.PropertyField(prefab);
+
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(prefabProp);
+        if (EditorGUI.EndChangeCheck())
+        {
+            // Inspector에서 templatePrefab을 변경했을 때만 다시 스캔
+            _so.ApplyModifiedProperties();
+            RefreshSlotIdOptionsFromPrefab();
+        }
 
         EditorGUILayout.Space(8);
 
@@ -594,12 +626,58 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _so.ApplyModifiedProperties();
     }
+    
+    private void RefreshSlotIdOptionsFromPrefab(bool force = false)
+    {
+        if (_asset == null)
+        {
+            _slotIdOptions = Array.Empty<string>();
+            _cachedTemplatePrefab = null;
+            return;
+        }
+
+        var spec = _asset.spec;
+        var prefab = spec != null ? spec.templatePrefab : null;
+
+        if (prefab == null)
+        {
+            _slotIdOptions = Array.Empty<string>();
+            _cachedTemplatePrefab = null;
+            return;
+        }
+
+        // prefab 레퍼런스가 같고, 이미 뭔가 목록이 있다면 건너뛰기 (자동 호출용)
+        if (!force && _cachedTemplatePrefab == prefab && _slotIdOptions.Length > 0)
+            return;
+
+        _cachedTemplatePrefab = prefab;
+
+        var slots = prefab.GetComponentsInChildren<UISlot>(true);
+        var ids = new List<string>();
+
+        foreach (var slot in slots)
+        {
+            if (slot == null) continue;
+            var id = (slot.id ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(id)) continue;
+            if (!ids.Contains(id))
+                ids.Add(id);
+        }
+
+        _slotIdOptions = ids.ToArray();
+    }
 
     private void DrawValidateButtons()
     {
         EditorGUILayout.Space(6);
         using (new EditorGUILayout.HorizontalScope())
         {
+            if (GUILayout.Button("Refresh Slots From Prefab"))
+            {
+                RefreshSlotIdOptionsFromPrefab(force: true);
+                Repaint();
+            }
+            
             if (GUILayout.Button("Validate"))
             {
                 var issues = ValidateSpec(_asset.spec);
@@ -615,6 +693,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 _so.Update(); // SerializedObject 쪽도 즉시 동기화
                 EditorUtility.SetDirty(_asset);
             }
+            
         }
     }
 
@@ -625,8 +704,29 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (string.IsNullOrWhiteSpace(s.screenId))
             issues.Add("- screenId is empty");
 
-        if (s.templatePrefab == null)
-            issues.Add("- templatePrefab is null");
+        //프리팹이 바뀌었는데, Spec이 옛 이름을 들고 있는 경우 Validate에서 알려줌.
+        if (s.templatePrefab != null)
+        {
+            var slotsInPrefab = s.templatePrefab.GetComponentsInChildren<UISlot>(true);
+            var ids = new HashSet<string>();
+            foreach (var slot in slotsInPrefab)
+            {
+                if (slot == null) continue;
+                var id = (slot.id ?? string.Empty).Trim();
+                if (!string.IsNullOrEmpty(id))
+                    ids.Add(id);
+            }
+
+            for (int i = 0; i < s.slots.Count; i++)
+            {
+                var slot = s.slots[i];
+                if (slot == null) continue;
+                if (!string.IsNullOrWhiteSpace(slot.slotName) && !ids.Contains(slot.slotName))
+                {
+                    issues.Add($"- slots[{i}].slotName '{slot.slotName}' does not exist in templatePrefab UISlots");
+                }
+            }
+        }
 
         if (s.slots == null || s.slots.Count == 0)
             issues.Add("- slots is empty");

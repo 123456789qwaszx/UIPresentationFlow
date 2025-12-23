@@ -6,9 +6,10 @@ public class UIScreen : MonoBehaviour
 {
     private Dictionary<string, RectTransform> _slots;
 
-    public void Build(UIBinder binder, IEnumerable<string> requiredSlots = null)
+    public void Build(UIBinder binder, UIScreenSpec spec)
     {
-        _slots = binder.BuildSlots(transform, requiredSlots);
+        List<string> required = spec.slots.ConvertAll(s => s.slotName);
+        _slots = binder.BuildSlots(transform, required);
     }
 
     public RectTransform GetSlot(string slotName)

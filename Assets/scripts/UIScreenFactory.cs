@@ -51,7 +51,7 @@ public class UIScreenFactory
             return null;
         }
 
-        screen.Build(_binder);
+        screen.Build(_binder, resolved.BaseSpec);
 
         _patcher.Apply(screen, result.Patches);
 
