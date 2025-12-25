@@ -1,4 +1,4 @@
 public interface IUiActionBinder
 {
-    void Bind(ButtonWidget button, string route);
+    bool TryBind(ButtonWidget button, UIActionKey routeKey);
 }

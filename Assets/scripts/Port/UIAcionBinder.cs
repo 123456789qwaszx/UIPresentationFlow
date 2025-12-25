@@ -1,46 +1,66 @@
 using System;
-using UnityEngine;
+using System.Collections.Generic;
 
-public sealed class UiActionBinder : IUiActionBinder
+public sealed class UIActionBinder : IUiActionBinder
 {
     private readonly Func<IHudView> _getHudView;
+    private readonly Dictionary<UIActionKey, Action<ButtonWidget>> _bindings;
 
-    public UiActionBinder(Func<IHudView> getHudView)
+    public UIActionBinder(Func<IHudView> getHudView)
     {
         _getHudView = getHudView;
+
+        _bindings = new Dictionary<UIActionKey, Action<ButtonWidget>>
+        {
+            {
+                UIActionKeys.Gold,
+                buttonWidget =>
+                {
+                    void OnClick()
+                    {
+                        _getHudView()?.SetGold(444);
+                    }
+
+                    buttonWidget.SetOnClick(OnClick);
+                }
+            },
+            {
+                UIActionKeys.Hp,
+                buttonWidget =>
+                {
+                    void OnClick()
+                    {
+                        _getHudView()?.SetHp(555, 666);
+                    }
+                    
+                    buttonWidget.SetOnClick(OnClick);
+                }
+            },
+            {
+                UIActionKeys.Gem,
+                buttonWidget =>
+                {
+                    void OnClick()
+                    {
+                        _getHudView()?.SetGem(777);
+                    }
+                    
+                    buttonWidget.SetOnClick(OnClick);
+                }
+            },
+        };
     }
 
-    public void Bind(ButtonWidget button, string route)
+    // 게임 기능을 엮기위한 Bind
+    public bool TryBind(ButtonWidget sourceButton, UIActionKey actionKey)
     {
-        switch (route)
-        {
-            case "ui/gold":
-                Debug.Log("Connect ui/gold");
-                button.SetOnClick(() =>
-                {
-                    _getHudView()?.SetGold(444);
-                });
-                break;
-            
-            case "ui/hp":
-                Debug.Log("Connect ui/hp");
-                button.SetOnClick(() =>
-                {
-                    _getHudView()?.SetHp(555, 666);
-                });
-                break;
-            
-            case "ui/gem":
-                Debug.Log("Connect ui/gem");
-                button.SetOnClick(() =>
-                {
-                    _getHudView()?.SetGem(777);
-                });
-                break;
+        if (actionKey == UIActionKey.None)
+            return false;
+        
+        if(!_bindings.TryGetValue(actionKey, out Action<ButtonWidget> bindingRule))
+            return false;
 
-            default:
-                Debug.LogWarning($"[UiActionBinder] Unknown ui action route='{route}'");
-                break;
-        }
+        bindingRule(sourceButton);
+        return true;
     }
 }
