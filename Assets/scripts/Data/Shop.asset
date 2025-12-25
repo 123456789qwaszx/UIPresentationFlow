@@ -23,18 +23,18 @@ MonoBehaviour:
     - slotName: HeaderNew
       widgets:
       - widgetType: 0
-        nameTag: 
+        nameTag: name01
         text: qweqw
         onClickRoute: 
         prefabOverride: {fileID: 0}
-        rectMode: 0
-        anchorMin: {x: 0, y: 0}
-        anchorMax: {x: 0, y: 0}
-        pivot: {x: 0, y: 0}
-        anchoredPosition: {x: 0, y: 0}
-        sizeDelta: {x: 0, y: 0}
+        rectMode: 1
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 54, y: -33}
+        sizeDelta: {x: 300, y: 300}
       - widgetType: 0
-        nameTag: 
+        nameTag: name02
         text: 
         onClickRoute: 
         prefabOverride: {fileID: 0}
@@ -47,17 +47,13 @@ MonoBehaviour:
     - slotName: TestSlot
       widgets:
       - widgetType: 0
-        nameTag: 
-        text: eter
+        nameTag: name00
+        text: 
         onClickRoute: 
         prefabOverride: {fileID: 0}
-        rectMode: 1
+        rectMode: 0
         anchorMin: {x: 0, y: 0}
         anchorMax: {x: 0, y: 0}
         pivot: {x: 0, y: 0}
         anchoredPosition: {x: 0, y: 0}
         sizeDelta: {x: 0, y: 0}
-    - slotName: trr
-      widgets: []
-    - slotName: New 2
-      widgets: []

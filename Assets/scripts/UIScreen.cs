@@ -16,6 +16,28 @@ public class UIScreen : MonoBehaviour
     {
         return _slots[slotName];
     }
+    
+    #region 동적 재구성/재배치 용
+    
+    private Dictionary<string, MonoBehaviour> _widgetsByNameTag = new();
+
+    internal void SetWidgets(Dictionary<string, MonoBehaviour> map)
+        => _widgetsByNameTag = map;
+
+    public T GetWidget<T>(string nameTag) where T : MonoBehaviour
+    {
+        if (!_widgetsByNameTag.TryGetValue(nameTag, out MonoBehaviour widget))
+            return null;
+        
+        if (widget is T t)
+            return t;
+        
+        Debug.LogWarning(
+            $"[UIScreen] Widget '{nameTag}' is {widget.GetType().Name}, not {typeof(T).Name}", this);
+        return null;
+    }
+    
+    #endregion
 
     public void Open() => gameObject.SetActive(true);
     public void Close() => Destroy(gameObject);

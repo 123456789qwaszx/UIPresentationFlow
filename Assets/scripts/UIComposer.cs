@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIComposer
@@ -11,10 +12,11 @@ public class UIComposer
 
     public void Compose(UIScreen screen, UIScreenSpec screenSpec, UIRouter router)
     {
+        var widgetMap = new Dictionary<string, MonoBehaviour>();
+        
         foreach (SlotSpec slotSpec in screenSpec.slots)
         {
             RectTransform slot = screen.GetSlot(slotSpec.slotName);
-
             DestroyChildren(slot);
 
             foreach (WidgetSpec widgetSpec in slotSpec.widgets)
@@ -25,8 +27,16 @@ public class UIComposer
                 {
                     ApplyRectFromSpec((RectTransform)widget.transform, widgetSpec);
                 }
+                
+                string tag = (widgetSpec.nameTag ?? string.Empty).Trim();
+                if (!widgetMap.TryAdd(tag, widget))
+                {
+                    Debug.LogWarning($"[UIComposer] Duplicate widget nameTag='{tag}'");
+                }
             }
         }
+        
+        screen.SetWidgets(widgetMap);
     }
     
     private void DestroyChildren(RectTransform slot)

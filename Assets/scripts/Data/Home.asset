@@ -20,21 +20,53 @@ MonoBehaviour:
     name: Home
     templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
     slots:
-    - slotName: Header
+    - slotName: HeaderNew
       widgets:
       - widgetType: 1
+        nameTag: 
         text: Go Shop
         onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
       - widgetType: 0
+        nameTag: 
         text: Welcome...
         onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
     - slotName: Body
       widgets:
       - widgetType: 1
+        nameTag: 
         text: 
         onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
     - slotName: Footer
       widgets:
       - widgetType: 0
+        nameTag: 
         text: 
         onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
