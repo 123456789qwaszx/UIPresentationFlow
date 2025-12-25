@@ -15,53 +15,35 @@ public enum ScreenKey { Home, Shop }
 public class UIScreenCatalog : ScriptableObject
 {
     [Serializable]
-    public class Entry
+    public class ScreenEntry
     {
         public ScreenKey key;
         public UIScreenSpecAsset specAsset;
     }
 
-    [Header("Registered UIScreenSpecAsset")]
-    public List<Entry> entries = new();
+    public List<ScreenEntry> entries = new();
 
-    // 런타임용 캐시 (에셋에 저장되지 않음)
     private Dictionary<ScreenKey, UIScreenSpec> _map;
 
-    private void Awake()
-    {
-        Init();
-    }
-
-    public void Init()
-    {
-        BuildCache();
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // 에디터에서 값 바뀔 때도 다시 빌드
-        BuildCache();
-    }
-#endif
-
-    private void BuildCache()
+    public void BuildCache()
     {
         _map = new Dictionary<ScreenKey, UIScreenSpec>();
 
-        foreach (Entry e in entries)
+        foreach (var e in entries)
         {
-            if (e == null || e.specAsset == null) continue;
-            
+            if (e?.specAsset == null) continue;
             _map[e.key] = e.specAsset.spec;
         }
     }
 
     public UIScreenSpec GetScreenSpec(ScreenKey key)
     {
-        if (_map == null) BuildCache();
+        if (_map == null)
+        {
+            Debug.LogError("[UIScreenCatalog] Cache not initialized.");
+            return null;
+        }
 
-        _map.TryGetValue(key, out var spec);
-        return spec;
+        return _map.TryGetValue(key, out var spec) ? spec : null;
     }
 }
