@@ -21,25 +21,25 @@ public class UIBootStrap : MonoBehaviour
         
         UIBinder              binder  = new();
         UIPatchApplier        patcher = new();
-        WidgetFactory  widgetFactory  = new(textWidgetPrefab, buttonWidgetPrefab);
+        WidgetRectApplier rectApplier = new();
+        RouteKeyResolver routeKeyResolver = new();
         
-        IHudView              hudView = null;
-        IUiActionBinder uiActionBinder = new UiActionBinder(() => hudView);
-        UIComposer           composer = new(widgetFactory, uiActionBinder);
+        IHudView hudView = null;
+        UIRouter router = null;
+        
+        CompositeUiActionBinder uiActionBinder = new (
+            new UIActionBinder(() => hudView),
+            new RouteActionBinder(() => router, routeKeyResolver)
+        );
+        
+        WidgetFactory    widgetFactory = new(textWidgetPrefab, buttonWidgetPrefab, uiActionBinder);
+        UIComposer            composer = new(widgetFactory, rectApplier);
         
         UIContext       context = UIContext.Default;
         UIResolver     resolver = new(catalog, context);
         UIScreenFactory factory = new(uiRoot, binder, patcher, composer);
         
-        Dictionary<string, ScreenKey> routeKeys = new (System.StringComparer.OrdinalIgnoreCase);
-        foreach (var e in catalog.entries)
-        {
-            if (e == null) continue;
-            routeKeys[e.key.ToString()] = e.key;
-        }
-        
-        UIRouter router = new(resolver, factory, routeKeys);
-        
+        router = new(resolver, factory, routeKeyResolver);
         
         hudView   = new HudPresenter(() => router.CurrentScreen);
         _uiOpener = new UIOpener(router, hudView);
