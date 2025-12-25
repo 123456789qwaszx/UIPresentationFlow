@@ -1,27 +1,28 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class TextWidget : MonoBehaviour
 {
-    [SerializeField] private TMP_Text label;
+    [SerializeField] private TMP_Text text;
 
     public void SetText(string labelText)
     {
-        if (label == null && !TryAutoBindLabel())
+        if (text == null && !TryAutoBindLabel())
             return;
         
-        label.text = labelText;
+        text.text = labelText;
     }
     
     
     private bool TryAutoBindLabel()
     {
-        label = GetComponent<TMP_Text>();
+        text = GetComponent<TMP_Text>();
 
-        if (label == null)
-            label = GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text == null)
+            text = GetComponentInChildren<TMP_Text>(includeInactive: true);
 
-        if (label != null)
+        if (text != null)
         {
             Debug.LogWarning(
                 $"[TextWidget] Auto-bound TMP_Text on '{name}'. " +

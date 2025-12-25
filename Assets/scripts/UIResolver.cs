@@ -14,7 +14,7 @@ public class UIRequest
     public string route;
     public object payload;
 
-    public UIRequest(string route, object payload)
+    public UIRequest(string route, object payload = null)
     {
         this.route = route;
         this.payload = payload;
