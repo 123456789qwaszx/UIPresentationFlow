@@ -25,7 +25,7 @@ MonoBehaviour:
       - widgetType: 1
         nameTag: 
         text: Go Shop
-        onClickRoute: 
+        onClickRoute: shop
         prefabOverride: {fileID: 0}
         rectMode: 0
         anchorMin: {x: 0.5, y: 0.5}

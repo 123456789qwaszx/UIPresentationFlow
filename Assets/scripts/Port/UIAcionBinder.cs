@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 public sealed class UiActionBinder : IUiActionBinder
 {

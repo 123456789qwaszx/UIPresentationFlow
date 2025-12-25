@@ -24,7 +24,7 @@ public class UIBootStrap : MonoBehaviour
         WidgetFactory  widgetFactory  = new(textWidgetPrefab, buttonWidgetPrefab);
         
         IHudView              hudView = null;
-        UiActionBinder uiActionBinder = new UiActionBinder(() => hudView);
+        IUiActionBinder uiActionBinder = new UiActionBinder(() => hudView);
         UIComposer           composer = new(widgetFactory, uiActionBinder);
         
         UIContext       context = UIContext.Default;
