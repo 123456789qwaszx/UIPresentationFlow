@@ -23,37 +23,72 @@ MonoBehaviour:
     - slotName: HeaderNew
       widgets:
       - widgetType: 0
-        nameTag: name01
-        text: qweqw
+        nameTag: tag00
+        text: Gold thanks
         onClickRoute: 
         prefabOverride: {fileID: 0}
         rectMode: 1
         anchorMin: {x: 0.5, y: 0.5}
         anchorMax: {x: 0.5, y: 0.5}
         pivot: {x: 0.5, y: 0.5}
-        anchoredPosition: {x: 54, y: -33}
+        anchoredPosition: {x: 290, y: 0}
         sizeDelta: {x: 300, y: 300}
       - widgetType: 0
-        nameTag: name02
-        text: 
+        nameTag: tag01
+        text: Hp please.
         onClickRoute: 
         prefabOverride: {fileID: 0}
-        rectMode: 0
+        rectMode: 1
         anchorMin: {x: 0, y: 0}
         anchorMax: {x: 0, y: 0}
         pivot: {x: 0, y: 0}
-        anchoredPosition: {x: 0, y: 0}
-        sizeDelta: {x: 0, y: 0}
+        anchoredPosition: {x: 700, y: 0}
+        sizeDelta: {x: 300, y: 300}
     - slotName: TestSlot
       widgets:
       - widgetType: 0
-        nameTag: name00
-        text: 
+        nameTag: tag02
+        text: Give me gems
         onClickRoute: 
         prefabOverride: {fileID: 0}
-        rectMode: 0
+        rectMode: 1
         anchorMin: {x: 0, y: 0}
         anchorMax: {x: 0, y: 0}
         pivot: {x: 0, y: 0}
-        anchoredPosition: {x: 0, y: 0}
-        sizeDelta: {x: 0, y: 0}
+        anchoredPosition: {x: 300, y: 0}
+        sizeDelta: {x: 300, y: 300}
+    - slotName: Footer
+      widgets:
+      - widgetType: 1
+        nameTag: 
+        text: gold
+        onClickRoute: ui/gold
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 111, y: 0}
+        sizeDelta: {x: 300, y: 300}
+      - widgetType: 1
+        nameTag: 
+        text: hp
+        onClickRoute: ui/hp
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 444, y: 0}
+        sizeDelta: {x: 300, y: 300}
+      - widgetType: 1
+        nameTag: 
+        text: gem
+        onClickRoute: ui/gem
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 777, y: 0}
+        sizeDelta: {x: 300, y: 300}

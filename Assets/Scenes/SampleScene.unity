@@ -1652,6 +1652,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UITestDriver
   bootstrap: {fileID: 1649107830}
+  curGold: 555
+  curHp: 666
+  maxHp: 777
+  curGem: 888
 --- !u!1 &2114876561
 GameObject:
   m_ObjectHideFlags: 0
