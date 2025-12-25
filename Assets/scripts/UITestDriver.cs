@@ -5,6 +5,12 @@ public class UITestDriver : MonoBehaviour
     [SerializeField] private UIBootStrap bootstrap;
     private UIOpener _uiOpener;
 
+    [SerializeField] private int curGold = 555;
+    [SerializeField] private int curHp = 666;
+    [SerializeField] private int maxHp = 777;
+    [SerializeField] private int curGem = 888;
+    
+
     void Start()
     {
         if (bootstrap == null)
@@ -21,5 +27,8 @@ public class UITestDriver : MonoBehaviour
     public void OnOpenShop()
     {
         _uiOpener.Open("shop");
+        _uiOpener.SetGold(curGold);
+        _uiOpener.SetHp(curHp, maxHp);
+        _uiOpener.SetGold(curGem);
     }
 }

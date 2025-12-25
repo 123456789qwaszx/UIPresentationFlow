@@ -3,9 +3,27 @@ using UnityEngine;
 public class UIOpener
 {
     private readonly UIRouter _router;
+    private readonly IHudView _hud;
 
-    public UIOpener(UIRouter router) => _router = router;
+    public UIOpener(UIRouter router, IHudView hud)
+    {
+        _router = router;
+        _hud    = hud;
+    }
 
     public void Open(string route, object payload = null)
-        => _router.Navigate(new UIRequest(route, payload));
+    {
+        _router.Navigate(new UIRequest(route, payload));
+    }
+    
+    public void SetGold(int goldValue)
+        => _hud.SetGold(goldValue);
+    
+    public void SetHp(int currentHp, int maxHp)
+        => _hud.SetHp(currentHp, maxHp);
+    
+    public void SetGem(int gemValue)
+        => _hud.SetGem(gemValue);
+    
+    
 }
