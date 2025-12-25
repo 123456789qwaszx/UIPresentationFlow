@@ -8,10 +8,9 @@ public class UIBootStrap : MonoBehaviour
     public GameObject buttonWidgetPrefab;
 
     [Header("Root")]
-    public Transform uiRoot;
-
+    [SerializeField] private Transform uiRoot;
     [SerializeField] private UIScreenCatalog catalog;
-
+    
     private UIOpener _uiOpener;
     public UIOpener Opener => _uiOpener;
 
@@ -19,20 +18,18 @@ public class UIBootStrap : MonoBehaviour
     {
         if (uiRoot == null) uiRoot = transform;
         if (catalog == null) catalog = FindFirstObjectByType<UIScreenCatalog>();
-
-        UIBinder       binder   = new();
-        UIPatchApplier patcher  = new();
-        WidgetFactory  widgets  = new(textWidgetPrefab, buttonWidgetPrefab);
-        UIComposer     composer = new(widgets);
-
-        // === Create UIContext ===
-        // Currently uses a hardcoded default context
-        // (can be replaced later with options / settings / server-driven values)
-        UIContext context = UIContext.Default;
-        // ex: UIContext context = new UIContext("Dark", "ko-KR", experiments, overrides);
-
-        UIResolver     resolver  = new(catalog, context);
-        UIScreenFactory factory  = new(uiRoot, binder, patcher, composer);
+        
+        UIBinder              binder  = new();
+        UIPatchApplier        patcher = new();
+        WidgetFactory  widgetFactory  = new(textWidgetPrefab, buttonWidgetPrefab);
+        
+        IHudView              hudView = null;
+        UiActionBinder uiActionBinder = new UiActionBinder(() => hudView);
+        UIComposer           composer = new(widgetFactory, uiActionBinder);
+        
+        UIContext       context = UIContext.Default;
+        UIResolver     resolver = new(catalog, context);
+        UIScreenFactory factory = new(uiRoot, binder, patcher, composer);
         
         Dictionary<string, ScreenKey> routeKeys = new (System.StringComparer.OrdinalIgnoreCase);
         foreach (var e in catalog.entries)
@@ -40,8 +37,11 @@ public class UIBootStrap : MonoBehaviour
             if (e == null) continue;
             routeKeys[e.key.ToString()] = e.key;
         }
+        
         UIRouter router = new(resolver, factory, routeKeys);
-
-        _uiOpener = new UIOpener(router);
+        
+        
+        hudView   = new HudPresenter(() => router.CurrentScreen);
+        _uiOpener = new UIOpener(router, hudView);
     }
 }

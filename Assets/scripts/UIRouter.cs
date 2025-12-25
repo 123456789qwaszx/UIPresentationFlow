@@ -8,7 +8,7 @@ public class UIRouter
     private readonly IReadOnlyDictionary<string, ScreenKey> _routes;
     
     private readonly ScreenKey _defaultKey = ScreenKey.Home;
-    private UIScreen _current;
+    public UIScreen CurrentScreen { get; private set; }
     
     public UIRouter(UIResolver resolver, UIScreenFactory factory, IReadOnlyDictionary<string, ScreenKey> routes)
     {
@@ -28,7 +28,7 @@ public class UIRouter
         UIResolveResult result = _resolver.Resolve(key, request);
         UnityEngine.Debug.Log(result.Trace.Dump());
         
-        _current = _factory.Create(result, this);
+        CurrentScreen = _factory.Create(result, this);
     }
 }
 
