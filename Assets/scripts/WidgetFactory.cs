@@ -4,12 +4,14 @@ public class WidgetFactory
 {
     private readonly GameObject _textPrefab;
     private readonly GameObject _buttonPrefab;
+    private readonly IUiActionBinder _actionBinder;
     private readonly bool _strict;
     
-    public WidgetFactory(GameObject textPrefab, GameObject buttonPrefab, bool strictMode = false)
+    public WidgetFactory(GameObject textPrefab, GameObject buttonPrefab, IUiActionBinder actionBinder, bool strictMode = false)
     {
         _textPrefab  = textPrefab;
         _buttonPrefab = buttonPrefab;
+        _actionBinder = actionBinder;
         _strict  = strictMode;
     }
     
@@ -23,26 +25,27 @@ public class WidgetFactory
             case WidgetType.Text:
             {
                 TextWidget textWidget = ResolveWidgetComponent<TextWidget>(go, prefab, spec);
-                if (textWidget == null)
-                    return null;
-
                 textWidget.SetText(spec.text);
                 return textWidget;
             }
             case WidgetType.Button:
             {
                 ButtonWidget buttonWidget = ResolveWidgetComponent<ButtonWidget>(go, prefab, spec);
-                if (buttonWidget == null)
-                    return null;
-
                 buttonWidget.SetLabel(spec.text);
-                //TODO buttonWidget.SetOnClick 는 나중에 Router랑 연결
+                BindActionIfNeeded(spec, buttonWidget);
                 return buttonWidget;
             }
             default:
                 Debug.LogError($"[WidgetFactory] Unknown widgetType: {spec.widgetType}");
                 return null;
         }
+    }
+    
+    
+    private void BindActionIfNeeded(WidgetSpec spec, ButtonWidget button)
+    {
+        UIActionKey key = UIActionKeyRegistry.Get(spec.onClickRoute);
+        _actionBinder.TryBind(button, key);
     }
     
     private GameObject ResolvePrefab(WidgetSpec spec)

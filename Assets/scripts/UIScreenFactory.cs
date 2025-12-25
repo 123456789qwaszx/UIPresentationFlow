@@ -24,7 +24,7 @@ public class UIScreenFactory
         _strict   = strict;
     }
 
-    public UIScreen Create(UIResolveResult result, UIRouter router)
+    public UIScreen Create(UIResolveResult result)
     {
         ResolvedUIScreen resolved = result.Resolved;
 
@@ -55,7 +55,7 @@ public class UIScreenFactory
 
         _patcher.Apply(screen, result.Patches);
 
-        _composer.Compose(screen, resolved.BaseSpec, router);
+        _composer.Compose(screen, resolved.BaseSpec);
 
         return screen;
     }

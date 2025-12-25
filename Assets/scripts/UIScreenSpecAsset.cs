@@ -42,7 +42,7 @@ public sealed class WidgetSpec
     public string onClickRoute;
     public GameObject prefabOverride;
     
-    public WidgetRectMode rectMode = WidgetRectMode.PrefabDefault;
+    public WidgetRectMode rectMode = WidgetRectMode.UseSlotLayout;
 
     // 아래 값들은 rectMode == OverrideInSlot일 때만 사용
     public Vector2 anchorMin   = new Vector2(0.5f, 0.5f);
@@ -56,6 +56,6 @@ public enum WidgetType { Text, Button }
 
 public enum WidgetRectMode
 {
-    PrefabDefault,   // 프리팹/슬롯 LayoutGroup에 맡김 (기본)
+    UseSlotLayout,   // 프리팹/슬롯 LayoutGroup에 맡김 (기본)
     OverrideInSlot   // 이 슬롯 안에서만 위치/크기를 직접 지정
 }
