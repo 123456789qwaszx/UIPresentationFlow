@@ -1897,14 +1897,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ScreenTemplate
       objectReference: {fileID: 0}
-    - target: {fileID: 5141068999548620503, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 569
-      objectReference: {fileID: 0}
-    - target: {fileID: 5141068999548620503, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 237
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
