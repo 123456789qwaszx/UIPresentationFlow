@@ -1,5 +1,7 @@
 using System;
+using TMPro;
 
+// TODO:게임 플레이 UI 표면 층이라, ?.보단 Helper를 추가하는게 좋을 것 같긴한데, 완성하고 다듬을 것.
 public sealed class HudPresenter : IHudView
 {
     private readonly Func<UIScreen> _getScreen;
@@ -10,24 +12,36 @@ public sealed class HudPresenter : IHudView
     }
 
     private const string GoldTextKey = "tag00";
-    private const string HpTextKey = "tag01";
-    private const string GemTextKey = "tag02";
+    private const string HpTextKey   = "tag01";
+    private const string GemTextKey  = "tag02";
 
     public void SetGold(int value)
     {
-        TextWidget text = _getScreen()?.GetWidget<TextWidget>(GoldTextKey);
-        if (text) text.SetText(value.ToString());
+        UIScreen screen = _getScreen();
+        WidgetHandle handle = screen?.GetWidgetHandle(GoldTextKey);
+        TMP_Text text = handle?.Text;
+
+        if (text != null)
+            text.text = value.ToString();
     }
 
     public void SetHp(int current, int max)
     {
-        TextWidget text = _getScreen()?.GetWidget<TextWidget>(HpTextKey);
-        if (text) text.SetText($"{current}/{max}");
+        UIScreen screen = _getScreen();
+        WidgetHandle handle = screen?.GetWidgetHandle(HpTextKey);
+        TMP_Text text = handle?.Text;
+
+        if (text != null)
+            text.text = $"{current}/{max}";
     }
     
     public void SetGem(int value)
     {
-        TextWidget text = _getScreen()?.GetWidget<TextWidget>(GemTextKey);
-        if (text) text.SetText(value.ToString());
+        UIScreen screen = _getScreen();
+        WidgetHandle handle = screen?.GetWidgetHandle(GemTextKey);
+        TMP_Text text = handle?.Text;
+
+        if (text != null)
+            text.text = value.ToString();
     }
 }

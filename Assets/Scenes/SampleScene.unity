@@ -704,7 +704,6 @@ GameObject:
   - component: {fileID: 703348561}
   - component: {fileID: 703348564}
   - component: {fileID: 703348563}
-  - component: {fileID: 703348562}
   m_Layer: 5
   m_Name: TextWidgetPrefab
   m_TagString: Untagged
@@ -731,19 +730,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000061035156, y: -2.2234497}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &703348562
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 703348560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adfc30695b0507d4987b8b70c0787658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TextWidget
-  text: {fileID: 0}
 --- !u!114 &703348563
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1528,7 +1514,6 @@ GameObject:
   - component: {fileID: 1827548447}
   - component: {fileID: 1827548446}
   - component: {fileID: 1827548445}
-  - component: {fileID: 1827548444}
   m_Layer: 5
   m_Name: ButtonWidgetPrefab
   m_TagString: Untagged
@@ -1556,20 +1541,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000061035156, y: -118}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1827548444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1827548442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cd4c965d9affc1a4fb5750277748d79b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonWidget
-  button: {fileID: 1827548445}
-  label: {fileID: 429083188}
 --- !u!114 &1827548445
 MonoBehaviour:
   m_ObjectHideFlags: 0
