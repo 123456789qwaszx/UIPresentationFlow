@@ -14,26 +14,52 @@ public class UIScreen : MonoBehaviour
 
     public RectTransform GetSlot(string slotName)
     {
-        return _slots[slotName];
+        if (!_slots.TryGetValue(slotName, out RectTransform slot))
+        {
+            Debug.LogWarning($"[UIScreen] Slot '{slotName}' not found.", this);
+            return null;
+        }
+
+        return slot;
     }
     
     #region 동적 재구성/재배치 용
     
-    private Dictionary<string, MonoBehaviour> _widgetsByNameTag = new();
+    private Dictionary<string, WidgetHandle> _widgetsByNameTag = new();
 
-    internal void SetWidgets(Dictionary<string, MonoBehaviour> map)
+    internal void SetWidgets(Dictionary<string, WidgetHandle> map)
         => _widgetsByNameTag = map;
 
-    public T GetWidget<T>(string nameTag) where T : MonoBehaviour
+    // WidgetHandle 자체를 얻고 싶을 때 사용.
+    public WidgetHandle GetWidgetHandle(string nameTag)
     {
-        if (!_widgetsByNameTag.TryGetValue(nameTag, out MonoBehaviour widget))
+        if (string.IsNullOrWhiteSpace(nameTag))
             return null;
-        
-        if (widget is T t)
-            return t;
-        
+
+        if (!_widgetsByNameTag.TryGetValue(nameTag, out var handle) || handle == null)
+        {
+            Debug.LogWarning($"[UIScreen] WidgetHandle not found for nameTag='{nameTag}'", this);
+            return null;
+        }
+
+        return handle;
+    }
+
+    // 특정 Component(TMP_Text, Image 등)를 바로 얻고 싶을 때 사용.
+    // 예: var text = screen.GetWidget<TMP_Text>("ScoreText");
+    public T GetWidget<T>(string nameTag) where T : Component
+    {
+        WidgetHandle handle = GetWidgetHandle(nameTag);
+        if (handle == null)
+            return null;
+
+        var component = handle.GameObject.GetComponentInChildren<T>(includeInactive: true);
+        if (component != null)
+            return component;
+
         Debug.LogWarning(
-            $"[UIScreen] Widget '{nameTag}' is {widget.GetType().Name}, not {typeof(T).Name}", this);
+            $"[UIScreen] Widget '{nameTag}' (GameObject='{handle.GameObject.name}') " +
+            $"does not contain component of type {typeof(T).Name}", this);
         return null;
     }
     

@@ -9,7 +9,7 @@ public sealed class CompositeUiActionBinder : IUiActionBinder
         _binders = binders;
     }
 
-    public bool TryBind(ButtonWidget sourceButton, UIActionKey actionKey)
+    public bool TryBind(WidgetHandle sourceButton, UIActionKey actionKey)
     {
         foreach (IUiActionBinder binder in _binders)
             if (binder.TryBind(sourceButton, actionKey))

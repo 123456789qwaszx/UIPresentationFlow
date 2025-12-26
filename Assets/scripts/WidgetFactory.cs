@@ -15,37 +15,53 @@ public class WidgetFactory
         _strict  = strictMode;
     }
     
-    public MonoBehaviour Create(WidgetSpec spec, Transform parent)
+    public WidgetHandle Create(WidgetSpec spec, Transform parent)
     {
         GameObject prefab = ResolvePrefab(spec);
         GameObject go = Object.Instantiate(prefab, parent);
         
-        switch (spec.widgetType)
+        var handle = new WidgetHandle(spec.widgetType, spec.nameTag, go);
+        
+        if (!string.IsNullOrEmpty(spec.text))
         {
-            case WidgetType.Text:
-            {
-                TextWidget textWidget = ResolveWidgetComponent<TextWidget>(go, prefab, spec);
-                textWidget.SetText(spec.text);
-                return textWidget;
-            }
-            case WidgetType.Button:
-            {
-                ButtonWidget buttonWidget = ResolveWidgetComponent<ButtonWidget>(go, prefab, spec);
-                buttonWidget.SetLabel(spec.text);
-                BindActionIfNeeded(spec, buttonWidget);
-                return buttonWidget;
-            }
-            default:
-                Debug.LogError($"[WidgetFactory] Unknown widgetType: {spec.widgetType}");
-                return null;
+            if (handle.Text != null)
+                handle.Text.text = spec.text;
         }
+        
+        if (!string.IsNullOrEmpty(spec.onClickRoute))
+        {
+            BindActionIfNeeded(spec, handle);
+        }
+
+        return handle;
+        
+        //
+        // switch (spec.widgetType)
+        // {
+        //     case WidgetType.Text:
+        //     {
+        //         TextWidget textWidget = ResolveWidgetComponent<TextWidget>(go, prefab, spec);
+        //         textWidget.SetText(spec.text);
+        //         return textWidget;
+        //     }
+        //     case WidgetType.Button:
+        //     {
+        //         ButtonWidget buttonWidget = ResolveWidgetComponent<ButtonWidget>(go, prefab, spec);
+        //         buttonWidget.SetLabel(spec.text);
+        //         BindActionIfNeeded(spec, buttonWidget);
+        //         return buttonWidget;
+        //     }
+        //     default:
+        //         Debug.LogError($"[WidgetFactory] Unknown widgetType: {spec.widgetType}");
+        //         return null;
+        // }
     }
     
     
-    private void BindActionIfNeeded(WidgetSpec spec, ButtonWidget button)
+    private void BindActionIfNeeded(WidgetSpec spec, WidgetHandle widget)
     {
         UIActionKey key = UIActionKeyRegistry.Get(spec.onClickRoute);
-        _actionBinder.TryBind(button, key);
+        _actionBinder.TryBind(widget, key);
     }
     
     private GameObject ResolvePrefab(WidgetSpec spec)

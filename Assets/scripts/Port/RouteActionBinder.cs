@@ -13,7 +13,7 @@ public sealed class RouteActionBinder : IUiActionBinder
     }
 
     // ScreenAsset.OnClickRoute를 받기 위한 Bind
-    public bool TryBind(ButtonWidget button, UIActionKey key)
+    public bool TryBind(WidgetHandle widget, UIActionKey key)
     {
         if (key == UIActionKey.None)
             return false;
@@ -21,7 +21,8 @@ public sealed class RouteActionBinder : IUiActionBinder
         if (!_routeResolver.TryGetRouteKey(key.Value, out ScreenKey screenKey))
             return false;
 
-        button.SetOnClick(() =>
+        widget.Button.onClick.RemoveAllListeners();
+        widget.Button.onClick.AddListener(() =>
         {
             _getRouter()?.Navigate(new UIRequest(screenKey.ToString()));
         });

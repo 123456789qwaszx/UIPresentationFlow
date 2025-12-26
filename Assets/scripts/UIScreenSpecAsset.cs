@@ -52,7 +52,7 @@ public sealed class WidgetSpec
     public Vector2 sizeDelta   = new Vector2(300f, 80f);
 }
 
-public enum WidgetType { Text, Button }
+public enum WidgetType { Text, Button, Image }
 
 public enum WidgetRectMode
 {

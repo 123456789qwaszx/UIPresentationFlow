@@ -17,7 +17,7 @@ public class UIComposer
 
     public void Compose(UIScreen screen, UIScreenSpec screenSpec)
     {
-        var widgetMap = new Dictionary<string, MonoBehaviour>();
+        var widgetMap = new Dictionary<string, WidgetHandle>();
         
         foreach (SlotSpec slotSpec in screenSpec.slots)
         {
@@ -26,9 +26,9 @@ public class UIComposer
 
             foreach (WidgetSpec widgetSpec in slotSpec.widgets)
             {
-                MonoBehaviour widget = _factory.Create(widgetSpec, slot);
+                WidgetHandle widget = _factory.Create(widgetSpec, slot);
                 
-                _rectApplier.Apply((RectTransform)widget.transform, widgetSpec);
+                _rectApplier.Apply(widget.RectTransform, widgetSpec);
                 
                 // 위젯 캐싱
                 string tag = (widgetSpec.nameTag ?? string.Empty).Trim();

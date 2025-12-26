@@ -44,7 +44,7 @@ MonoBehaviour:
         pivot: {x: 0.5, y: 0.5}
         anchoredPosition: {x: 0, y: 0}
         sizeDelta: {x: 300, y: 80}
-    - slotName: Body
+    - slotName: Footer
       widgets:
       - widgetType: 1
         nameTag: 

@@ -1,66 +1,105 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public sealed class UIActionBinder : IUiActionBinder
 {
     private readonly Func<IHudView> _getHudView;
-    private readonly Dictionary<UIActionKey, Action<ButtonWidget>> _bindings;
+    private readonly Dictionary<UIActionKey, Action<WidgetHandle>> _bindings;
 
     public UIActionBinder(Func<IHudView> getHudView)
     {
         _getHudView = getHudView;
 
-        _bindings = new Dictionary<UIActionKey, Action<ButtonWidget>>
+        _bindings = new Dictionary<UIActionKey, Action<WidgetHandle>>
         {
             {
                 UIActionKeys.Gold,
-                buttonWidget =>
+                widget =>
                 {
+                    if (widget.Button == null)
+                    {
+                        Debug.LogWarning(
+                            $"[UIActionBinder] actionKey={UIActionKeys.Gold} " +
+                            $"but widget '{widget.NameTag}' has no Button component.");
+                        return;
+                    }
+
                     void OnClick()
                     {
                         _getHudView()?.SetGold(444);
                     }
 
-                    buttonWidget.SetOnClick(OnClick);
+                    widget.Button.onClick.RemoveAllListeners();
+                    widget.Button.onClick.AddListener(OnClick);
                 }
             },
             {
                 UIActionKeys.Hp,
-                buttonWidget =>
+                widget =>
                 {
+                    if (widget.Button == null)
+                    {
+                        Debug.LogWarning(
+                            $"[UIActionBinder] actionKey={UIActionKeys.Hp} " +
+                            $"but widget '{widget.NameTag}' has no Button component.");
+                        return;
+                    }
+
                     void OnClick()
                     {
                         _getHudView()?.SetHp(555, 666);
                     }
-                    
-                    buttonWidget.SetOnClick(OnClick);
+
+                    widget.Button.onClick.RemoveAllListeners();
+                    widget.Button.onClick.AddListener(OnClick);
                 }
             },
             {
                 UIActionKeys.Gem,
-                buttonWidget =>
+                widget =>
                 {
+                    if (widget.Button == null)
+                    {
+                        Debug.LogWarning(
+                            $"[UIActionBinder] actionKey={UIActionKeys.Gem} " +
+                            $"but widget '{widget.NameTag}' has no Button component.");
+                        return;
+                    }
+
                     void OnClick()
                     {
                         _getHudView()?.SetGem(777);
                     }
-                    
-                    buttonWidget.SetOnClick(OnClick);
+
+                    widget.Button.onClick.RemoveAllListeners();
+                    widget.Button.onClick.AddListener(OnClick);
                 }
             },
         };
     }
 
     // 게임 기능을 엮기위한 Bind
-    public bool TryBind(ButtonWidget sourceButton, UIActionKey actionKey)
+    public bool TryBind(WidgetHandle widget, UIActionKey actionKey)
     {
+        if (widget == null)
+            return false;
+
         if (actionKey == UIActionKey.None)
             return false;
         
-        if(!_bindings.TryGetValue(actionKey, out Action<ButtonWidget> bindingRule))
+        if (!_bindings.TryGetValue(actionKey, out Action<WidgetHandle> bindingRule))
             return false;
 
-        bindingRule(sourceButton);
+        // 여기서 한 번 더 버튼 존재 체크 (안전장치)
+        if (widget.Button == null)
+        {
+            Debug.LogWarning(
+                $"[UIActionBinder] Widget '{widget.NameTag}' has actionKey={actionKey} but no Button component.");
+            return false;
+        }
+
+        bindingRule(widget);
         return true;
     }
 }
