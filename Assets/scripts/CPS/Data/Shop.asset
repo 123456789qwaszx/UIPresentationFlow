@@ -17,7 +17,7 @@ MonoBehaviour:
     slots:
     - slotName: HeaderNew
       widgets:
-      - widgetType: 0
+      - widgetType: 2
         nameTag: tag00
         text: Gold thanks
         onClickRoute: 
@@ -59,7 +59,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
-      - widgetType: 2
+      - widgetType: 4
         nameTag: imagei
         text: imagei
         onClickRoute: 
