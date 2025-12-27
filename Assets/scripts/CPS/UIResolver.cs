@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 public class UIResolveTrace
@@ -11,13 +10,15 @@ public class UIResolveTrace
 
 public class UIRequest
 {
-    public string route;
-    public object payload;
+    public UIActionKey Action { get; }
+    public object Payload;
+    
+    public string Route => Action.Value;
 
-    public UIRequest(string route, object payload = null)
+    public UIRequest(UIActionKey action, object payload = null)
     {
-        this.route = route;
-        this.payload = payload;
+        Action  = action;
+        Payload = payload;
     }
 }
 
@@ -52,7 +53,8 @@ public class UIResolver
     {
         UIResolveTrace trace = new UIResolveTrace();
         trace.Add($"Resolve ScreenKey = {screenKey}");
-        trace.Add($"Payload = {(request.payload != null ? request.payload.ToString() : "null")}");
+        trace.Add($"Action = {request.Action.Value}");
+        trace.Add($"Payload = {(request.Payload != null ? request.Payload.ToString() : "null")}");
 
         // 1) Take UIScreenSpec from catalog
         UIScreenSpec baseSpec = _catalog.GetScreenSpec(screenKey);

@@ -14,18 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenSpecAsset
   spec:
     screenId: Home
-    baseTheme: {fileID: 0}
-    baseLayout: {fileID: 0}
-    variants: []
-    name: 
-    templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
     slots:
     - slotName: HeaderNew
       widgets:
       - widgetType: 1
-        nameTag: 
+        nameTag: h1
         text: Go Shop
-        onClickRoute: shop
+        onClickRoute: nav/shop
         prefabOverride: {fileID: 0}
         rectMode: 0
         anchorMin: {x: 0.5, y: 0.5}
@@ -43,7 +38,7 @@ MonoBehaviour:
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
       - widgetType: 0
-        nameTag: 
+        nameTag: h2
         text: Welcome...
         onClickRoute: 
         prefabOverride: {fileID: 0}
@@ -62,47 +57,8 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
-    - slotName: Footer
-      widgets:
-      - widgetType: 1
-        nameTag: 
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-        rectMode: 0
-        anchorMin: {x: 0.5, y: 0.5}
-        anchorMax: {x: 0.5, y: 0.5}
-        pivot: {x: 0.5, y: 0.5}
-        anchoredPosition: {x: 0, y: 0}
-        sizeDelta: {x: 300, y: 80}
-        imageSprite: {fileID: 0}
-        imageColor: {r: 1, g: 1, b: 1, a: 1}
-        imageSetNativeSize: 0
-        toggleInitialValue: 0
-        toggleInteractable: 1
-        sliderMin: 0
-        sliderMax: 1
-        sliderInitialValue: 0.5
-        sliderWholeNumbers: 0
-    - slotName: Footer
-      widgets:
-      - widgetType: 0
-        nameTag: 
-        text: 
-        onClickRoute: 
-        prefabOverride: {fileID: 0}
-        rectMode: 0
-        anchorMin: {x: 0.5, y: 0.5}
-        anchorMax: {x: 0.5, y: 0.5}
-        pivot: {x: 0.5, y: 0.5}
-        anchoredPosition: {x: 0, y: 0}
-        sizeDelta: {x: 300, y: 80}
-        imageSprite: {fileID: 0}
-        imageColor: {r: 1, g: 1, b: 1, a: 1}
-        imageSetNativeSize: 0
-        toggleInitialValue: 0
-        toggleInteractable: 1
-        sliderMin: 0
-        sliderMax: 1
-        sliderInitialValue: 0.5
-        sliderWholeNumbers: 0
+    templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
+    baseTheme: {fileID: 0}
+    baseLayout: {fileID: 0}
+    variants: []
+    name: 

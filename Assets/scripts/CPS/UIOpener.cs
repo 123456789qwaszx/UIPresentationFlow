@@ -11,9 +11,9 @@ public class UIOpener
         _hud    = hud;
     }
 
-    public void Open(string route, object payload = null)
+    public void Open(UIActionKey action, object payload = null)
     {
-        _router.Navigate(new UIRequest(route, payload));
+        _router.Navigate(new UIRequest(action, payload));
     }
     
     public void SetGold(int goldValue)

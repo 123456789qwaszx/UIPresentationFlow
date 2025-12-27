@@ -22,6 +22,10 @@ public class UIScreenCatalog : ScriptableObject
     }
 
     public List<ScreenEntry> entries = new();
+    
+    //ActionKey 등록용
+    public List<UIRouteEntry> routes = new();
+    
 
     private Dictionary<ScreenKey, UIScreenSpec> _map;
 

@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-
 public sealed class RouteKeyResolver
 {
-    public bool TryGetRouteKey(string route, out ScreenKey key)
+    public bool TryGetRouteKey(UIActionKey routeActionKey, out ScreenKey key)
     {
-        return UIRouteKeyRegistry.TryGetRouteKey(route, out key);
+        return UIRouteKeyRegistry.TryGetRouteKey(routeActionKey.Value, out key);
     }
 }
 
@@ -27,17 +25,17 @@ public class UIRouter
     
     public void Navigate(UIRequest request)
     {
-        if (!_routeKeyResolver.TryGetRouteKey(request.route, out ScreenKey key))
+        UIActionKey action = request.Action;
+        
+        if (!_routeKeyResolver.TryGetRouteKey(action, out ScreenKey key))
         {
-            UnityEngine.Debug.LogWarning($"[UIRouter] Unknown route='{request.route}'. Fallback to {_defaultKey}.");
+            UnityEngine.Debug.LogWarning($"[UIRouter] Unknown route='{action.Value}'. Fallback to {_defaultKey}.");
             key = _defaultKey;
         }
         
-        //UIScreenSpec baseSpec = _catalog.GetScreenSpec(screenKey);
-        
         UIResolveResult result = _resolver.Resolve(key, request);
         UnityEngine.Debug.Log(result.Trace.Dump());
-        
+
         CurrentScreen = _factory.Create(result);
     }
 }

@@ -14,11 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenSpecAsset
   spec:
     screenId: Shop
-    baseTheme: {fileID: 0}
-    baseLayout: {fileID: 0}
-    variants: []
-    name: 
-    templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
     slots:
     - slotName: HeaderNew
       widgets:
@@ -167,7 +162,7 @@ MonoBehaviour:
     - slotName: Footer
       widgets:
       - widgetType: 1
-        nameTag: 
+        nameTag: b1
         text: gold
         onClickRoute: ui/gold
         prefabOverride: {fileID: 0}
@@ -187,7 +182,7 @@ MonoBehaviour:
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
       - widgetType: 1
-        nameTag: 
+        nameTag: b2
         text: hp
         onClickRoute: ui/hp
         prefabOverride: {fileID: 0}
@@ -207,7 +202,7 @@ MonoBehaviour:
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
       - widgetType: 1
-        nameTag: 
+        nameTag: b3
         text: gem
         onClickRoute: ui/gem
         prefabOverride: {fileID: 0}
@@ -226,3 +221,8 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+    templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
+    baseTheme: {fileID: 0}
+    baseLayout: {fileID: 0}
+    variants: []
+    name: 
