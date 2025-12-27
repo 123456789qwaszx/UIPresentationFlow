@@ -2,13 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public struct UIRouteEntry
-{
-    public string route;
-    public ScreenKey key;
-}
-
 public enum ScreenKey { Home, Shop }
 
 [CreateAssetMenu(menuName = "UI/Screen Catalog", fileName = "UIScreenCatalog")]

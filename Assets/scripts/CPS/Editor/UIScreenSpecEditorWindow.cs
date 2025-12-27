@@ -12,7 +12,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private SerializedProperty _specProp;
     private SerializedProperty _slotsProp;
-    
+
     // 🔹 추가: 현재 prefab에서 발견된 UISlot id 목록 캐시
     private string[] _slotIdOptions = Array.Empty<string>();
     private GameObject _cachedTemplatePrefab;
@@ -185,7 +185,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             var popupRect = new Rect(popupX, rect.y, popupWidth, rect.height);
             var textRect = new Rect(textX, rect.y, textWidth, rect.height);
-            
+
             var options = _slotIdOptions;
 
             if (options == null || options.Length == 0)
@@ -288,10 +288,47 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 lines += 5;
             }
 
+            // 🔹 타입별 추가 옵션 라인수
+            switch (widgetType)
+            {
+                case WidgetType.Image:
+                    // [Image Options] 헤더 + Sprite + Color + SetNativeSize
+                    lines += 4;
+                    break;
+                case WidgetType.Toggle:
+                    // [Toggle Options] 헤더 + Initial + Interactable
+                    lines += 3;
+                    break;
+                case WidgetType.Slider:
+                    // [Slider Options] 헤더 + Min + Max + Initial + WholeNumbers
+                    lines += 5;
+                    break;
+                default:
+                    break;
+            }
+
             float contentHeight = lines * (lineH + vGap) + vGap;
 
             // 여유 조금 더 주기 위해 +4f 정도
             return contentHeight + borderPadding * 2f + 4f;
+        };
+        
+        _widgetsList.onAddCallback = list =>
+        {
+            if (widgetsProp == null) return;
+
+            int insertIndex = widgetsProp.arraySize;
+            widgetsProp.InsertArrayElementAtIndex(insertIndex);
+
+            var newElem = widgetsProp.GetArrayElementAtIndex(insertIndex);
+            ResetWidgetSpecDefaults(newElem, insertIndex);
+
+            _so.ApplyModifiedProperties();
+            BuildWidgetsList();
+            if (_widgetsList != null)
+                _widgetsList.index = insertIndex;
+
+            Repaint();
         };
 
         _widgetsList.drawElementCallback = (rect, index, isActive, isFocused) =>
@@ -344,6 +381,18 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             var anchoredPosProp = w.FindPropertyRelative("anchoredPosition");
             var sizeDeltaProp = w.FindPropertyRelative("sizeDelta");
 
+            var imageSpriteProp = w.FindPropertyRelative("imageSprite");
+            var imageColorProp = w.FindPropertyRelative("imageColor");
+            var imageNativeProp = w.FindPropertyRelative("imageSetNativeSize");
+
+            var toggleInitialProp = w.FindPropertyRelative("toggleInitialValue");
+            var toggleInteractProp = w.FindPropertyRelative("toggleInteractable");
+
+            var sliderMinProp = w.FindPropertyRelative("sliderMin");
+            var sliderMaxProp = w.FindPropertyRelative("sliderMax");
+            var sliderInitProp = w.FindPropertyRelative("sliderInitialValue");
+            var sliderWholeProp = w.FindPropertyRelative("sliderWholeNumbers");
+
             // 🔹 우클릭 메뉴 (Add / Delete) – 기존에 쓰던 거 있으면 그대로 유지
             if (e.type == EventType.ContextClick && borderRect.Contains(e.mousePosition))
             {
@@ -358,14 +407,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     widgetsProp.InsertArrayElementAtIndex(insertIndex);
 
                     var newElem = widgetsProp.GetArrayElementAtIndex(insertIndex);
-                    if (newElem != null)
-                    {
-                        newElem.FindPropertyRelative("nameTag").stringValue = $"Widget {insertIndex}";
-                        newElem.FindPropertyRelative("widgetType").enumValueIndex = (int)WidgetType.Text;
-                        newElem.FindPropertyRelative("text").stringValue = string.Empty;
-                        newElem.FindPropertyRelative("onClickRoute").stringValue = string.Empty;
-                        newElem.FindPropertyRelative("prefabOverride").objectReferenceValue = null;
-                    }
+                    ResetWidgetSpecDefaults(newElem, insertIndex);
 
                     _so.ApplyModifiedProperties();
                     BuildWidgetsList();
@@ -524,6 +566,73 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 posValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, posValue);
                 anchoredPosProp.vector2Value = posValue;
                 y += rowHeight + vGap;
+
+                switch (widgetType)
+                {
+                    case WidgetType.Image:
+                    {
+                        // 헤더
+                        var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.LabelField(headerRect, "[Image Options]", EditorStyles.miniBoldLabel);
+                        y += lineH + vGap;
+
+                        // Sprite
+                        var spriteRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(spriteRect, imageSpriteProp, new GUIContent("Sprite"));
+                        y += lineH + vGap;
+
+                        // Color
+                        var colorRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(colorRect, imageColorProp, new GUIContent("Color"));
+                        y += lineH + vGap;
+
+                        // Set Native Size
+                        var nativeRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(nativeRect, imageNativeProp, new GUIContent("Set Native Size"));
+                        y += lineH + vGap;
+                        break;
+                    }
+
+                    case WidgetType.Toggle:
+                    {
+                        var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.LabelField(headerRect, "[Toggle Options]", EditorStyles.miniBoldLabel);
+                        y += lineH + vGap;
+
+                        var initRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(initRect, toggleInitialProp, new GUIContent("Initial Value"));
+                        y += lineH + vGap;
+
+                        var interactRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(interactRect, toggleInteractProp, new GUIContent("Interactable"));
+                        y += lineH + vGap;
+                        break;
+                    }
+
+                    case WidgetType.Slider:
+                    {
+                        var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.LabelField(headerRect, "[Slider Options]", EditorStyles.miniBoldLabel);
+                        y += lineH + vGap;
+
+                        var minRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(minRect, sliderMinProp, new GUIContent("Min"));
+                        y += lineH + vGap;
+
+                        var maxRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(maxRect, sliderMaxProp, new GUIContent("Max"));
+                        y += lineH + vGap;
+
+                        var initRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(initRect, sliderInitProp, new GUIContent("Initial Value"));
+                        y += lineH + vGap;
+
+                        var wholeRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(wholeRect, sliderWholeProp, new GUIContent("Whole Numbers"));
+                        y += lineH + vGap;
+                        break;
+                    }
+                }
             }
         };
     }
@@ -625,7 +734,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _so.ApplyModifiedProperties();
     }
-    
+
     private void RefreshSlotIdOptionsFromPrefab(bool force = false)
     {
         if (_asset == null)
@@ -676,7 +785,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 RefreshSlotIdOptionsFromPrefab(force: true);
                 Repaint();
             }
-            
+
             if (GUILayout.Button("Validate"))
             {
                 var issues = ValidateSpec(_asset.spec);
@@ -692,9 +801,67 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 _so.Update(); // SerializedObject 쪽도 즉시 동기화
                 EditorUtility.SetDirty(_asset);
             }
-            
         }
     }
+    
+    // UIScreenSpecEditorWindow 클래스 내부 어딘가에 추가
+private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
+{
+    if (widgetProp == null) return;
+
+    var typeProp         = widgetProp.FindPropertyRelative("widgetType");
+    var nameTagProp      = widgetProp.FindPropertyRelative("nameTag");
+    var textProp         = widgetProp.FindPropertyRelative("text");
+    var routeProp        = widgetProp.FindPropertyRelative("onClickRoute");
+    var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
+
+    var rectModeProp     = widgetProp.FindPropertyRelative("rectMode");
+    var anchorMinProp    = widgetProp.FindPropertyRelative("anchorMin");
+    var anchorMaxProp    = widgetProp.FindPropertyRelative("anchorMax");
+    var pivotProp        = widgetProp.FindPropertyRelative("pivot");
+    var anchoredPosProp  = widgetProp.FindPropertyRelative("anchoredPosition");
+    var sizeDeltaProp    = widgetProp.FindPropertyRelative("sizeDelta");
+
+    // 타입/기본 텍스트
+    typeProp.enumValueIndex = (int)WidgetType.Text;
+    nameTagProp.stringValue = $"Widget {index}";
+    textProp.stringValue    = string.Empty;
+    routeProp.stringValue   = string.Empty;
+    prefabOverrideProp.objectReferenceValue = null;
+
+    // Rect 모드 & 기본 값들
+    rectModeProp.enumValueIndex = (int)WidgetRectMode.UseSlotLayout; // 기본은 슬롯 레이아웃 사용
+
+    anchorMinProp.vector2Value       = new Vector2(0.5f, 0.5f);
+    anchorMaxProp.vector2Value       = new Vector2(0.5f, 0.5f);
+    pivotProp.vector2Value           = new Vector2(0.5f, 0.5f);
+    anchoredPosProp.vector2Value     = Vector2.zero;
+    sizeDeltaProp.vector2Value       = new Vector2(300f, 80f);
+
+    // 타입별 옵션(있으면)도 안전하게 기본값으로
+    var imageColorProp     = widgetProp.FindPropertyRelative("imageColor");
+    var imageNativeProp    = widgetProp.FindPropertyRelative("imageSetNativeSize");
+    var toggleInitialProp  = widgetProp.FindPropertyRelative("toggleInitialValue");
+    var toggleInteractProp = widgetProp.FindPropertyRelative("toggleInteractable");
+    var sliderMinProp      = widgetProp.FindPropertyRelative("sliderMin");
+    var sliderMaxProp      = widgetProp.FindPropertyRelative("sliderMax");
+    var sliderInitProp     = widgetProp.FindPropertyRelative("sliderInitialValue");
+    var sliderWholeProp    = widgetProp.FindPropertyRelative("sliderWholeNumbers");
+
+    var imageSpriteProp    = widgetProp.FindPropertyRelative("imageSprite");
+    if (imageSpriteProp != null) imageSpriteProp.objectReferenceValue = null;
+    if (imageColorProp  != null) imageColorProp.colorValue           = Color.white;
+    if (imageNativeProp != null) imageNativeProp.boolValue           = false;
+
+    if (toggleInitialProp  != null) toggleInitialProp.boolValue      = false;
+    if (toggleInteractProp != null) toggleInteractProp.boolValue     = true;
+
+    if (sliderMinProp   != null) sliderMinProp.floatValue            = 0f;
+    if (sliderMaxProp   != null) sliderMaxProp.floatValue            = 1f;
+    if (sliderInitProp  != null) sliderInitProp.floatValue           = 0.5f;
+    if (sliderWholeProp != null) sliderWholeProp.boolValue           = false;
+}
+
 
     private static List<string> ValidateSpec(UIScreenSpec s)
     {

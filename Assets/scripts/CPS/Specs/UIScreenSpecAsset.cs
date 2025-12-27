@@ -5,7 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "UIScreenSpecAsset", menuName = "Scriptable Objects/UIScreenSpecAsset")]
 public sealed class UIScreenSpecAsset : ScriptableObject
 {
-    public UIScreenSpec spec = new UIScreenSpec();
+    public UIScreenSpec spec = new ();
 }
 
 [Serializable]

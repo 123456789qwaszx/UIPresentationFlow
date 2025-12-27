@@ -62,12 +62,72 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
-      - widgetType: 5
-        nameTag: tag01
-        text: Hp please.
+      - widgetType: 2
+        nameTag: imagei
+        text: imagei
         onClickRoute: 
         prefabOverride: {fileID: 0}
-        rectMode: 0
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 700, y: 0}
+        sizeDelta: {x: 300, y: 300}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+      - widgetType: 3
+        nameTag: tag03
+        text: Togglet
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 100, y: 100}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+      - widgetType: 4
+        nameTag: tag04
+        text: Sliders
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        anchorMin: {x: 0, y: 0}
+        anchorMax: {x: 0, y: 0}
+        pivot: {x: 0, y: 0}
+        anchoredPosition: {x: 700, y: 0}
+        sizeDelta: {x: 300, y: 300}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+      - widgetType: 5
+        nameTag: tag05
+        text: gog
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
         anchorMin: {x: 0, y: 0}
         anchorMax: {x: 0, y: 0}
         pivot: {x: 0, y: 0}
