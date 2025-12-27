@@ -42,6 +42,12 @@ public sealed class WidgetSpec
     
     public WidgetRectMode rectMode = WidgetRectMode.UseSlotLayout;
 
+    
+    /// <summary>
+    /// true면 이 위젯은 런타임에서 완전히 무시된다. (임시 비활성용)
+    /// </summary>
+    public bool disabled = false;
+    
     // 아래 값들은 rectMode == OverrideInSlot일 때만 사용
     public Vector2 anchorMin   = new Vector2(0.5f, 0.5f);
     public Vector2 anchorMax   = new Vector2(0.5f, 0.5f);

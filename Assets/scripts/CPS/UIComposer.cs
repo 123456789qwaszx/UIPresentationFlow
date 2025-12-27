@@ -26,6 +26,8 @@ public class UIComposer
 
             foreach (WidgetSpec widgetSpec in slotSpec.widgets)
             {
+                if (widgetSpec.disabled) continue; 
+                
                 WidgetHandle widget = _factory.Create(widgetSpec, slot);
                 
                 _rectApplier.Apply(widget.RectTransform, widgetSpec);

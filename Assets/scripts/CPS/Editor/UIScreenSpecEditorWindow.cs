@@ -13,7 +13,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private SerializedProperty _specProp;
     private SerializedProperty _slotsProp;
 
-    // 🔹 추가: 현재 prefab에서 발견된 UISlot id 목록 캐시
+    // 현재 prefab에서 발견된 UISlot id 목록 캐시
     private string[] _slotIdOptions = Array.Empty<string>();
     private GameObject _cachedTemplatePrefab;
 
@@ -25,8 +25,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private int _selectedSlotIndex = -1;
 
-    // RouteCatalog 같은 걸 가지고 있다면 여기 연결해서 드롭다운 제공 가능
-    // public RouteCatalog routeCatalog;
+    // 🔹 위젯별 접힘/펼침 상태 (SerializedProperty.propertyPath 기준)
+    private readonly Dictionary<string, bool> _widgetFoldoutStates = new();
 
     [MenuItem("Tools/UI/UIScreen Spec Editor")]
     public static void Open()
@@ -263,6 +263,24 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             float vGap = 2f;
             float borderPadding = 2f;
 
+            if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
+                return lineH + 2f * borderPadding;
+
+            var w = widgetsProp.GetArrayElementAtIndex(index);
+
+            // 🔹 접힘 상태 확인
+            string foldKey = w.propertyPath;
+            bool expanded = true;
+            _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
+
+            if (!expanded)
+            {
+                // 접혀 있을 때: 헤더 한 줄 정도만 보이게
+                int collapsedLines = 1; // Foldout + Enabled + Name + Type 한 줄
+                float collapsedHeight = collapsedLines * (lineH + vGap) + vGap;
+                return collapsedHeight + borderPadding * 2f + 4f;
+            }
+
             int lines = 0;
 
             // 1줄: Name + Type
@@ -272,7 +290,6 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             lines += 2;
 
             // Route + Prefab
-            var w = widgetsProp.GetArrayElementAtIndex(index);
             var typeProp = w.FindPropertyRelative("widgetType");
             var widgetType = (WidgetType)typeProp.enumValueIndex;
             lines += (widgetType == WidgetType.Button) ? 2 : 1;
@@ -303,16 +320,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     // [Slider Options] 헤더 + Min + Max + Initial + WholeNumbers
                     lines += 5;
                     break;
-                default:
-                    break;
             }
 
             float contentHeight = lines * (lineH + vGap) + vGap;
-
-            // 여유 조금 더 주기 위해 +4f 정도
             return contentHeight + borderPadding * 2f + 4f;
         };
-        
+
         _widgetsList.onAddCallback = list =>
         {
             if (widgetsProp == null) return;
@@ -392,6 +405,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             var sliderMaxProp = w.FindPropertyRelative("sliderMax");
             var sliderInitProp = w.FindPropertyRelative("sliderInitialValue");
             var sliderWholeProp = w.FindPropertyRelative("sliderWholeNumbers");
+            var disabledProp = w.FindPropertyRelative("disabled");
 
             // 🔹 우클릭 메뉴 (Add / Delete) – 기존에 쓰던 거 있으면 그대로 유지
             if (e.type == EventType.ContextClick && borderRect.Contains(e.mousePosition))
@@ -431,13 +445,40 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 e.Use();
             }
 
-            // === 1줄: Name + Type ===
-            var nameRect = new Rect(rect.x, y, rect.width * 0.6f, lineH);
-            var typeRect = new Rect(rect.x + rect.width * 0.62f, y, rect.width * 0.36f, lineH);
+            // === 헤더: Foldout + Enabled 토글 + Name + Type ===
+            string foldKey = w.propertyPath;
+            bool expanded = true;
+            _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
+
+// Foldout 아이콘
+            var foldoutRect = new Rect(rect.x, y, 14f, lineH);
+            expanded = EditorGUI.Foldout(foldoutRect, expanded, GUIContent.none);
+            _widgetFoldoutStates[foldKey] = expanded;
+
+            float x = foldoutRect.xMax + 2f;
+
+// Enabled 토글 (실제 저장은 disabled)
+            var toggleRect = new Rect(x, y, 18f, lineH);
+            bool enabled = disabledProp != null ? !disabledProp.boolValue : true;
+            enabled = EditorGUI.Toggle(toggleRect, enabled);
+            if (disabledProp != null)
+                disabledProp.boolValue = !enabled;
+
+            x = toggleRect.xMax + 4f;
+
+// Name + Type
+            float nameWidth = rect.width * 0.55f;
+            var nameRect = new Rect(x, y, nameWidth, lineH);
+            var typeRect = new Rect(rect.x + rect.width * 0.75f, y, rect.width * 0.25f, lineH);
 
             nameProp.stringValue = EditorGUI.TextField(nameRect, "Name", nameProp.stringValue);
             EditorGUI.PropertyField(typeRect, typeProp, GUIContent.none);
+
             y += lineH + vGap;
+
+// 🔸 접혀 있으면 여기서 조기 리턴 (헤더만 표시)
+            if (!expanded)
+                return;
 
             var widgetType = (WidgetType)typeProp.enumValueIndex;
 
@@ -655,6 +696,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             Bind(newAsset);
         }
 
+        if (_asset != null && _so == null)
+        {
+            Bind(_asset);
+        }
+
         if (_asset == null || _so == null)
         {
             EditorGUILayout.HelpBox("UIScreenSpecAsset 를 선택하거나 드래그해서 열어주세요.\n(Project 창에서 Spec Asset 클릭 → 자동 바인딩됨)",
@@ -803,64 +849,69 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             }
         }
     }
-    
+
     // UIScreenSpecEditorWindow 클래스 내부 어딘가에 추가
-private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
-{
-    if (widgetProp == null) return;
+    private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
+    {
+        if (widgetProp == null) return;
 
-    var typeProp         = widgetProp.FindPropertyRelative("widgetType");
-    var nameTagProp      = widgetProp.FindPropertyRelative("nameTag");
-    var textProp         = widgetProp.FindPropertyRelative("text");
-    var routeProp        = widgetProp.FindPropertyRelative("onClickRoute");
-    var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
+        var typeProp = widgetProp.FindPropertyRelative("widgetType");
+        var nameTagProp = widgetProp.FindPropertyRelative("nameTag");
+        var textProp = widgetProp.FindPropertyRelative("text");
+        var routeProp = widgetProp.FindPropertyRelative("onClickRoute");
+        var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
 
-    var rectModeProp     = widgetProp.FindPropertyRelative("rectMode");
-    var anchorMinProp    = widgetProp.FindPropertyRelative("anchorMin");
-    var anchorMaxProp    = widgetProp.FindPropertyRelative("anchorMax");
-    var pivotProp        = widgetProp.FindPropertyRelative("pivot");
-    var anchoredPosProp  = widgetProp.FindPropertyRelative("anchoredPosition");
-    var sizeDeltaProp    = widgetProp.FindPropertyRelative("sizeDelta");
+        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp = widgetProp.FindPropertyRelative("pivot");
+        var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
+        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
 
-    // 타입/기본 텍스트
-    typeProp.enumValueIndex = (int)WidgetType.Text;
-    nameTagProp.stringValue = $"Widget {index}";
-    textProp.stringValue    = string.Empty;
-    routeProp.stringValue   = string.Empty;
-    prefabOverrideProp.objectReferenceValue = null;
+        var disabledProp = widgetProp.FindPropertyRelative("disabled");
 
-    // Rect 모드 & 기본 값들
-    rectModeProp.enumValueIndex = (int)WidgetRectMode.UseSlotLayout; // 기본은 슬롯 레이아웃 사용
+        // 타입/기본 텍스트
+        typeProp.enumValueIndex = (int)WidgetType.Text;
+        nameTagProp.stringValue = $"Widget {index}";
+        textProp.stringValue = string.Empty;
+        routeProp.stringValue = string.Empty;
+        prefabOverrideProp.objectReferenceValue = null;
 
-    anchorMinProp.vector2Value       = new Vector2(0.5f, 0.5f);
-    anchorMaxProp.vector2Value       = new Vector2(0.5f, 0.5f);
-    pivotProp.vector2Value           = new Vector2(0.5f, 0.5f);
-    anchoredPosProp.vector2Value     = Vector2.zero;
-    sizeDeltaProp.vector2Value       = new Vector2(300f, 80f);
+        // Rect 모드 & 기본 값들
+        rectModeProp.enumValueIndex = (int)WidgetRectMode.UseSlotLayout;
 
-    // 타입별 옵션(있으면)도 안전하게 기본값으로
-    var imageColorProp     = widgetProp.FindPropertyRelative("imageColor");
-    var imageNativeProp    = widgetProp.FindPropertyRelative("imageSetNativeSize");
-    var toggleInitialProp  = widgetProp.FindPropertyRelative("toggleInitialValue");
-    var toggleInteractProp = widgetProp.FindPropertyRelative("toggleInteractable");
-    var sliderMinProp      = widgetProp.FindPropertyRelative("sliderMin");
-    var sliderMaxProp      = widgetProp.FindPropertyRelative("sliderMax");
-    var sliderInitProp     = widgetProp.FindPropertyRelative("sliderInitialValue");
-    var sliderWholeProp    = widgetProp.FindPropertyRelative("sliderWholeNumbers");
+        anchorMinProp.vector2Value = new Vector2(0.5f, 0.5f);
+        anchorMaxProp.vector2Value = new Vector2(0.5f, 0.5f);
+        pivotProp.vector2Value = new Vector2(0.5f, 0.5f);
+        anchoredPosProp.vector2Value = Vector2.zero;
+        sizeDeltaProp.vector2Value = new Vector2(300f, 80f);
 
-    var imageSpriteProp    = widgetProp.FindPropertyRelative("imageSprite");
-    if (imageSpriteProp != null) imageSpriteProp.objectReferenceValue = null;
-    if (imageColorProp  != null) imageColorProp.colorValue           = Color.white;
-    if (imageNativeProp != null) imageNativeProp.boolValue           = false;
+        if (disabledProp != null)
+            disabledProp.boolValue = false; // 새로 만든 위젯은 기본적으로 활성
 
-    if (toggleInitialProp  != null) toggleInitialProp.boolValue      = false;
-    if (toggleInteractProp != null) toggleInteractProp.boolValue     = true;
+        // 타입별 옵션들 기본값 (지금 있던 코드 그대로)
+        var imageColorProp = widgetProp.FindPropertyRelative("imageColor");
+        var imageNativeProp = widgetProp.FindPropertyRelative("imageSetNativeSize");
+        var toggleInitialProp = widgetProp.FindPropertyRelative("toggleInitialValue");
+        var toggleInteractProp = widgetProp.FindPropertyRelative("toggleInteractable");
+        var sliderMinProp = widgetProp.FindPropertyRelative("sliderMin");
+        var sliderMaxProp = widgetProp.FindPropertyRelative("sliderMax");
+        var sliderInitProp = widgetProp.FindPropertyRelative("sliderInitialValue");
+        var sliderWholeProp = widgetProp.FindPropertyRelative("sliderWholeNumbers");
 
-    if (sliderMinProp   != null) sliderMinProp.floatValue            = 0f;
-    if (sliderMaxProp   != null) sliderMaxProp.floatValue            = 1f;
-    if (sliderInitProp  != null) sliderInitProp.floatValue           = 0.5f;
-    if (sliderWholeProp != null) sliderWholeProp.boolValue           = false;
-}
+        var imageSpriteProp = widgetProp.FindPropertyRelative("imageSprite");
+        if (imageSpriteProp != null) imageSpriteProp.objectReferenceValue = null;
+        if (imageColorProp != null) imageColorProp.colorValue = Color.white;
+        if (imageNativeProp != null) imageNativeProp.boolValue = false;
+
+        if (toggleInitialProp != null) toggleInitialProp.boolValue = false;
+        if (toggleInteractProp != null) toggleInteractProp.boolValue = true;
+
+        if (sliderMinProp != null) sliderMinProp.floatValue = 0f;
+        if (sliderMaxProp != null) sliderMaxProp.floatValue = 1f;
+        if (sliderInitProp != null) sliderInitProp.floatValue = 0.5f;
+        if (sliderWholeProp != null) sliderWholeProp.boolValue = false;
+    }
 
 
     private static List<string> ValidateSpec(UIScreenSpec s)
