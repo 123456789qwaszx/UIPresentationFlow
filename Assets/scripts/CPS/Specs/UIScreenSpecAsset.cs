@@ -12,18 +12,16 @@ public sealed class UIScreenSpecAsset : ScriptableObject
 public class UIScreenSpec
 {
     public string screenId;
+    // 슬롯 이름 -> WidgetSpec 리스트
+    public List<SlotSpec> slots = new();
+    
+    public GameObject templatePrefab;    // 실제 UI 프리팹
     
     public ThemeSpec baseTheme;          // nullable
     public LayoutPatchSpec baseLayout;   // nullable
-
     public UIVariantRule[] variants;     // nullable
     
-    
-    public string name;                  // 디스플레이용 이름
-    public GameObject templatePrefab;    // 실제 UI 프리팹
-
-    // 슬롯 이름 -> WidgetSpec 리스트
-    public List<SlotSpec> slots = new();
+    public string name;                  // 에디터 인덱싱용 이름
 }
 
 [Serializable]

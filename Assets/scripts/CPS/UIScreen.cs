@@ -1,17 +1,23 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class UIScreen : MonoBehaviour
 {
     private Dictionary<string, RectTransform> _slots;
+    private Dictionary<string, WidgetHandle> _widgetsByNameTag = new();
 
-    public void Build(UIBinder binder, UIScreenSpec spec)
+    public void BuildSlot(UISlotBinder binder, UIScreenSpec spec)
     {
         List<string> required = spec.slots.ConvertAll(s => s.slotName);
         _slots = binder.BuildSlots(transform, required);
     }
 
+    internal void SetWidgets(Dictionary<string, WidgetHandle> map)
+    {
+        _widgetsByNameTag = map;
+    }
+
+    
     public RectTransform GetSlot(string slotName)
     {
         if (!_slots.TryGetValue(slotName, out RectTransform slot))
@@ -23,13 +29,6 @@ public class UIScreen : MonoBehaviour
         return slot;
     }
     
-    #region 동적 재구성/재배치 용
-    
-    private Dictionary<string, WidgetHandle> _widgetsByNameTag = new();
-
-    internal void SetWidgets(Dictionary<string, WidgetHandle> map)
-        => _widgetsByNameTag = map;
-
     public WidgetHandle GetWidgetHandle(string nameTag)
     {
         if (string.IsNullOrWhiteSpace(nameTag))
@@ -43,7 +42,6 @@ public class UIScreen : MonoBehaviour
 
         return handle;
     }
-    #endregion
     
     public void Open() => gameObject.SetActive(true);
     public void Close() => Destroy(gameObject);

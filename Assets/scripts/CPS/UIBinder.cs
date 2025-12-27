@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class UIBinder
+public sealed class UISlotBinder
 {
     private readonly bool _includeInactive;
 
-    public UIBinder(bool includeInactive = true)
+    public UISlotBinder(bool includeInactive = true)
     {
         _includeInactive = includeInactive;
     }

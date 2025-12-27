@@ -10,7 +10,6 @@ public class UITestDriver : MonoBehaviour
     [SerializeField] private int maxHp = 777;
     [SerializeField] private int curGem = 888;
     
-
     void Start()
     {
         if (bootstrap == null)

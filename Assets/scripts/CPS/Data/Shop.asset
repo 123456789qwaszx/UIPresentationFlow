@@ -17,7 +17,7 @@ MonoBehaviour:
     baseTheme: {fileID: 0}
     baseLayout: {fileID: 0}
     variants: []
-    name: Shop
+    name: 
     templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
     slots:
     - slotName: HeaderNew

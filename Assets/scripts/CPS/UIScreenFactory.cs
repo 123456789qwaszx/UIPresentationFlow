@@ -5,14 +5,14 @@ using Object = UnityEngine.Object;
 public class UIScreenFactory
 {
     private readonly Transform _uiRoot;
-    private readonly UIBinder  _binder;
+    private readonly UISlotBinder  _binder;
     private readonly UIPatchApplier _patcher;
     private readonly UIComposer _composer;
     private readonly bool _strict;
 
     public UIScreenFactory(
         Transform uiRoot,
-        UIBinder binder,
+        UISlotBinder binder,
         UIPatchApplier patcher,
         UIComposer composer,
         bool strict = true)
@@ -51,7 +51,7 @@ public class UIScreenFactory
             return null;
         }
 
-        screen.Build(_binder, resolved.BaseSpec);
+        screen.BuildSlot(_binder, resolved.BaseSpec);
 
         _patcher.Apply(screen, result.Patches);
 

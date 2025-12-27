@@ -23,7 +23,7 @@ public class UIBootStrap : MonoBehaviour
         if (uiRoot == null) uiRoot = transform;
         if (catalog == null) catalog = FindFirstObjectByType<UIScreenCatalog>();
         
-        UIBinder              binder  = new();
+        UISlotBinder              binder  = new();
         UIPatchApplier        patcher = new();
         WidgetRectApplier rectApplier = new();
         RouteKeyResolver routeKeyResolver = new();

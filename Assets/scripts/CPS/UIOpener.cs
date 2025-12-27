@@ -24,6 +24,4 @@ public class UIOpener
     
     public void SetGem(int gemValue)
         => _hud.SetGem(gemValue);
-    
-    
 }
