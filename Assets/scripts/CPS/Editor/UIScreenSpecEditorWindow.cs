@@ -7,7 +7,6 @@ using UnityEngine;
 
 public sealed class UIScreenSpecEditorWindow : EditorWindow
 {
-
     private UIScreenSpecAsset _asset;
     private SerializedObject _so;
 

@@ -35,7 +35,7 @@ public class UIScreen : MonoBehaviour
         if (string.IsNullOrWhiteSpace(nameTag))
             return null;
 
-        if (!_widgetsByNameTag.TryGetValue(nameTag, out var handle) || handle == null)
+        if (!_widgetsByNameTag.TryGetValue(nameTag, out WidgetHandle handle) || handle == null)
         {
             Debug.LogWarning($"[UIScreen] WidgetHandle not found for nameTag='{nameTag}'", this);
             return null;

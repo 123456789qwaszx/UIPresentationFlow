@@ -3,9 +3,13 @@ using UnityEngine;
 
 public class UIBootStrap : MonoBehaviour
 {
-    [Header("Prefabs")]
-    public GameObject textWidgetPrefab;
-    public GameObject buttonWidgetPrefab;
+    [Header("Widget Prefabs")]
+    public GameObject textPrefab;
+    public GameObject buttonPrefab;
+    public GameObject imagePrefab;
+    public GameObject togglePrefab;
+    public GameObject sliderPrefab;
+    public GameObject gameObjectPrefab;
 
     [Header("Root")]
     [SerializeField] private Transform uiRoot;
@@ -32,7 +36,7 @@ public class UIBootStrap : MonoBehaviour
             new RouteActionBinder(() => router, routeKeyResolver)
         );
         
-        WidgetFactory    widgetFactory = new(textWidgetPrefab, buttonWidgetPrefab, uiActionBinder);
+        WidgetFactory    widgetFactory = new(textPrefab, buttonPrefab, imagePrefab, togglePrefab, sliderPrefab, gameObjectPrefab, uiActionBinder);
         UIComposer            composer = new(widgetFactory, rectApplier);
         
         UIContext       context = UIContext.Default;

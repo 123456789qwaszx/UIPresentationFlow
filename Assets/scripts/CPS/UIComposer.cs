@@ -17,7 +17,7 @@ public class UIComposer
 
     public void Compose(UIScreen screen, UIScreenSpec screenSpec)
     {
-        var widgetMap = new Dictionary<string, WidgetHandle>();
+        var widgetsByNameTag = new Dictionary<string, WidgetHandle>();
         
         foreach (SlotSpec slotSpec in screenSpec.slots)
         {
@@ -30,16 +30,16 @@ public class UIComposer
                 
                 _rectApplier.Apply(widget.RectTransform, widgetSpec);
                 
-                // 위젯 캐싱
+                // widget cashing
                 string tag = (widgetSpec.nameTag ?? string.Empty).Trim();
-                if (!widgetMap.TryAdd(tag, widget))
+                if (!widgetsByNameTag.TryAdd(tag, widget))
                 {
                     Debug.LogWarning($"[UIComposer] Duplicate widget nameTag='{tag}'");
                 }
             }
         }
         
-        screen.SetWidgets(widgetMap);
+        screen.SetWidgets(widgetsByNameTag);
     }
     
     private void DestroyChildren(RectTransform slot)

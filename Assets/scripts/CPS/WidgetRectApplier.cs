@@ -4,9 +4,6 @@ public sealed class WidgetRectApplier
 {
     public void Apply(RectTransform rect, WidgetSpec spec)
     {
-        if (rect == null || spec == null)
-            return;
-
         switch (spec.rectMode)
         {
             case WidgetRectMode.UseSlotLayout:
