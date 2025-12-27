@@ -31,6 +31,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private readonly List<string> _lastIssues = new List<string>();
     private Vector2 _issuesScroll;
 
+    // 🔹 위젯 프리셋 카탈로그 (선택적으로 지정)
+    [SerializeField] private WidgetPresetCatalog _presetCatalog;
+
+    private readonly Dictionary<string, int> _widgetPresetSelection = new();
 
     [MenuItem("Tools/UI/UIScreen Spec Editor")]
     public static void Open()
@@ -284,9 +288,16 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             int lines = 0;
 
+// 프리셋 선택 행 (프리셋 카탈로그가 있을 때만)
+            bool hasPresets =
+                _presetCatalog != null &&
+                _presetCatalog.presets != null &&
+                _presetCatalog.presets.Count > 0;
+
             // 1줄: Name + Type
             lines += 1;
-
+            // 프리셋 드롭다운 1줄 추가
+            lines += 1; // Preset row
             // 2줄: Text 멀티라인
             lines += 2;
 
@@ -309,6 +320,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             // 🔹 타입별 추가 옵션 라인수
             switch (widgetType)
             {
+                case WidgetType.Button:
+                    // [Button Options] + OnClick Route
+                    lines += 1;
+                    break;
                 case WidgetType.Image:
                     // [Image Options] 헤더 + Sprite + Color + SetNativeSize
                     lines += 4;
@@ -468,32 +483,21 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             x = toggleRect.xMax + 4f;
 
 // ---- Type 드롭다운 고정 폭 ----
-            const float typeWidth = 70f; // 드롭다운 고정 폭 (원하면 80~110 사이로 조절 가능)
+            const float typeWidth = 70f; // 드롭다운 고정 폭
             const float gap = 4f;
 
 // 오른쪽 끝에서 고정 폭만큼 확보
             float typeX = rect.x + rect.width - typeWidth;
             var typeRect = new Rect(typeX, y, typeWidth, lineH);
 
-// Name 전체 가로 폭 (남은 공간 전부)
-            float nameTotalWidth = typeX - x - gap;
-            if (nameTotalWidth < 60f) nameTotalWidth = 60f;
+// Name 필드: 남은 공간 전부 사용
+            float nameWidth = typeX - x - gap;
+            if (nameWidth < 60f) nameWidth = 60f;
 
-// Name 라벨 + 필드 쪼개기
-            const float nameLabelWidth = 80f;
-            const float nameInnerGap = 2f;
+            var nameFieldRect = new Rect(x, y, nameWidth, lineH);
 
-            var nameLabelRect = new Rect(x, y, nameLabelWidth, lineH);
-            var nameFieldRect = new Rect(
-                nameLabelRect.xMax + nameInnerGap,
-                y,
-                nameTotalWidth - (nameLabelWidth + nameInnerGap),
-                lineH
-            );
-
-// 실제 그리기
-            EditorGUI.LabelField(nameLabelRect, "Name (editor)");
-            nameProp.stringValue = EditorGUI.TextField(nameFieldRect, GUIContent.none, nameProp.stringValue);
+// 실제 그리기 (라벨 없음)
+            nameProp.stringValue = EditorGUI.TextField(nameFieldRect, nameProp.stringValue);
             EditorGUI.PropertyField(typeRect, typeProp, GUIContent.none);
 
             y += lineH + vGap;
@@ -504,36 +508,68 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             var widgetType = (WidgetType)typeProp.enumValueIndex;
 
-            // === 2줄: Text (멀티라인) ===
-            int textLines = 2; // 살짝만 멀티라인
-            float textHeight = (lineH + 2f) * textLines;
-
-            var textRect = new Rect(rect.x, y, rect.width, textHeight);
-            textProp.stringValue = EditorGUI.TextArea(textRect, textProp.stringValue, EditorStyles.textArea);
-            y += textHeight + vGap;
-
-            if (widgetType == WidgetType.Button)
+// 🔹 프리셋 선택 팝업: 카탈로그가 없어도 항상 한 줄 차지
             {
-                // === Route ===
-                var routeRect = new Rect(rect.x, y, rect.width, lineH);
-                routeProp.stringValue = EditorGUI.TextField(routeRect, "OnClick Route", routeProp.stringValue);
-                y += lineH + vGap;
+                string[] labels;
+                bool hasPresetCatalog =
+                    _presetCatalog != null &&
+                    _presetCatalog.presets != null &&
+                    _presetCatalog.presets.Count > 0;
 
-                // === Prefab Override ===
-                var prefabRect = new Rect(rect.x, y, rect.width, lineH);
-                EditorGUI.PropertyField(prefabRect, prefabProp, new GUIContent("Prefab Override"));
+                if (hasPresetCatalog)
+                {
+                    var presets = _presetCatalog.presets;
+                    int presetCount = presets.Count;
+
+                    labels = new string[presetCount + 1];
+                    labels[0] = "Select Preset";
+
+                    for (int pi = 0; pi < presetCount; pi++)
+                    {
+                        var p = presets[pi];
+                        // label 필드는 없애고 id만 쓴 상태라서 이렇게
+                        labels[pi + 1] = string.IsNullOrEmpty(p.id) ? $"Preset {pi}" : p.id;
+                    }
+                }
+                else
+                {
+                    // 🔸 카탈로그가 없거나, presets 리스트가 null/비어 있어도
+                    // 항상 같은 높이로 한 줄을 차지하도록.
+                    labels = new[] { "(No presets configured)" };
+                }
+
+                var presetRect = new Rect(rect.x, y, rect.width, lineH);
+
+                // 위젯별 현재 선택 인덱스 저장 키 (propertyPath 사용)
+                string presetKey = w.propertyPath;
+                int currentIndex;
+                if (!_widgetPresetSelection.TryGetValue(presetKey, out currentIndex))
+                    currentIndex = 0;
+
+                if (currentIndex < 0 || currentIndex >= labels.Length)
+                    currentIndex = 0;
+
+                EditorGUI.BeginDisabledGroup(!hasPresetCatalog);
+                int newIndex = EditorGUI.Popup(presetRect, currentIndex, labels);
+                EditorGUI.EndDisabledGroup();
+
+                if (hasPresetCatalog && newIndex != currentIndex)
+                {
+                    _widgetPresetSelection[presetKey] = newIndex;
+
+                    // 0은 "Select Preset..." → 실제 적용은 1 이상만
+                    if (newIndex > 0)
+                    {
+                        var presets = _presetCatalog.presets;
+                        var chosen = presets[newIndex - 1];
+                        ApplyPresetToWidget(chosen, w);
+                        _so.ApplyModifiedProperties();
+                    }
+                }
+
                 y += lineH + vGap;
             }
-            else
-            {
-                routeProp.stringValue = string.Empty;
-
-                var prefabRect = new Rect(rect.x, y, rect.width, lineH);
-                EditorGUI.PropertyField(prefabRect, prefabProp, new GUIContent("Prefab Override"));
-                y += lineH + vGap;
-            }
-
-            // 1) RectMode 드롭다운
+// 🔹 Layout Mode 드롭다운
             var layoutModeRect = new Rect(rect.x, y, rect.width, lineH);
             EditorGUI.PropertyField(layoutModeRect, rectModeProp, new GUIContent("Layout Mode"));
             y += lineH + vGap;
@@ -541,12 +577,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 // enum 값 읽기
             var rectMode = (WidgetRectMode)rectModeProp.enumValueIndex;
 
-// 2) OverrideInSlot일 때만 상세값 노출
+// 🔹 Rect Override 상세 값 + 타입별 옵션
             if (rectMode == WidgetRectMode.OverrideInSlot)
             {
-                float labelWidth = 90f; // 라벨이 차지할 폭
-                float fieldGap = 4f; // 라벨과 값 사이 간격
-                float rowHeight = lineH; // 한 줄 높이(그냥 singleLineHeight로 유지)
+                float labelWidth = 90f;
+                float fieldGap = 4f;
+                float rowHeight = lineH;
 
                 Rect MakeRowRect() => new Rect(rect.x, y, rect.width, rowHeight);
 
@@ -630,26 +666,34 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 anchoredPosProp.vector2Value = posValue;
                 y += rowHeight + vGap;
 
+                // --- 타입별 추가 옵션 ---
                 switch (widgetType)
                 {
+                    case WidgetType.Button:
+                    {
+                        var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.LabelField(headerRect, "[Button Options]", EditorStyles.miniBoldLabel);
+                        y += lineH + vGap;
+
+                        var routeRect = new Rect(rect.x, y, rect.width, lineH);
+                        routeProp.stringValue = EditorGUI.TextField(routeRect, "OnClick Route", routeProp.stringValue);
+                        y += lineH + vGap;
+                        break;
+                    }
                     case WidgetType.Image:
                     {
-                        // 헤더
                         var headerRect = new Rect(rect.x, y, rect.width, lineH);
                         EditorGUI.LabelField(headerRect, "[Image Options]", EditorStyles.miniBoldLabel);
                         y += lineH + vGap;
 
-                        // Sprite
                         var spriteRect = new Rect(rect.x, y, rect.width, lineH);
                         EditorGUI.PropertyField(spriteRect, imageSpriteProp, new GUIContent("Sprite"));
                         y += lineH + vGap;
 
-                        // Color
                         var colorRect = new Rect(rect.x, y, rect.width, lineH);
                         EditorGUI.PropertyField(colorRect, imageColorProp, new GUIContent("Color"));
                         y += lineH + vGap;
 
-                        // Set Native Size
                         var nativeRect = new Rect(rect.x, y, rect.width, lineH);
                         EditorGUI.PropertyField(nativeRect, imageNativeProp, new GUIContent("Set Native Size"));
                         y += lineH + vGap;
@@ -697,6 +741,23 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     }
                 }
             }
+
+// 🔹 Text 입력 영역: 가장 아래 쪽
+            {
+                int textLines = 2;
+                float textHeight = (lineH + 2f) * textLines;
+
+                var textRect = new Rect(rect.x, y, rect.width, textHeight);
+                textProp.stringValue = EditorGUI.TextArea(textRect, textProp.stringValue, EditorStyles.textArea);
+                y += textHeight + vGap;
+            }
+
+// 🔹 Prefab Override: 완전 맨 아래
+            {
+                var prefabRect = new Rect(rect.x, y, rect.width, lineH);
+                EditorGUI.PropertyField(prefabRect, prefabProp, new GUIContent("Prefab Override"));
+                y += lineH + vGap;
+            }
         };
     }
 
@@ -721,6 +782,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             Bind(newAsset);
         }
+
+        _presetCatalog = (WidgetPresetCatalog)EditorGUILayout.ObjectField(
+            "Widget Presets",
+            _presetCatalog,
+            typeof(WidgetPresetCatalog),
+            false);
 
         if (_asset != null && _so == null)
         {
@@ -940,6 +1007,25 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 }
             }
         }
+    }
+
+    private void ApplyPresetToWidget(WidgetPreset preset, SerializedProperty widgetProp)
+    {
+        if (widgetProp == null) return;
+
+        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp = widgetProp.FindPropertyRelative("pivot");
+        var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
+        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
+
+        rectModeProp.enumValueIndex = (int)preset.rectMode;
+        anchorMinProp.vector2Value = preset.anchorMin;
+        anchorMaxProp.vector2Value = preset.anchorMax;
+        pivotProp.vector2Value = preset.pivot;
+        anchoredPosProp.vector2Value = preset.anchoredPosition;
+        sizeDeltaProp.vector2Value = preset.sizeDelta;
     }
 
     private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
