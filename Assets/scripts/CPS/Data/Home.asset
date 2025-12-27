@@ -15,7 +15,7 @@ MonoBehaviour:
   spec:
     screenId: Home
     slots:
-    - slotName: HeaderNew
+    - slotName: TestSlot
       widgets:
       - widgetType: 1
         nameTag: h1
@@ -23,6 +23,7 @@ MonoBehaviour:
         onClickRoute: nav/shop
         prefabOverride: {fileID: 0}
         rectMode: 0
+        disabled: 0
         anchorMin: {x: 0.5, y: 0.5}
         anchorMax: {x: 0.5, y: 0.5}
         pivot: {x: 0.5, y: 0.5}
@@ -43,6 +44,51 @@ MonoBehaviour:
         onClickRoute: 
         prefabOverride: {fileID: 0}
         rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+    - slotName: HeaderNew
+      widgets:
+      - widgetType: 0
+        nameTag: Widget 0
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+      - widgetType: 0
+        nameTag: Widget 1
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        disabled: 0
         anchorMin: {x: 0.5, y: 0.5}
         anchorMax: {x: 0.5, y: 0.5}
         pivot: {x: 0.5, y: 0.5}

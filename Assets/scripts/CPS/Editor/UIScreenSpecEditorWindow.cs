@@ -28,6 +28,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     // 🔹 위젯별 접힘/펼침 상태 (SerializedProperty.propertyPath 기준)
     private readonly Dictionary<string, bool> _widgetFoldoutStates = new();
 
+    private readonly List<string> _lastIssues = new List<string>();
+    private Vector2 _issuesScroll;
+
+
     [MenuItem("Tools/UI/UIScreen Spec Editor")]
     public static void Open()
     {
@@ -38,7 +42,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        minSize = new Vector2(680, 400);
+        minSize = new Vector2(530, 380);
         Selection.selectionChanged += TryAutoBindFromSelection;
         TryAutoBindFromSelection();
 
@@ -63,6 +67,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private void Bind(UIScreenSpecAsset asset)
     {
         _asset = asset;
+        _lastIssues.Clear();
+        _issuesScroll = Vector2.zero;
+
         _so = new SerializedObject(_asset);
 
         _specProp = _so.FindProperty("spec");
@@ -165,32 +172,26 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
 
-            const float leftWidth = 55f; // 살짝 넓혀서 텍스트+카운트 표시
-            const float rightBlankWidth = 40f;
+            const float leftWidth = 55f; // Slot 0 (2) 영역
+            const float rightBlankWidth = 8f; // 살짝만 여유
             const float gap = 4f;
 
-            // 🔹 왼쪽: 슬롯 인덱스 + 위젯 개수 표시
+// 🔹 왼쪽: 슬롯 인덱스 + 위젯 개수 표시
             var leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
             EditorGUI.LabelField(leftRect, $"Slot {index} ({widgetCount})");
 
-            // 🔹 가운데: Popup + TextField
+// 🔹 가운데: Popup만 넓게
             float usableWidth = rect.width - leftWidth - rightBlankWidth - gap * 2f;
             if (usableWidth < 0) usableWidth = 0;
 
-            float popupWidth = usableWidth * 0.4f;
-            float textWidth = usableWidth * 0.6f;
-
             float popupX = rect.x + leftWidth + gap;
-            float textX = popupX + popupWidth + gap;
-
-            var popupRect = new Rect(popupX, rect.y, popupWidth, rect.height);
-            var textRect = new Rect(textX, rect.y, textWidth, rect.height);
+            var popupRect = new Rect(popupX, rect.y, usableWidth, rect.height);
+// textRect는 이제 필요 없음
 
             var options = _slotIdOptions;
 
             if (options == null || options.Length == 0)
             {
-                // 템플릿 프리팹에 UISlot이 없는 상태
                 EditorGUI.LabelField(popupRect, "(No UISlot in Prefab)");
             }
             else
@@ -466,17 +467,38 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             x = toggleRect.xMax + 4f;
 
-// Name + Type
-            float nameWidth = rect.width * 0.55f;
-            var nameRect = new Rect(x, y, nameWidth, lineH);
-            var typeRect = new Rect(rect.x + rect.width * 0.75f, y, rect.width * 0.25f, lineH);
+// ---- Type 드롭다운 고정 폭 ----
+            const float typeWidth = 70f; // 드롭다운 고정 폭 (원하면 80~110 사이로 조절 가능)
+            const float gap = 4f;
 
-            nameProp.stringValue = EditorGUI.TextField(nameRect, "Name", nameProp.stringValue);
+// 오른쪽 끝에서 고정 폭만큼 확보
+            float typeX = rect.x + rect.width - typeWidth;
+            var typeRect = new Rect(typeX, y, typeWidth, lineH);
+
+// Name 전체 가로 폭 (남은 공간 전부)
+            float nameTotalWidth = typeX - x - gap;
+            if (nameTotalWidth < 60f) nameTotalWidth = 60f;
+
+// Name 라벨 + 필드 쪼개기
+            const float nameLabelWidth = 80f;
+            const float nameInnerGap = 2f;
+
+            var nameLabelRect = new Rect(x, y, nameLabelWidth, lineH);
+            var nameFieldRect = new Rect(
+                nameLabelRect.xMax + nameInnerGap,
+                y,
+                nameTotalWidth - (nameLabelWidth + nameInnerGap),
+                lineH
+            );
+
+// 실제 그리기
+            EditorGUI.LabelField(nameLabelRect, "Name (editor)");
+            nameProp.stringValue = EditorGUI.TextField(nameFieldRect, GUIContent.none, nameProp.stringValue);
             EditorGUI.PropertyField(typeRect, typeProp, GUIContent.none);
 
             y += lineH + vGap;
 
-// 🔸 접혀 있으면 여기서 조기 리턴 (헤더만 표시)
+// 접혀 있으면 여기서 조기 리턴 (헤더만 표시)
             if (!expanded)
                 return;
 
@@ -684,8 +706,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         var newAsset =
             (UIScreenSpecAsset)EditorGUILayout.ObjectField("Spec Asset", _asset, typeof(UIScreenSpecAsset), false);
+
         if (newAsset != _asset)
         {
+            _lastIssues.Clear();
+            _issuesScroll = Vector2.zero;
+
             if (newAsset == null)
             {
                 _asset = null;
@@ -710,21 +736,16 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _so.Update();
 
-        var screenId = _specProp.FindPropertyRelative("screenId");
-        var nameProp = _specProp.FindPropertyRelative("name");
         var prefabProp = _specProp.FindPropertyRelative("templatePrefab");
 
-        EditorGUILayout.LabelField("Base", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(screenId);
-        EditorGUILayout.PropertyField(nameProp);
+        EditorGUILayout.LabelField("Template", EditorStyles.boldLabel);
 
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField(prefabProp);
+        EditorGUILayout.PropertyField(prefabProp, new GUIContent("Template Prefab"));
         if (EditorGUI.EndChangeCheck())
         {
-            // Inspector에서 templatePrefab을 변경했을 때만 다시 스캔
             _so.ApplyModifiedProperties();
-            RefreshSlotIdOptionsFromPrefab();
+            RefreshSlotIdOptionsFromPrefab(force: true);
         }
 
         EditorGUILayout.Space(8);
@@ -732,12 +753,34 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         // 좌/우 분할
         using (new EditorGUILayout.HorizontalScope())
         {
-            // 왼쪽: Slots 영역
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(position.width * 0.4f)))
+                //using (new EditorGUILayout.VerticalScope(GUILayout.Width(180f)))
             {
                 _slotsScroll = EditorGUILayout.BeginScrollView(_slotsScroll);
                 _slotsList?.DoLayoutList();
                 EditorGUILayout.EndScrollView();
+
+
+                // 🔹 Validate 결과 패널
+                if (_lastIssues.Count > 0)
+                {
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField("Validation", EditorStyles.boldLabel);
+
+                    _issuesScroll = EditorGUILayout.BeginScrollView(_issuesScroll, GUILayout.Height(150));
+
+                    foreach (var msg in _lastIssues)
+                    {
+                        MessageType mt;
+                        if (msg.StartsWith("[Error]")) mt = MessageType.Error;
+                        else if (msg.StartsWith("[Warn]")) mt = MessageType.Warning;
+                        else mt = MessageType.Info;
+
+                        EditorGUILayout.HelpBox(msg, mt);
+                    }
+
+                    EditorGUILayout.EndScrollView();
+                }
 
                 DrawValidateButtons();
             }
@@ -747,9 +790,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             // 오른쪽: Widgets 영역
             using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
             {
+                // 🔹 위젯 리스트는 스크롤 안에서만
                 _widgetsScroll = EditorGUILayout.BeginScrollView(_widgetsScroll);
 
-                // 🔹 슬롯 개수가 바뀐 뒤 인덱스가 꼬인 경우 방어
+                // 슬롯 개수 방어
                 if (_slotsProp != null)
                 {
                     int slotCount = _slotsProp.arraySize;
@@ -775,6 +819,53 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 }
 
                 EditorGUILayout.EndScrollView();
+
+                // 🔹 스크롤뷰 밖, 오른쪽 아래에 버튼 배치
+                EditorGUILayout.Space(4f);
+
+                bool hasSlotSelected =
+                    _slotsProp != null &&
+                    _slotsProp.arraySize > 0 &&
+                    _selectedSlotIndex >= 0 &&
+                    _selectedSlotIndex < _slotsProp.arraySize;
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace(); // 오른쪽 정렬
+
+                    EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
+                    if (GUILayout.Button("Enable All Widgets", GUILayout.Width(180f)))
+                    {
+                        // 🔹 확인 팝업
+                        bool ok = EditorUtility.DisplayDialog(
+                            "Enable All Widgets",
+                            "Enable all disabled widgets in every slot?",
+                            "Yes, enable all",
+                            "Cancel"
+                        );
+
+                        if (ok)
+                        {
+                            EnableAllDisabledWidgets(_asset.spec);
+                            _so.Update();
+                            EditorUtility.SetDirty(_asset);
+
+                            // Validate 다시 실행해서 결과 패널 갱신
+                            _lastIssues.Clear();
+                            var issues = ValidateSpec(_asset.spec);
+                            if (issues.Count == 0)
+                                _lastIssues.Add("[Info] OK (no issues after Enable All Widgets)");
+                            else
+                                _lastIssues.AddRange(issues);
+
+                            _issuesScroll = Vector2.zero;
+                            BuildWidgetsList();
+                            Repaint();
+                        }
+                    }
+
+                    EditorGUI.EndDisabledGroup();
+                }
             }
         }
 
@@ -826,7 +917,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         EditorGUILayout.Space(6);
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Refresh Slots From Prefab"))
+            if (GUILayout.Button("Refresh Slots"))
             {
                 RefreshSlotIdOptionsFromPrefab(force: true);
                 Repaint();
@@ -834,23 +925,23 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             if (GUILayout.Button("Validate"))
             {
-                var issues = ValidateSpec(_asset.spec);
-                if (issues.Count == 0)
-                    EditorUtility.DisplayDialog("Validate", "OK (no issues)", "Close");
-                else
-                    EditorUtility.DisplayDialog("Validate", string.Join("\n", issues), "Close");
-            }
-
-            if (GUILayout.Button("Auto-Fix (Safe)"))
-            {
-                AutoFixSafe(_asset.spec);
-                _so.Update(); // SerializedObject 쪽도 즉시 동기화
-                EditorUtility.SetDirty(_asset);
+                _lastIssues.Clear();
+                if (_asset != null)
+                {
+                    var issues = ValidateSpec(_asset.spec);
+                    if (issues.Count == 0)
+                    {
+                        _lastIssues.Add("[Info] OK (no issues)");
+                    }
+                    else
+                    {
+                        _lastIssues.AddRange(issues);
+                    }
+                }
             }
         }
     }
 
-    // UIScreenSpecEditorWindow 클래스 내부 어딘가에 추가
     private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
     {
         if (widgetProp == null) return;
@@ -913,92 +1004,262 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (sliderWholeProp != null) sliderWholeProp.boolValue = false;
     }
 
-
+    // templatePrefab이 CPS-UI용 프리팹이 맞는지 (UIScreen 존재 하는지)
+    // templatePrefab 없는데 slots만 있는지
+    // Prefab 안의 UISlot.id 수집 + 중복 id 경고
+    // Spec의 slotName이 실제 Prefab의 UISlot.id와 매칭되는지
+    // slots null/empty
+    // 각 slot null인지, slotName 비었는지
+    // slot.widgets null인지
+    // 슬롯 내부에서 nameTag 중복 경고
+    // 위젯이 전부 disabled면 “활성 위젯 없음” 경고
+    // disabled == true면 나머지 검사는 스킵
+    // Button: route 없으면 Error
+    // Image: prefab도, sprite도 없으면 Warning
+    // Slider: min/max 역전이면 Error, initialValue 범위 밖이면 Warning
+    // Rect Override: anchorMin > anchorMax면 Error, 0~1 밖이면 Warning
+    // prefabOverride가 위젯 타입이 요구하는 컴포넌트를 실제로 들고 있는지
     private static List<string> ValidateSpec(UIScreenSpec s)
     {
         var issues = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(s.screenId))
-            issues.Add("- screenId is empty");
+        // ---- 0) templatePrefab 관련 ----
+        if (s.templatePrefab == null)
+        {
+            if (s.slots != null && s.slots.Count > 0)
+            {
+                issues.Add("[Error] templatePrefab is null but slots are defined");
+            }
+            // templatePrefab 없이 '추상 스펙'으로 쓰고 싶다면, 여기서 Warning 으로 완화할 수도 있음.
+        }
+        else
+        {
+            // 1) UIScreen 컴포넌트 존재 여부
+            if (s.templatePrefab.GetComponent<UIScreen>() == null)
+            {
+                issues.Add("[Error] templatePrefab has no UIScreen component");
+            }
+        }
 
-        //프리팹이 바뀌었는데, Spec이 옛 이름을 들고 있는 경우 Validate에서 알려줌.
+        // ---- 2) Prefab 내 UISlot id 수집 ----
+        HashSet<string> prefabSlotIds = null;
+
         if (s.templatePrefab != null)
         {
             var slotsInPrefab = s.templatePrefab.GetComponentsInChildren<UISlot>(true);
-            var ids = new HashSet<string>();
+            prefabSlotIds = new HashSet<string>();
             foreach (var slot in slotsInPrefab)
             {
                 if (slot == null) continue;
                 var id = (slot.id ?? string.Empty).Trim();
                 if (!string.IsNullOrEmpty(id))
-                    ids.Add(id);
-            }
-
-            for (int i = 0; i < s.slots.Count; i++)
-            {
-                var slot = s.slots[i];
-                if (slot == null) continue;
-                if (!string.IsNullOrWhiteSpace(slot.slotName) && !ids.Contains(slot.slotName))
                 {
-                    issues.Add($"- slots[{i}].slotName '{slot.slotName}' does not exist in templatePrefab UISlots");
+                    if (!prefabSlotIds.Add(id))
+                    {
+                        issues.Add($"[Warn] Duplicate UISlot id '{id}' found in templatePrefab");
+                    }
                 }
             }
         }
 
+        // ---- 3) Slot 리스트 기본 체크 ----
         if (s.slots == null || s.slots.Count == 0)
-            issues.Add("- slots is empty");
+            issues.Add("[Error] slots is empty");
 
-        if (s.slots != null)
+        if (s.slots == null)
+            return issues;
+
+        // slotName 중복 체크용
+        var slotNameSet = new HashSet<string>();
+
+        for (int i = 0; i < s.slots.Count; i++)
         {
-            for (int i = 0; i < s.slots.Count; i++)
+            var slot = s.slots[i];
+            if (slot == null)
             {
-                var slot = s.slots[i];
-                if (slot == null)
+                issues.Add($"[Error] slots[{i}] is null");
+                continue;
+            }
+
+            string slotName = slot.slotName ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(slotName))
+            {
+                issues.Add($"[Error] slots[{i}].slotName is empty");
+            }
+            else
+            {
+                // 슬롯 이름 중복
+                if (!slotNameSet.Add(slotName))
                 {
-                    issues.Add($"- slots[{i}] is null");
+                    issues.Add($"[Warn] Duplicate slotName '{slotName}' in slots (index {i})");
+                }
+
+                // prefab 에 실제로 존재하는 UISlot 인지
+                if (prefabSlotIds != null && !prefabSlotIds.Contains(slotName))
+                {
+                    issues.Add($"[Error] slots[{i}].slotName '{slotName}' does not exist in templatePrefab UISlots");
+                }
+            }
+
+            if (slot.widgets == null)
+            {
+                issues.Add($"[Error] slots[{i}].widgets is null");
+                continue;
+            }
+
+            // ---- 4) 위젯 검증 ----
+            var nameTagSet = new HashSet<string>();
+            bool hasActiveWidget = false;
+
+            for (int w = 0; w < slot.widgets.Count; w++)
+            {
+                var widget = slot.widgets[w];
+                if (widget == null)
+                {
+                    issues.Add($"[Error] slots[{i}].widgets[{w}] is null");
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(slot.slotName))
-                    issues.Add($"- slots[{i}].slotName is empty");
-
-                if (slot.widgets == null)
-                    issues.Add($"- slots[{i}].widgets is null");
-                else
+                // nameTag 중복 체크 (슬롯 내)
+                string nameTag = widget.nameTag ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(nameTag))
                 {
-                    for (int w = 0; w < slot.widgets.Count; w++)
+                    if (!nameTagSet.Add(nameTag))
                     {
-                        var widget = slot.widgets[w];
-                        if (widget == null)
-                        {
-                            issues.Add($"- slots[{i}].widgets[{w}] is null");
-                            continue;
-                        }
-
-                        if (widget.widgetType == WidgetType.Button && string.IsNullOrWhiteSpace(widget.onClickRoute))
-                            issues.Add($"- Button route missing: slots[{i}].widgets[{w}]");
+                        issues.Add(
+                            $"[Warn] Duplicate nameTag '{nameTag}' in slots[{i}].widgets (index {w})");
                     }
                 }
+
+                // 비활성 위젯이면 이후 검증 스킵
+                if (widget.disabled)
+                    continue;
+
+                hasActiveWidget = true;
+
+                // ---- 4-1) prefabOverride 타입 호환성 체크 ----
+                if (widget.prefabOverride != null)
+                {
+                    var go = widget.prefabOverride;
+
+                    switch (widget.widgetType)
+                    {
+                        case WidgetType.Button:
+                            if (go.GetComponentInChildren<UnityEngine.UI.Button>(true) == null)
+                            {
+                                issues.Add(
+                                    $"[Warn] Button widget prefabOverride has no Button component: slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                            }
+
+                            break;
+
+                        case WidgetType.Text:
+                            if (go.GetComponentInChildren<TMPro.TMP_Text>(true) == null)
+                            {
+                                issues.Add(
+                                    $"[Warn] Text widget prefabOverride has no TMP_Text component: slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                            }
+
+                            break;
+
+                        case WidgetType.Image:
+                            if (go.GetComponentInChildren<UnityEngine.UI.Image>(true) == null)
+                            {
+                                issues.Add(
+                                    $"[Warn] Image widget prefabOverride has no Image component: slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                            }
+
+                            break;
+                    }
+                }
+
+                // ---- 4-2) 타입별 필수 값 체크 ----
+
+                // Button: route 필수
+                if (widget.widgetType == WidgetType.Button &&
+                    string.IsNullOrWhiteSpace(widget.onClickRoute))
+                {
+                    issues.Add(
+                        $"[Error] Button route missing: slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                }
+
+                // Image: sprite 또는 prefabOverride 둘 다 없으면 경고
+                if (widget.widgetType == WidgetType.Image)
+                {
+                    bool hasPrefab = widget.prefabOverride != null;
+                    bool hasSprite = widget.imageSprite != null;
+
+                    if (!hasPrefab && !hasSprite)
+                    {
+                        issues.Add(
+                            $"[Warn] Image widget has neither prefabOverride nor imageSprite: slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                    }
+                }
+
+                // Slider: min/max/initial 검증
+                if (widget.widgetType == WidgetType.Slider)
+                {
+                    if (widget.sliderMax <= widget.sliderMin)
+                    {
+                        issues.Add(
+                            $"[Error] Slider min/max invalid (min >= max) in slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                    }
+
+                    if (widget.sliderInitialValue < widget.sliderMin ||
+                        widget.sliderInitialValue > widget.sliderMax)
+                    {
+                        issues.Add(
+                            $"[Warn] Slider initialValue out of range [{widget.sliderMin}, {widget.sliderMax}] " +
+                            $"in slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                    }
+                }
+
+                // Rect Override 모드일 때 Anchor/Size 검사
+                if (widget.rectMode == WidgetRectMode.OverrideInSlot)
+                {
+                    if (widget.anchorMin.x > widget.anchorMax.x ||
+                        widget.anchorMin.y > widget.anchorMax.y)
+                    {
+                        issues.Add(
+                            $"[Error] Rect anchorMin > anchorMax in slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                    }
+
+                    if (widget.anchorMin.x < 0f || widget.anchorMin.x > 1f ||
+                        widget.anchorMax.x < 0f || widget.anchorMax.x > 1f ||
+                        widget.anchorMin.y < 0f || widget.anchorMin.y > 1f ||
+                        widget.anchorMax.y < 0f || widget.anchorMax.y > 1f)
+                    {
+                        issues.Add(
+                            $"[Warn] Rect anchor out of [0,1] range in slots[{i}].widgets[{w}] (nameTag='{widget.nameTag}')");
+                    }
+                }
+            }
+
+            // 이 슬롯 안에 활성 위젯이 하나도 없을 때
+            if (!hasActiveWidget)
+            {
+                issues.Add($"[Warn] slots[{i}] ('{slotName}') has no active widgets (all disabled or empty)");
             }
         }
 
         return issues;
     }
 
-    private static void AutoFixSafe(UIScreenSpec s)
+    private static void EnableAllDisabledWidgets(UIScreenSpec s)
     {
-        if (s.slots == null) s.slots = new List<SlotSpec>();
+        if (s == null || s.slots == null)
+            return;
 
         foreach (var slot in s.slots)
         {
-            if (slot == null) continue;
-            if (slot.widgets == null) slot.widgets = new List<WidgetSpec>();
+            if (slot == null || slot.widgets == null)
+                continue;
 
             foreach (var w in slot.widgets)
             {
                 if (w == null) continue;
-                if (w.widgetType != WidgetType.Button)
-                    w.onClickRoute = string.Empty;
+                if (w.disabled)
+                    w.disabled = false;
             }
         }
     }
