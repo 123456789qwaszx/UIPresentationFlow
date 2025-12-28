@@ -36,7 +36,7 @@ public class UIBootStrap : MonoBehaviour
             new RouteActionBinder(() => router, routeKeyResolver)
         );
         
-        WidgetFactory    widgetFactory = new(textPrefab, buttonPrefab, imagePrefab, togglePrefab, sliderPrefab, gameObjectPrefab, uiActionBinder);
+        WidgetFactory    widgetFactory = new(textPrefab, buttonPrefab, imagePrefab, togglePrefab, sliderPrefab, gameObjectPrefab, uiActionBinder, true);
         UIComposer            composer = new(widgetFactory, rectApplier);
         
         UIContext       context = UIContext.Default;

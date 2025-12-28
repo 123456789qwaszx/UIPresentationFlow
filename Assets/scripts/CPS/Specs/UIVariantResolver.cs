@@ -36,40 +36,40 @@ public sealed class UIVariantResolver
         }
 
         // 3) normal rules (priority desc)
-        var rules = spec.variants;
+        UIVariantRule[] rules = spec.variants;
         if (rules != null && rules.Length > 0)
         {
             Array.Sort(rules, (a, b) => b.priority.CompareTo(a.priority));
 
             bool prefabLocked = false;
 
-            foreach (var r in rules)
+            foreach (UIVariantRule rule in rules)
             {
-                if (r == null || r.condition == null)
+                if (rule == null || rule.condition == null)
                     continue;
 
-                if (!r.condition.Matches(ctx))
+                if (!rule.condition.Matches(ctx))
                     continue;
 
-                trace.AppendLine($"  +match variant={r.variantId} (p={r.priority})");
-                applied.Add(r.variantId);
+                trace.AppendLine($"  +match variant={rule.variantId} (p={rule.priority})");
+                applied.Add(rule.variantId);
 
-                if (!prefabLocked && r.overridePrefab != null)
+                if (!prefabLocked && rule.overridePrefab != null)
                 {
-                    prefab       = r.overridePrefab;
+                    prefab       = rule.overridePrefab;
                     prefabLocked = true;
                     trace.AppendLine($"    prefab -> {prefab.name} (locked)");
                 }
 
-                if (r.overrideTheme != null)
+                if (rule.overrideTheme != null)
                 {
-                    theme = r.overrideTheme; // 덮어쓰기 정책
+                    theme = rule.overrideTheme; // 덮어쓰기 정책
                     trace.AppendLine($"    theme  -> {theme.name}");
                 }
 
-                if (r.overrideLayout != null)
+                if (rule.overrideLayout != null)
                 {
-                    layout = r.overrideLayout; // 덮어쓰기 정책
+                    layout = rule.overrideLayout; // 덮어쓰기 정책
                     trace.AppendLine($"    layout -> {layout.name}");
                 }
             }

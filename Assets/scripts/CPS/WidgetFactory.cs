@@ -37,6 +37,7 @@ public class WidgetFactory
     public WidgetHandle Create(WidgetSpec spec, Transform parent)
     {
         GameObject go = Object.Instantiate(ResolvePrefab(spec), parent);
+        if(_strict) go.gameObject.name = spec.nameTag;
         
         var handle = new WidgetHandle(spec.widgetType, spec.nameTag, go);
         

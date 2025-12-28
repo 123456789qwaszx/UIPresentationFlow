@@ -8,16 +8,16 @@ public readonly struct UIContext
     // Active experiment assignments for the current UI context.
     // Key   : experiment identifier (e.g. "ShopLayoutTest")
     // Value : assigned variant ID (e.g. "Shop_A", "Shop_B", "NewUI")
-    public readonly IReadOnlyDictionary<string, string> Experiments;
+    public readonly IReadOnlyDictionary<ExperimentKey, VariantId> Experiments;
 
     // Per-screen forced variant overrides.
-    public readonly IReadOnlyDictionary<ScreenKey, string> ScreenOverrides;
+    public readonly IReadOnlyDictionary<ScreenKey, VariantId> ScreenOverrides;
 
     public UIContext(
         string themeId,
         string localeId,
-        IReadOnlyDictionary<string, string> experiments,
-        IReadOnlyDictionary<ScreenKey, string> screenOverrides)
+        IReadOnlyDictionary<ExperimentKey, VariantId> experiments,
+        IReadOnlyDictionary<ScreenKey, VariantId> screenOverrides)
     {
         ThemeId        = themeId;
         LocaleId       = localeId;

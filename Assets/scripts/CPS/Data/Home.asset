@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Home
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenSpecAsset
   spec:
-    screenId: Home
+    screenKey: 0
     slots:
     - slotName: TestSlot
       widgets:
       - widgetType: 1
         nameTag: h1
         text: Go Shop
-        onClickRoute: 
+        onClickRoute: nav/shop
         prefabOverride: {fileID: 0}
         rectMode: 0
         disabled: 0
@@ -128,4 +128,3 @@ MonoBehaviour:
     baseTheme: {fileID: 0}
     baseLayout: {fileID: 0}
     variants: []
-    name: 
