@@ -11,13 +11,13 @@ public readonly struct UIContext
     public readonly IReadOnlyDictionary<string, string> Experiments;
 
     // Per-screen forced variant overrides.
-    public readonly IReadOnlyDictionary<string, string> ScreenOverrides;
+    public readonly IReadOnlyDictionary<ScreenKey, string> ScreenOverrides;
 
     public UIContext(
         string themeId,
         string localeId,
         IReadOnlyDictionary<string, string> experiments,
-        IReadOnlyDictionary<string, string> screenOverrides)
+        IReadOnlyDictionary<ScreenKey, string> screenOverrides)
     {
         ThemeId        = themeId;
         LocaleId       = localeId;

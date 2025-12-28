@@ -18,12 +18,12 @@ public sealed class UIVariantResolver
         List<string> applied = new List<string>(8);
         StringBuilder trace  = new StringBuilder(256);
 
-        trace.AppendLine($"[UIResolve] screen={spec.screenId} basePrefab={(prefab != null ? prefab.name : "null")}");
+        trace.AppendLine($"[UIResolve] screen={spec.screenKey} basePrefab={(prefab != null ? prefab.name : "null")}");
         trace.AppendLine($"  ctx.theme={ctx.ThemeId}, ctx.locale={ctx.LocaleId}");
 
         // 2) debug override (screenId -> variantId)
         if (ctx.ScreenOverrides != null &&
-            ctx.ScreenOverrides.TryGetValue(spec.screenId, out var forcedVariantId) &&
+            ctx.ScreenOverrides.TryGetValue(spec.screenKey, out var forcedVariantId) &&
             !string.IsNullOrEmpty(forcedVariantId))
         {
             ApplyByVariantId(
@@ -32,7 +32,7 @@ public sealed class UIVariantResolver
                 applied, trace);
 
             return new ResolvedUIScreen(
-                spec.screenId, spec, prefab, theme, layout, applied, trace.ToString());
+                spec.screenKey, spec, prefab, theme, layout, applied, trace.ToString());
         }
 
         // 3) normal rules (priority desc)
@@ -78,7 +78,7 @@ public sealed class UIVariantResolver
         trace.AppendLine($"[UIResolve] result prefab={(prefab != null ? prefab.name : "null")}, theme={(theme ? theme.name : "null")}, layout={(layout ? layout.name : "null")}");
 
         return new ResolvedUIScreen(
-            spec.screenId, spec, prefab, theme, layout, applied, trace.ToString());
+            spec.screenKey, spec, prefab, theme, layout, applied, trace.ToString());
     }
 
     private static void ApplyByVariantId(

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class ResolvedUIScreen
 {
-    public string ScreenId { get; }
+    public ScreenKey ScreenKey { get; }
     public UIScreenSpec BaseSpec { get; }
 
     public GameObject Prefab { get; }
@@ -14,7 +14,7 @@ public sealed class ResolvedUIScreen
     public string DecisionTrace { get; }
 
     public ResolvedUIScreen(
-        string screenId,
+        ScreenKey screenKey,
         UIScreenSpec baseSpec,
         GameObject prefab,
         ThemeSpec theme,
@@ -22,7 +22,7 @@ public sealed class ResolvedUIScreen
         List<string> appliedVariantIds,
         string decisionTrace)
     {
-        ScreenId         = screenId;
+        ScreenKey         = screenKey;
         BaseSpec         = baseSpec;
         Prefab           = prefab;
         Theme            = theme;

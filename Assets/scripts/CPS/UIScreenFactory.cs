@@ -31,8 +31,8 @@ public class UIScreenFactory
         GameObject prefab = resolved.Prefab;
         if (prefab == null)
         {
-            if (_strict)throw new InvalidOperationException($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenId}");
-            Debug.LogWarning($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenId}");
+            if (_strict)throw new InvalidOperationException($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenKey}");
+            Debug.LogWarning($"[UIScreenFactory] Resolved prefab is null. screenId={resolved.ScreenKey}");
             return null;
         }
 
@@ -43,10 +43,10 @@ public class UIScreenFactory
             if (_strict)
                 throw new InvalidOperationException(
                     $"[UIScreenFactory] Prefab '{prefab.name}' must have {nameof(UIScreen)} component. " +
-                    $"screenId={resolved.ScreenId}");
+                    $"screenId={resolved.ScreenKey}");
             Debug.LogError(
                 $"[UIScreenFactory] Prefab '{prefab.name}' must have {nameof(UIScreen)} component. " +
-                $"screenId={resolved.ScreenId}");
+                $"screenId={resolved.ScreenKey}");
             Object.Destroy(go);
             return null;
         }

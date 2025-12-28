@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "UIScreenSpecAsset", menuName = "Scriptable Objects/UIScreenSpecAsset")]
+[CreateAssetMenu(fileName = "UIScreenSpecAsset", menuName = "UI/UIScreenSpecAsset")]
 public sealed class UIScreenSpecAsset : ScriptableObject
 {
     public UIScreenSpec spec = new ();
@@ -11,8 +11,7 @@ public sealed class UIScreenSpecAsset : ScriptableObject
 [Serializable]
 public class UIScreenSpec
 {
-    public string screenId;
-    // 슬롯 이름 -> WidgetSpec 리스트
+    public ScreenKey screenKey;
     public List<SlotSpec> slots = new();
     
     public GameObject templatePrefab;    // 실제 UI 프리팹
@@ -20,8 +19,6 @@ public class UIScreenSpec
     public ThemeSpec baseTheme;          // nullable
     public LayoutPatchSpec baseLayout;   // nullable
     public UIVariantRule[] variants;     // nullable
-    
-    public string name;                  // 에디터 인덱싱용 이름
 }
 
 [Serializable]
