@@ -1,5 +1,11 @@
 using System;
 
+public static class UIExperiments
+{
+    public static readonly ExperimentKey HomeLayoutTest
+        = new ExperimentKey("HomeLayoutTest");
+}
+
 [Serializable]
 public readonly struct ExperimentKey : IEquatable<ExperimentKey>
 {

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 public sealed class RouteKeyResolver
 {
     public bool TryGetRouteKey(UIActionKey routeActionKey, out ScreenKey key)
@@ -14,7 +16,6 @@ public class UIRouter
     private readonly RouteKeyResolver _routeKeyResolver;
     
     private readonly ScreenKey _defaultKey = ScreenKey.Home;
-    public UIScreen CurrentScreen { get; private set; }
     
     public UIRouter(UIResolver resolver, UIScreenFactory factory, RouteKeyResolver routeKeyResolver)
     {
@@ -22,6 +23,12 @@ public class UIRouter
         _factory  = factory;
         _routeKeyResolver = routeKeyResolver;
     }
+    
+    private readonly Dictionary<ScreenKey, UIScreen> _screens = new();
+    public UIScreen CurrentScreen { get; private set; }
+    
+    public bool TryGetScreen(ScreenKey key, out UIScreen screen)
+        => _screens.TryGetValue(key, out screen);
     
     public void Navigate(UIRequest request)
     {
@@ -32,11 +39,17 @@ public class UIRouter
             UnityEngine.Debug.LogWarning($"[UIRouter] Unknown route='{action.Value}'. Fallback to {_defaultKey}.");
             key = _defaultKey;
         }
-        
-        UIResolveResult result = _resolver.Resolve(key, request);
-        UnityEngine.Debug.Log(result.Trace.Dump());
 
-        CurrentScreen = _factory.Create(result);
+        if (!_screens.TryGetValue(key, out UIScreen screen))
+        {
+            UIResolveResult result = _resolver.Resolve(key, request);
+            screen = _factory.Create(result);
+            _screens[key] = screen;
+            
+            result.Trace.Dump();
+        }
+        
+        CurrentScreen = screen;
     }
 }
 

@@ -9,6 +9,12 @@ public static class UIActionKeys
     public static readonly UIActionKey OpenShop =
         UIActionKeyRegistry.Get("nav/shop");
     
+    public static readonly UIActionKey OpenClickerTitle =
+        UIActionKeyRegistry.Get("nav/clickerTitle");
+    
+    public static readonly UIActionKey OpenInGame =
+        UIActionKeyRegistry.Get("nav/inGame");
+    
     // HUD 관련 액션
     public static readonly UIActionKey Gold =
         UIActionKeyRegistry.Get("ui/gold");
