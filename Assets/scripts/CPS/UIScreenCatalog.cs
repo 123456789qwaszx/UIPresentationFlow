@@ -9,8 +9,6 @@ public struct UIRouteEntry
     public ScreenKey key;
 }
 
-public enum ScreenKey { Home, Shop }
-
 [CreateAssetMenu(menuName = "UI/Screen Catalog", fileName = "UIScreenCatalog")]
 public class UIScreenCatalog : ScriptableObject
 {

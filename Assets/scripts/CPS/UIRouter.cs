@@ -15,7 +15,7 @@ public class UIRouter
     
     private readonly RouteKeyResolver _routeKeyResolver;
     
-    private readonly ScreenKey _defaultKey = ScreenKey.Home;
+    private readonly ScreenKey _defaultKey = UIScreenKeys.Home;
     
     public UIRouter(UIResolver resolver, UIScreenFactory factory, RouteKeyResolver routeKeyResolver)
     {
