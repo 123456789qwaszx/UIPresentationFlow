@@ -24,6 +24,7 @@ public static class UIActionKeys
 
     public static readonly UIActionKey Gem =
         UIActionKeyRegistry.Get("ui/gem");
+    
 }
 
 public static class UIActionKeyRegistry

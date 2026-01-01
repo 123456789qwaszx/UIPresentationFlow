@@ -4,4 +4,5 @@ public static class UIScreenKeys
     public static readonly ScreenKey Home  = new("home");
     [UIScreenKey]
     public static readonly ScreenKey Shop  = new("shop");
+    
 }

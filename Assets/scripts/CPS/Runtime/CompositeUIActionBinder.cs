@@ -2,6 +2,7 @@ using UnityEngine;
 
 public sealed class CompositeUiActionBinder : IUiActionBinder
 {
+    
     readonly IUiActionBinder[] _binders;
 
     public CompositeUiActionBinder(params IUiActionBinder[] binders)
