@@ -13,12 +13,16 @@ MonoBehaviour:
   m_Name: HomeScreenSpec
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenCatalog
   entries:
-  - key: 0
+  - key:
+      value: home
     specAsset: {fileID: 11400000, guid: df55a48437c21924895d4083042f5cde, type: 2}
-  - key: 1
+  - key:
+      value: shop
     specAsset: {fileID: 11400000, guid: 3f9b9b3d5abe08c41ba5f2092ea99fe0, type: 2}
   routes:
   - route: nav/home
-    key: 0
+    key:
+      value: home
   - route: nav/shop
-    key: 1
+    key:
+      value: shop

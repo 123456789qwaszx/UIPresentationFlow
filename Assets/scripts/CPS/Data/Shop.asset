@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Shop
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenSpecAsset
   spec:
-    screenId: Shop
+    screenKey:
+      value: home
     slots:
     - slotName: HeaderNew
       widgets:
@@ -235,4 +236,3 @@ MonoBehaviour:
     baseTheme: {fileID: 0}
     baseLayout: {fileID: 0}
     variants: []
-    name: 
