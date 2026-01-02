@@ -1,32 +1,5 @@
 using System.Collections.Generic;
 
-public static class UIActionKeys
-{
-    // 네비게이션 관련 액션 (Route)
-    public static readonly UIActionKey OpenHome =
-        UIActionKeyRegistry.Get("nav/home");
-
-    public static readonly UIActionKey OpenShop =
-        UIActionKeyRegistry.Get("nav/shop");
-    
-    public static readonly UIActionKey OpenClickerTitle =
-        UIActionKeyRegistry.Get("nav/clickerTitle");
-    
-    public static readonly UIActionKey OpenInGame =
-        UIActionKeyRegistry.Get("nav/inGame");
-    
-    // HUD 관련 액션
-    public static readonly UIActionKey Gold =
-        UIActionKeyRegistry.Get("ui/gold");
-
-    public static readonly UIActionKey Hp =
-        UIActionKeyRegistry.Get("ui/hp");
-
-    public static readonly UIActionKey Gem =
-        UIActionKeyRegistry.Get("ui/gem");
-    
-}
-
 public static class UIActionKeyRegistry
 {
     private static readonly Dictionary<string, UIActionKey> _cache = new();

@@ -20,12 +20,12 @@ public class UITestDriver : MonoBehaviour
     
     public void OnOpenHome()
     {
-        _uiOpener.Open(UIActionKeys.OpenHome);
+        _uiOpener.Open(DefaultActionKeys.OpenHome);
     }
 
     public void OnOpenShop()
     {
-        _uiOpener.Open(UIActionKeys.OpenShop);
+        _uiOpener.Open(DefaultActionKeys.OpenShop);
         _uiOpener.SetGold(curGold);
         _uiOpener.SetHp(curHp, maxHp);
         _uiOpener.SetGold(curGem);

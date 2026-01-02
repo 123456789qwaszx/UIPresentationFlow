@@ -20,9 +20,9 @@ MonoBehaviour:
       value: shop
     specAsset: {fileID: 11400000, guid: 3f9b9b3d5abe08c41ba5f2092ea99fe0, type: 2}
   routes:
-  - route: nav/home
+  - route: default/nav/home
     key:
       value: home
-  - route: nav/shop
+  - route: default/nav/shop
     key:
       value: shop

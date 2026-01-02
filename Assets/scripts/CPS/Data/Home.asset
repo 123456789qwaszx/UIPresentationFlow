@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Home
   m_EditorClassIdentifier: Assembly-CSharp::UIScreenSpecAsset
   spec:
-    screenKey: 0
+    screenKey:
+      value: home
     slots:
     - slotName: TestSlot
       widgets:

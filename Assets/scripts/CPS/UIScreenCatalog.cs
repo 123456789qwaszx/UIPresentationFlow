@@ -5,6 +5,7 @@ using UnityEngine;
 [Serializable]
 public struct UIRouteEntry
 {
+    [UIRouteKey]
     public string route;
     public ScreenKey key;
 }

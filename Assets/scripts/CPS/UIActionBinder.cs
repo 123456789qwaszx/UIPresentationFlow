@@ -14,13 +14,13 @@ public sealed class UIActionBinder : IUiActionBinder
         _bindings = new Dictionary<UIActionKey, Action<WidgetHandle>>
         {
             {
-                UIActionKeys.Gold,
+                DefaultActionKeys.Gold,
                 widget =>
                 {
                     if (widget.Button == null)
                     {
                         Debug.LogWarning(
-                            $"[UIActionBinder] actionKey={UIActionKeys.Gold} " +
+                            $"[UIActionBinder] actionKey={DefaultActionKeys.Gold} " +
                             $"but widget '{widget.NameTag}' has no Button component.");
                         return;
                     }
@@ -35,13 +35,13 @@ public sealed class UIActionBinder : IUiActionBinder
                 }
             },
             {
-                UIActionKeys.Hp,
+                DefaultActionKeys.Hp,
                 widget =>
                 {
                     if (widget.Button == null)
                     {
                         Debug.LogWarning(
-                            $"[UIActionBinder] actionKey={UIActionKeys.Hp} " +
+                            $"[UIActionBinder] actionKey={DefaultActionKeys.Hp} " +
                             $"but widget '{widget.NameTag}' has no Button component.");
                         return;
                     }
@@ -56,13 +56,13 @@ public sealed class UIActionBinder : IUiActionBinder
                 }
             },
             {
-                UIActionKeys.Gem,
+                DefaultActionKeys.Gem,
                 widget =>
                 {
                     if (widget.Button == null)
                     {
                         Debug.LogWarning(
-                            $"[UIActionBinder] actionKey={UIActionKeys.Gem} " +
+                            $"[UIActionBinder] actionKey={DefaultActionKeys.Gem} " +
                             $"but widget '{widget.NameTag}' has no Button component.");
                         return;
                     }
