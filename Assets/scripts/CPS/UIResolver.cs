@@ -57,10 +57,9 @@ public class UIResolver
         trace.Add($"Payload = {(request.Payload != null ? request.Payload.ToString() : "null")}");
 
         // 1) Take UIScreenSpec from catalog
-        UIScreenSpec baseSpec = _catalog.GetScreenSpec(screenKey);
-        if (baseSpec == null)
+        if (!_catalog.TryGetScreenSpec(screenKey, out UIScreenSpec baseSpec))
         {
-            trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}. It may be removed during runtime from catalog.");
+            trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}.");
             Debug.LogError(trace.Dump());
         }
 

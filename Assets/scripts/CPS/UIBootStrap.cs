@@ -26,7 +26,7 @@ public class UIBootStrap : MonoBehaviour
         UISlotBinder              binder  = new();
         UIPatchApplier        patcher = new();
         WidgetRectApplier rectApplier = new();
-        RouteKeyResolver routeKeyResolver = new();
+        RouteKeyResolver routeKeyResolver = new(catalog);
         
         IHudView hudView = null;
         UIRouter router = null;

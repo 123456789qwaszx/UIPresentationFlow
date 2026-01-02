@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public struct UIRouteEntry
@@ -20,34 +21,74 @@ public class UIScreenCatalog : ScriptableObject
         public UIScreenSpecAsset specAsset;
     }
     public List<ScreenEntry> entries = new();
+    private Dictionary<ScreenKey, UIScreenSpec> _screenMap;
     
     public List<UIRouteEntry> routes = new();
+    private Dictionary<string, ScreenKey> _routeMap;
     
-    private Dictionary<ScreenKey, UIScreenSpec> _map;
+    #region Init
     
-    
-    public void BuildCache()
+    public void Init()
     {
-        _map = new Dictionary<ScreenKey, UIScreenSpec>();
+        BuildScreenCache();
+        BuildRouteCache();
+    }
 
-        foreach (var e in entries)
+    private void BuildScreenCache()
+    {
+        _screenMap = new Dictionary<ScreenKey, UIScreenSpec>();
+
+        foreach (ScreenEntry e in entries)
         {
-            if (e?.specAsset == null) continue;
-            _map[e.key] = e.specAsset.spec;
+            if (e?.specAsset == null)
+                continue;
+            _screenMap[e.key] = e.specAsset.spec;
         }
     }
 
-    public UIScreenSpec GetScreenSpec(ScreenKey key)
+    private void BuildRouteCache()
     {
-        if (_map == null)
+        _routeMap = new Dictionary<string, ScreenKey>(StringComparer.OrdinalIgnoreCase);
+        
+        foreach (UIRouteEntry r in routes)
         {
-            Debug.LogError("[UIScreenCatalog] Cache not initialized.");
-            return null;
+            if (!_routeMap.TryAdd(r.route, r.key))
+            {
+                Debug.LogWarning($"[UIScreenCatalog] Duplicate route detected: '{r.route}' in catalog '{name}'.");
+            }
+        }
+    }
+    
+    #endregion
+    
+    #region Getter
+    
+    public bool TryGetScreenSpec(ScreenKey key, out UIScreenSpec spec)
+    {
+        if (_screenMap == null)
+        {
+            spec = null;
+            return false;
         }
 
-        return _map.TryGetValue(key, out var spec) ? spec : null;
+        return _screenMap.TryGetValue(key, out spec);
     }
+    
+    public bool TryGetRouteScreenKey(string route, out ScreenKey key)
+    {
+        if (_routeMap == null)
+        {
+            key = default;
+            return false;
+        }
 
+        return _routeMap.TryGetValue(route, out key);
+    }
+    
+    #endregion
+    
+    #region Validate
+    
     public void ValidateAll()
     {
 #if UNITY_EDITOR
@@ -137,4 +178,6 @@ public class UIScreenCatalog : ScriptableObject
         return warningCount;
     }
 #endif
+    
+    #endregion
 }

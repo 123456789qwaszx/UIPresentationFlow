@@ -2,9 +2,16 @@ using System.Collections.Generic;
 
 public sealed class RouteKeyResolver
 {
+    private readonly UIScreenCatalog _catalog;
+
+    public RouteKeyResolver(UIScreenCatalog catalog)
+    {
+        _catalog = catalog;
+    }
+
     public bool TryGetRouteKey(UIActionKey routeActionKey, out ScreenKey key)
     {
-        return UIRouteKeyRegistry.TryGetRouteKey(routeActionKey.Value, out key);
+        return _catalog.TryGetRouteScreenKey(routeActionKey.Value, out key);
     }
 }
 
