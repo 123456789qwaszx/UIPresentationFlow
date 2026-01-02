@@ -47,15 +47,17 @@ public class UIRouter
             key = _defaultKey;
         }
 
-        if (!_screens.TryGetValue(key, out UIScreen screen))
+        UIResolveResult result = _resolver.Resolve(key, request);
+        UIScreen screen = _factory.Create(result);
+
+        result.Trace.Dump();
+
+        if (_screens.TryGetValue(key, out UIScreen existing) && existing != null)
         {
-            UIResolveResult result = _resolver.Resolve(key, request);
-            screen = _factory.Create(result);
-            _screens[key] = screen;
-            
-            result.Trace.Dump();
+            UnityEngine.Object.Destroy(existing.gameObject);
         }
-        
+
+        _screens[key] = screen;
         CurrentScreen = screen;
     }
 }
