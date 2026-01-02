@@ -4,30 +4,7 @@ using UnityEngine;
 public class UIScreen : MonoBehaviour
 {
     private Dictionary<string, RectTransform> _slots;
-    private Dictionary<string, WidgetHandle> _widgetsByNameTag = new();
-
-    public void BuildSlot(UISlotBinder binder, UIScreenSpec spec)
-    {
-        List<string> required = spec.slots.ConvertAll(s => s.slotName);
-        _slots = binder.BuildSlots(transform, required);
-    }
-
-    internal void SetWidgets(Dictionary<string, WidgetHandle> map)
-    {
-        _widgetsByNameTag = map;
-    }
-
-    
-    public RectTransform GetSlot(string slotName)
-    {
-        if (!_slots.TryGetValue(slotName, out RectTransform slot))
-        {
-            Debug.LogWarning($"[UIScreen] Slot '{slotName}' not found.", this);
-            return null;
-        }
-
-        return slot;
-    }
+    private Dictionary<string, WidgetHandle> _widgetsByNameTag;
     
     public WidgetHandle GetWidgetHandle(string nameTag)
     {
@@ -43,8 +20,28 @@ public class UIScreen : MonoBehaviour
         return handle;
     }
     
-    public void Open() => gameObject.SetActive(true);
-    public void Close() => Destroy(gameObject);
+    
+    public RectTransform GetSlot(string slotName)
+    {
+        if (!_slots.TryGetValue(slotName, out RectTransform slot))
+        {
+            Debug.LogWarning($"[UIScreen] Slot '{slotName}' not found.", this);
+            return null;
+        }
+
+        return slot;
+    }
+    
+    public void BuildSlotMap(UISlotBinder binder, UIScreenSpec spec)
+    {
+        List<string> required = spec.slots.ConvertAll(s => s.slotName);
+        _slots = binder.BindSlots(transform, required);
+    }
+    
+    internal void SetWidgets(Dictionary<string, WidgetHandle> map)
+    {
+        _widgetsByNameTag = map;
+    }
     
     
     #region 레거시

@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class WidgetHandle : IWidget
+public sealed class WidgetHandle
 {
     public WidgetType Type { get; }
     public string NameTag { get; }

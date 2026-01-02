@@ -51,7 +51,7 @@ public class UIScreenFactory
             return null;
         }
 
-        screen.BuildSlot(_binder, resolved.BaseSpec);
+        screen.BuildSlotMap(_binder, resolved.BaseSpec);
 
         _patcher.Apply(screen, result.Patches);
 

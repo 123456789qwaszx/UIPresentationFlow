@@ -11,11 +11,7 @@ public sealed class UISlotBinder
         _includeInactive = includeInactive;
     }
 
-    /// <summary>
-    /// 1) UISlot 마커 기반으로 바인딩 시도
-    /// 2) 마커가 하나도 없으면 이름 기반(root.Find)으로 폴백
-    /// </summary>
-    public Dictionary<string, RectTransform> BuildSlots(Transform root, IEnumerable<string> requiredSlotIds, bool strict = true)
+    public Dictionary<string, RectTransform> BindSlots(Transform root, IEnumerable<string> requiredSlotIds, bool strict = true)
     {
         var map = new Dictionary<string, RectTransform>(StringComparer.Ordinal);
 

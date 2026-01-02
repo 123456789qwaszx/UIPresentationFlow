@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 public class UIComposer
@@ -22,6 +20,7 @@ public class UIComposer
         foreach (SlotSpec slotSpec in screenSpec.slots)
         {
             RectTransform slot = screen.GetSlot(slotSpec.slotName);
+            // 혹시 나중에 재귀적인 Slot시스템 구축할거면 제거.
             DestroyChildren(slot);
 
             foreach (WidgetSpec widgetSpec in slotSpec.widgets)
