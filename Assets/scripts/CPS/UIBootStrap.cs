@@ -45,6 +45,7 @@ public class UIBootStrap : MonoBehaviour
         
         router = new(resolver, factory, routeKeyResolver);
         
+        UIRuntimeRouter.Router = router;
         hudView   = new HudPresenter(() => router.CurrentScreen);
         _uiOpener = new UIOpener(router, hudView);
     }
