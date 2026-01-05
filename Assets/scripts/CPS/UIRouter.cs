@@ -49,6 +49,8 @@ public class UIRouter
 
         UIResolveResult result = _resolver.Resolve(key, request);
         UIScreen screen = _factory.Create(result);
+        
+        screen.gameObject.name = key.ToString();
 
         result.Trace.Dump();
 
