@@ -60,6 +60,9 @@ public sealed class WidgetSpec
     public float sliderMax = 1f;
     public float sliderInitialValue = 0.5f;
     public bool  sliderWholeNumbers = false;
+    
+    // --------- Slot 전용 옵션 --------
+    public string slotId;
 }
 
 public enum WidgetType
@@ -70,11 +73,8 @@ public enum WidgetType
     Toggle = 3,
     Slider = 4,
     
-    /// <summary>
-    /// 그냥 빈 컨테이너 혹은 임의의 GameObject 프리팹.
-    /// (레이아웃용/특수 위젯용으로 사용)
-    /// </summary>
     GameObject = 5,
+    Slot = 6
 }
 
 public enum WidgetRectMode

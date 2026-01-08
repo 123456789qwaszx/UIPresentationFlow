@@ -16,7 +16,7 @@ MonoBehaviour:
     screenKey:
       value: home
     slots:
-    - slotName: HeaderNew
+    - slotName: Footer
       widgets:
       - widgetType: 2
         nameTag: tag00
@@ -39,6 +39,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 0
         nameTag: tag01
         text: Hp please.
@@ -60,6 +61,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 4
         nameTag: imagei
         text: imagei
@@ -81,6 +83,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 3
         nameTag: tag03
         text: Togglet
@@ -102,6 +105,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 4
         nameTag: tag04
         text: Sliders
@@ -123,6 +127,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 5
         nameTag: tag05
         text: gog
@@ -144,7 +149,96 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
-    - slotName: TestSlot
+        slotId: 
+      - widgetType: 6
+        nameTag: stete
+        text: qweqwe
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: qweqweqweqw
+      - widgetType: 6
+        nameTag: Widget 7
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: qweqweqweqw
+      - widgetType: 0
+        nameTag: Widget 8
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: qweqweqweqw
+      - widgetType: 6
+        nameTag: Widget 9
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: qweqweqweqw
+    - slotName: Body
       widgets:
       - widgetType: 0
         nameTag: tag02
@@ -167,7 +261,30 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
-    - slotName: Footer
+        slotId: 
+      - widgetType: 6
+        nameTag: qweqw
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: 
+    - slotName: New 2
       widgets:
       - widgetType: 1
         nameTag: b1
@@ -190,6 +307,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 1
         nameTag: b2
         text: hp
@@ -211,6 +329,7 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
       - widgetType: 1
         nameTag: b3
         text: gem
@@ -232,6 +351,149 @@ MonoBehaviour:
         sliderMax: 1
         sliderInitialValue: 0.5
         sliderWholeNumbers: 0
+        slotId: 
+    - slotName: HeaderNew
+      widgets: []
+    - slotName: qweqweqweqw
+      widgets:
+      - widgetType: 0
+        nameTag: Widget 0
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: 
+      - widgetType: 6
+        nameTag: Widget 1
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: 
+      - widgetType: 6
+        nameTag: Widget 2
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
+        rectMode: 1
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: c1
+    - slotName: Slot 5
+      widgets: []
+    - slotName: c1
+      widgets:
+      - widgetType: 6
+        nameTag: Widget 0
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: c2
+    - slotName: c2
+      widgets:
+      - widgetType: 2
+        nameTag: Widget 0
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 1
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: 
+      - widgetType: 1
+        nameTag: Widget 1
+        text: 
+        onClickRoute: 
+        prefabOverride: {fileID: 0}
+        rectMode: 0
+        disabled: 0
+        anchorMin: {x: 0.5, y: 0.5}
+        anchorMax: {x: 0.5, y: 0.5}
+        pivot: {x: 0.5, y: 0.5}
+        anchoredPosition: {x: 0, y: 0}
+        sizeDelta: {x: 300, y: 80}
+        imageSprite: {fileID: 0}
+        imageColor: {r: 1, g: 1, b: 1, a: 1}
+        imageSetNativeSize: 0
+        toggleInitialValue: 0
+        toggleInteractable: 1
+        sliderMin: 0
+        sliderMax: 1
+        sliderInitialValue: 0.5
+        sliderWholeNumbers: 0
+        slotId: 
     templatePrefab: {fileID: 4994278366068515335, guid: 1d549f43fe2a31d4ba732362e30b4093, type: 3}
     baseTheme: {fileID: 0}
     baseLayout: {fileID: 0}

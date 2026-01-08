@@ -10,6 +10,7 @@ public class UIBootStrap : MonoBehaviour
     public GameObject togglePrefab;
     public GameObject sliderPrefab;
     public GameObject gameObjectPrefab;
+    public GameObject uISlotPrefab;
 
     [Header("Root")]
     [SerializeField] private Transform uiRoot;
@@ -36,7 +37,7 @@ public class UIBootStrap : MonoBehaviour
             new RouteActionBinder(() => router, routeKeyResolver)
         );
         
-        WidgetFactory    widgetFactory = new(textPrefab, buttonPrefab, imagePrefab, togglePrefab, sliderPrefab, gameObjectPrefab, uiActionBinder, true);
+        WidgetFactory    widgetFactory = new(textPrefab, buttonPrefab, imagePrefab, togglePrefab, sliderPrefab, gameObjectPrefab, uISlotPrefab, uiActionBinder, true);
         UIComposer            composer = new(widgetFactory, rectApplier);
         
         UIContext       context = UIContext.Default;

@@ -1857,6 +1857,7 @@ MonoBehaviour:
   togglePrefab: {fileID: 160659349}
   sliderPrefab: {fileID: 709629141}
   gameObjectPrefab: {fileID: 1930240663}
+  uISlotPrefab: {fileID: 5192250922718123098, guid: fb5851a7374823f40a0f6c96cbeb554f, type: 3}
   uiRoot: {fileID: 1174595858}
   catalog: {fileID: 11400000, guid: 77f24a0fd9bcd064eac0d042f9414cda, type: 2}
 --- !u!4 &1649107831

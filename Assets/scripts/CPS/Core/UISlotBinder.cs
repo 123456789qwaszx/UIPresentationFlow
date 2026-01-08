@@ -11,7 +11,7 @@ public sealed class UISlotBinder
         _includeInactive = includeInactive;
     }
 
-    public Dictionary<string, RectTransform> BindSlots(Transform root, IEnumerable<string> requiredSlotIds, bool strict = true)
+    public Dictionary<string, RectTransform> BindSlots(Transform root, IEnumerable<string> requiredSlotIds, bool strict = false)
     {
         var map = new Dictionary<string, RectTransform>(StringComparer.Ordinal);
 
@@ -50,7 +50,7 @@ public sealed class UISlotBinder
                 map.Add(id, rect);
             }
 
-            ValidateRequired(root, map, requiredSlotIds, strict);
+            //ValidateRequired(root, map, requiredSlotIds, strict);
             return map;
         }
 
