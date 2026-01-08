@@ -53,9 +53,10 @@ public class UIScreenFactory
 
         screen.BuildSlotMap(_binder, resolved.BaseSpec);
 
+        _composer.Compose(screen, resolved.BaseSpec);
+        
         _patcher.Apply(screen, result.Patches);
 
-        _composer.Compose(screen, resolved.BaseSpec);
 
         return screen;
     }
