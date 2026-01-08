@@ -36,6 +36,7 @@ public class UIScreen : MonoBehaviour
         return slot;
     }
 
+    // 루트 슬롯만 템플릿 의존, 자식 슬롯은 Slot 위젯에서 동적 생성
     public void BuildSlotMap(UISlotBinder binder, UIScreenSpec spec)
     {
         if (binder == null || spec == null)

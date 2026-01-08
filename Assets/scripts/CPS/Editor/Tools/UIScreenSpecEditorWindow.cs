@@ -21,14 +21,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private int _selectedSlotIndex = -1;
 
-    // 현재 "어디까지 들어와 있는지"를 나타내는 Slot 인덱스 경로
+    // Current slot index path, representing the navigation depth.
     // ex) [0] -> [0, 2] -> [0, 2, 5]
     private readonly List<int> _slotPath = new();
 
-    // 위젯별 Foldout 상태
+    // Per-widget foldout state cache
     private readonly Dictionary<string, bool> _widgetFoldoutStates = new();
 
-    // 위젯 프리셋 카탈로그
+    // Widget preset catalog
     [SerializeField] private WidgetPresetCatalog _presetCatalog;
     private readonly Dictionary<string, int> _widgetPresetSelection = new();
 
@@ -78,7 +78,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _slotsProp = _specProp.FindPropertyRelative("slots");
 
-        // 🔹 여기 추가: 최소 1개의 Root Slot 보장
+        // Ensure at least one root slot exists
         EnsureRootSlotExists();
 
         BuildSlotsList();
@@ -106,11 +106,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _slotsProp.InsertArrayElementAtIndex(0);
             var root = _slotsProp.GetArrayElementAtIndex(0);
 
-            var nameProp = root.FindPropertyRelative("slotName");
+            var nameProp    = root.FindPropertyRelative("slotName");
             var widgetsProp = root.FindPropertyRelative("widgets");
 
-            // 처음 기본 이름은 비워두거나 "Root" 정도로.
-            // 어차피 나중에 템플릿의 UISlot.id와 맞춰주기 위해 직접 수정 가능해야 함.
+            // Initial root slot id can be customized later to match the UISlot.id on the template.
             if (nameProp != null)
                 nameProp.stringValue = "Root";
 
@@ -122,11 +121,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     // ─────────────────────────────────────────────
-    // Slots 리스트
+    // Slots list
     // ─────────────────────────────────────────────
     private void BuildSlotsList()
     {
-        // 🔹 add/remove/drag 비활성화: 읽기 전용 리스트로
+        // Read-only list in terms of add/remove/drag (we manage order manually).
         _slotsList = new ReorderableList(_so, _slotsProp,
             draggable: false,
             displayHeader: true,
@@ -148,7 +147,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _slotsProp.InsertArrayElementAtIndex(i);
             var slot = _slotsProp.GetArrayElementAtIndex(i);
 
-            var nameProp = slot.FindPropertyRelative("slotName");
+            var nameProp    = slot.FindPropertyRelative("slotName");
             var widgetsProp = slot.FindPropertyRelative("widgets");
 
             if (nameProp != null)
@@ -159,7 +158,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             _so.ApplyModifiedProperties();
 
-            // 새 슬롯은 루트처럼 취급
+            // Treat the newly created slot as a new root context for editing.
             SetRootSlot(i);
         };
 
@@ -190,9 +189,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         _slotsList.elementHeightCallback = index =>
         {
             float lineH = EditorGUIUtility.singleLineHeight;
-            float vGap = 2f;
+            float vGap  = 2f;
 
-            // root(0번)는 2줄, 나머지는 1줄
+            // Root (index 0) uses 2 lines (main + Root Slot Id field), others use 1 line.
             int lines = (index == 0) ? 2 : 1;
 
             return lines * (lineH + vGap) + 4f;
@@ -202,106 +201,107 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     private void DrawSlotElement(Rect rect, int index, bool isActive, bool isFocused)
-{
-    float lineH = EditorGUIUtility.singleLineHeight;
-    float vGap  = 2f;
-
-    rect.y += 2f;
-
-    const float horizontalPadding = 4f;
-    rect.x    += horizontalPadding;
-    rect.width -= horizontalPadding * 2f;
-    rect.height = lineH;
-
-    var slot        = _slotsProp.GetArrayElementAtIndex(index);
-    var nameProp    = slot.FindPropertyRelative("slotName");
-    var widgetsProp = slot.FindPropertyRelative("widgets");
-    int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
-
-    int    depth;
-    string pathLabel = GetSlotDisplayPath(index, out depth);
-
-    // orphan 여부 계산 (index 0은 Root)
-    bool isOrphan = false;
-    if (index > 0)
     {
-        var hasParent = BuildHasParentFlags();
-        if (index < hasParent.Length)
-            isOrphan = !hasParent[index];
-    }
+        float lineH = EditorGUIUtility.singleLineHeight;
+        float vGap  = 2f;
 
-    string labelText;
-    if (index == 0)
-    {
-        // Root 슬롯 표시용 라벨 (첫 줄)
-        labelText = $"[Root] {pathLabel} ({widgetCount})";
-    }
-    else if (isOrphan)
-    {
-        // 부모가 없는 슬롯
-        labelText = $"(!) [unlinked] {pathLabel} ({widgetCount})";
-    }
-    else
-    {
-        // 정상 depth 슬롯
-        labelText = $"[depth{depth}] {pathLabel} ({widgetCount})";
-    }
+        rect.y += 2f;
 
-    // ──────────────────────
-    // 1줄차: 라벨 + (Root가 아니면 ↑↓ 버튼 영역 고려)
-    // ──────────────────────
-    const float btnWidth = 18f;
-    const float btnGap   = 2f;
+        const float horizontalPadding = 4f;
+        rect.x     += horizontalPadding;
+        rect.width -= horizontalPadding * 2f;
+        rect.height = lineH;
 
-    float labelWidth = rect.width;
-    if (index > 0)
-        labelWidth -= (btnWidth * 2f + btnGap * 2f);
+        var slot        = _slotsProp.GetArrayElementAtIndex(index);
+        var nameProp    = slot.FindPropertyRelative("slotName");
+        var widgetsProp = slot.FindPropertyRelative("widgets");
+        int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
 
-    var labelRect = new Rect(rect.x, rect.y, labelWidth, lineH);
-    EditorGUI.LabelField(labelRect, labelText);
+        int    depth;
+        string pathLabel = GetSlotDisplayPath(index, out depth);
 
-    // Root 이외 슬롯이면 ↑↓ 버튼
-    if (index > 0)
-    {
-        var upRect   = new Rect(labelRect.xMax + btnGap, rect.y, btnWidth, lineH);
-        var downRect = new Rect(upRect.xMax + btnGap, rect.y, btnWidth, lineH);
-
-        using (new EditorGUI.DisabledScope(index <= 1))
+        // Check if this slot is unlinked (no parent) – index 0 is always treated as the root.
+        bool isUnlinked = false;
+        if (index > 0)
         {
-            if (GUI.Button(upRect, "↑"))
+            var hasParent = BuildHasParentFlags();
+            if (index < hasParent.Length)
+                isUnlinked = !hasParent[index];
+        }
+
+        string labelText;
+        if (index == 0)
+        {
+            // Root slot label (first line)
+            labelText = $"[Root] {pathLabel} ({widgetCount})";
+        }
+        else if (isUnlinked)
+        {
+            // Slot that has no parent reference in the current graph
+            labelText = $"(!) [unlinked] {pathLabel} ({widgetCount})";
+        }
+        else
+        {
+            // Normal slot with a valid parent chain
+            labelText = $"[depth{depth}] {pathLabel} ({widgetCount})";
+        }
+
+        // ──────────────────────
+        // First line: label + (↑↓ controls for non-root slots)
+        // ──────────────────────
+        const float btnWidth = 18f;
+        const float btnGap   = 2f;
+
+        float labelWidth = rect.width;
+        if (index > 0)
+            labelWidth -= (btnWidth * 2f + btnGap * 2f);
+
+        var labelRect = new Rect(rect.x, rect.y, labelWidth, lineH);
+        EditorGUI.LabelField(labelRect, labelText);
+
+        // Move buttons for non-root slots
+        if (index > 0)
+        {
+            var upRect   = new Rect(labelRect.xMax + btnGap, rect.y, btnWidth, lineH);
+            var downRect = new Rect(upRect.xMax + btnGap, rect.y, btnWidth, lineH);
+
+            // Up: only from index >= 2 (index 1 cannot move into root position)
+            using (new EditorGUI.DisabledScope(index <= 1))
             {
-                MoveSlot(index, index - 1);
+                if (GUI.Button(upRect, "↑"))
+                {
+                    MoveSlot(index, index - 1);
+                }
+            }
+
+            // Down: any index that is not the last one
+            using (new EditorGUI.DisabledScope(index >= _slotsProp.arraySize - 1))
+            {
+                if (GUI.Button(downRect, "↓"))
+                {
+                    MoveSlot(index, index + 1);
+                }
             }
         }
 
-        using (new EditorGUI.DisabledScope(index >= _slotsProp.arraySize - 1))
+        // ──────────────────────
+        // Second line: Root Slot Id field (root only)
+        // ──────────────────────
+        if (index == 0)
         {
-            if (GUI.Button(downRect, "↓"))
+            var idRect = new Rect(rect.x, rect.y + lineH + vGap, rect.width, lineH);
+
+            string currentName = nameProp != null ? nameProp.stringValue : string.Empty;
+
+            EditorGUI.BeginChangeCheck();
+            string newName = EditorGUI.TextField(idRect, "Root Slot Id", currentName);
+            if (EditorGUI.EndChangeCheck() && nameProp != null)
             {
-                MoveSlot(index, index + 1);
+                nameProp.stringValue = newName;
+                _so.ApplyModifiedProperties();
             }
         }
     }
-
-    // ──────────────────────
-    // 2줄차: Root 한정 SlotId 편집
-    // ──────────────────────
-    if (index == 0)
-    {
-        var idRect = new Rect(rect.x, rect.y + lineH + vGap, rect.width, lineH);
-
-        string currentName = nameProp != null ? nameProp.stringValue : string.Empty;
-
-        EditorGUI.BeginChangeCheck();
-        string newName = EditorGUI.TextField(idRect, "Root Slot Id", currentName);
-        if (EditorGUI.EndChangeCheck() && nameProp != null)
-        {
-            nameProp.stringValue = newName;
-            _so.ApplyModifiedProperties();
-        }
-    }
-}
-
 
     private void MoveSlot(int from, int to)
     {
@@ -309,16 +309,16 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         int size = _slotsProp.arraySize;
         if (from < 0 || from >= size) return;
-        if (to < 0 || to >= size) return;
+        if (to   < 0 || to   >= size) return;
 
-        // 🔹 0번은 Root 고정이므로, 절대 to=0 으로 보내지 않는다.
+        // Slot 0 is the canonical root and cannot be moved into.
         if (to == 0) return;
 
         _slotsProp.MoveArrayElement(from, to);
         _so.ApplyModifiedProperties();
 
-        // 선택 인덱스 업데이트 + 경로 재구성
-        _slotsList.index = to;
+        // Update selection and rebuild path
+        _slotsList.index  = to;
         _selectedSlotIndex = to;
         RebuildSlotPathForSelected(to);
 
@@ -326,7 +326,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     // ─────────────────────────────────────────────
-    // Slot 경로 & 현재 Widgets 리스트
+    // Slot path & widget list for the current slot
     // ─────────────────────────────────────────────
     private void SetRootSlot(int slotIndex)
     {
@@ -355,9 +355,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     /// <summary>
-    /// Slots 리스트에서 어떤 슬롯을 클릭했을 때,
-    /// Slot 위젯의 slotId 연결을 따라가면서
-    /// 루트 → ... → targetIndex 경로를 찾아서 _slotPath를 재구성.
+    /// When a slot is selected in the left list, reconstruct the slot path
+    /// (root → ... → selected) based on Slot widgets (slotId) connections.
     /// </summary>
     private void RebuildSlotPathForSelected(int targetIndex)
     {
@@ -374,32 +373,32 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             return;
         }
 
-        // 1) slotName -> index 맵
+        // 1) Build name -> index map
         var nameToIndex = new Dictionary<string, int>();
         for (int i = 0; i < slotCount; i++)
         {
-            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var slot     = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
-            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
             if (!string.IsNullOrEmpty(name) && !nameToIndex.ContainsKey(name))
                 nameToIndex.Add(name, i);
         }
 
-        // 2) parent -> children graph 구성 (Slot 위젯의 slotId 기준)
-        var children = new List<int>[slotCount];
+        // 2) Build parent -> children graph using Slot widgets (slotId)
+        var children  = new List<int>[slotCount];
         var hasParent = new bool[slotCount];
         for (int i = 0; i < slotCount; i++)
         {
             children[i] = new List<int>();
 
-            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var slot        = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
             for (int wi = 0; wi < widgetsProp.arraySize; wi++)
             {
-                var widget = widgetsProp.GetArrayElementAtIndex(wi);
-                var typeProp = widget.FindPropertyRelative("widgetType");
+                var widget     = widgetsProp.GetArrayElementAtIndex(wi);
+                var typeProp   = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null) continue;
@@ -417,7 +416,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             }
         }
 
-        // 3) 루트 후보들 찾기 (부모가 없는 슬롯들)
+        // 3) Collect root candidates (slots with no parent)
         var roots = new List<int>();
         for (int i = 0; i < slotCount; i++)
         {
@@ -425,14 +424,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 roots.Add(i);
         }
 
-        // 4) 루트들에서 DFS로 targetIndex까지 경로 찾기
-        var path = new List<int>();
+        // 4) DFS from each root to find a path to targetIndex
+        var path     = new List<int>();
         var visiting = new HashSet<int>();
 
         bool TryDfs(int current)
         {
             if (visiting.Contains(current))
-                return false; // cycle 방어
+                return false; // prevent cycles
 
             visiting.Add(current);
             path.Add(current);
@@ -446,7 +445,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     return true;
             }
 
-            // 실패하면 되돌리기
+            // backtrack on failure
             path.RemoveAt(path.Count - 1);
             visiting.Remove(current);
             return false;
@@ -466,7 +465,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         if (!found)
         {
-            // 그래프 상에 경로를 못 찾으면, 그냥 단독 루트 취급
+            // If the graph traversal cannot find a path, treat this slot as an independent root.
             SetRootSlot(targetIndex);
             return;
         }
@@ -488,7 +487,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
             return;
 
-        var slot = _slotsProp.GetArrayElementAtIndex(slotIndex);
+        var slot        = _slotsProp.GetArrayElementAtIndex(slotIndex);
         var widgetsProp = slot.FindPropertyRelative("widgets");
 
         _widgetsList = new ReorderableList(_so, widgetsProp, true, true, true, true);
@@ -504,7 +503,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 rect.height - padding * 2f
             );
 
-            Color normalBg = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+            Color normalBg   = new Color(0.3f, 0.3f, 0.3f, 0.5f);
             Color selectedBg = new Color(0f, 0f, 0f, 0.24f);
 
             EditorGUI.DrawRect(bgRect, isActive ? selectedBg : normalBg);
@@ -561,12 +560,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     // ─────────────────────────────────────────────
-    // 개별 위젯 높이 계산
+    // Per-widget element height
     // ─────────────────────────────────────────────
     private float CalcWidgetElementHeight(SerializedProperty widgetsProp, int index)
     {
-        float lineH = EditorGUIUtility.singleLineHeight;
-        float vGap = 2f;
+        float lineH         = EditorGUIUtility.singleLineHeight;
+        float vGap          = 2f;
         float borderPadding = 2f;
 
         if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
@@ -575,26 +574,26 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var w = widgetsProp.GetArrayElementAtIndex(index);
 
         string foldKey = w.propertyPath;
-        bool expanded = true;
+        bool expanded  = true;
         _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
 
         if (!expanded)
         {
-            int collapsedLines = 1;
+            int   collapsedLines  = 1;
             float collapsedHeight = collapsedLines * (lineH + vGap) + vGap;
             return collapsedHeight + borderPadding * 2f + 4f;
         }
 
         int lines = 0;
 
-        // 1줄: Name + Type
+        // 1 line: Name + Type
         lines += 1;
-        // 프리셋 드롭다운
+        // Preset dropdown
         lines += 1;
-        // Text 2줄
+        // Text 2 lines
         lines += 2;
 
-        var typeProp = w.FindPropertyRelative("widgetType");
+        var typeProp   = w.FindPropertyRelative("widgetType");
         var widgetType = (WidgetType)typeProp.enumValueIndex;
 
         // Route + Prefab
@@ -604,7 +603,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         lines += 1;
 
         var rectModeProp = w.FindPropertyRelative("rectMode");
-        var rectMode = (WidgetRectMode)rectModeProp.enumValueIndex;
+        var rectMode     = (WidgetRectMode)rectModeProp.enumValueIndex;
         if (rectMode == WidgetRectMode.OverrideInSlot)
         {
             // AnchorMin, AnchorMax, Pivot, Size, Position
@@ -636,7 +635,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     // ─────────────────────────────────────────────
-    // 개별 위젯 렌더링
+    // Widget element rendering
     // ─────────────────────────────────────────────
     private void DrawWidgetElement(
         Rect rect,
@@ -662,45 +661,45 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         const float horizontalPadding = 6f;
 
         rect = borderRect;
-        rect.y += vGap;
-        rect.x += horizontalPadding;
+        rect.y     += vGap;
+        rect.x     += horizontalPadding;
         rect.width -= horizontalPadding * 2f;
 
         float lineH = EditorGUIUtility.singleLineHeight;
-        float y = rect.y;
+        float y     = rect.y;
 
         var w = widgetsProp.GetArrayElementAtIndex(index);
-        var typeProp = w.FindPropertyRelative("widgetType");
-        var nameProp = w.FindPropertyRelative("nameTag");
-        var textProp = w.FindPropertyRelative("text");
-        var routeProp = w.FindPropertyRelative("onClickRoute");
-        var prefabProp = w.FindPropertyRelative("prefabOverride");
-        var rectModeProp = w.FindPropertyRelative("rectMode");
-        var anchorMinProp = w.FindPropertyRelative("anchorMin");
-        var anchorMaxProp = w.FindPropertyRelative("anchorMax");
-        var pivotProp = w.FindPropertyRelative("pivot");
+        var typeProp       = w.FindPropertyRelative("widgetType");
+        var nameProp       = w.FindPropertyRelative("nameTag");
+        var textProp       = w.FindPropertyRelative("text");
+        var routeProp      = w.FindPropertyRelative("onClickRoute");
+        var prefabProp     = w.FindPropertyRelative("prefabOverride");
+        var rectModeProp   = w.FindPropertyRelative("rectMode");
+        var anchorMinProp  = w.FindPropertyRelative("anchorMin");
+        var anchorMaxProp  = w.FindPropertyRelative("anchorMax");
+        var pivotProp      = w.FindPropertyRelative("pivot");
         var anchoredPosProp = w.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp = w.FindPropertyRelative("sizeDelta");
+        var sizeDeltaProp  = w.FindPropertyRelative("sizeDelta");
 
         var imageSpriteProp = w.FindPropertyRelative("imageSprite");
-        var imageColorProp = w.FindPropertyRelative("imageColor");
+        var imageColorProp  = w.FindPropertyRelative("imageColor");
         var imageNativeProp = w.FindPropertyRelative("imageSetNativeSize");
 
         var toggleInitialProp = w.FindPropertyRelative("toggleInitialValue");
         var toggleInteractProp = w.FindPropertyRelative("toggleInteractable");
 
-        var sliderMinProp = w.FindPropertyRelative("sliderMin");
-        var sliderMaxProp = w.FindPropertyRelative("sliderMax");
-        var sliderInitProp = w.FindPropertyRelative("sliderInitialValue");
+        var sliderMinProp   = w.FindPropertyRelative("sliderMin");
+        var sliderMaxProp   = w.FindPropertyRelative("sliderMax");
+        var sliderInitProp  = w.FindPropertyRelative("sliderInitialValue");
         var sliderWholeProp = w.FindPropertyRelative("sliderWholeNumbers");
-        var disabledProp = w.FindPropertyRelative("disabled");
+        var disabledProp    = w.FindPropertyRelative("disabled");
 
         var slotIdProp = w.FindPropertyRelative("slotId");
 
-        // 우클릭 메뉴 (Add / Delete)
+        // Context menu (Add / Delete widget)
         if (e.type == EventType.ContextClick && borderRect.Contains(e.mousePosition))
         {
-            var menu = new GenericMenu();
+            var menu          = new GenericMenu();
             int capturedIndex = index;
 
             menu.AddItem(new GUIContent("Add Widget Below"), false, () =>
@@ -735,9 +734,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             e.Use();
         }
 
-        // 헤더: Foldout + Enabled 토글 + Name + Type
+        // Header: Foldout + Enabled toggle + Name + Type
         string foldKey = w.propertyPath;
-        bool expanded = true;
+        bool   expanded = true;
         _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
 
         var foldoutRect = new Rect(rect.x, y, 14f, lineH);
@@ -755,10 +754,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         x = toggleRect.xMax + 4f;
 
         const float typeWidth = 70f;
-        const float gap = 4f;
+        const float gap       = 4f;
 
-        float typeX = rect.x + rect.width - typeWidth;
-        var typeRect = new Rect(typeX, y, typeWidth, lineH);
+        float typeX    = rect.x + rect.width - typeWidth;
+        var   typeRect = new Rect(typeX, y, typeWidth, lineH);
 
         float nameWidth = typeX - x - gap;
         if (nameWidth < 60f) nameWidth = 60f;
@@ -774,7 +773,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         var widgetType = (WidgetType)typeProp.enumValueIndex;
 
-        // 프리셋 선택
+        // Preset selection
         {
             string[] labels;
             bool hasPresetCatalog =
@@ -784,11 +783,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             if (hasPresetCatalog)
             {
-                var presets = _presetCatalog.presets;
+                var presets     = _presetCatalog.presets;
                 int presetCount = presets.Count;
 
-                labels = new string[presetCount + 1];
-                labels[0] = "Select Preset";
+                labels      = new string[presetCount + 1];
+                labels[0]   = "Select Preset";
                 for (int pi = 0; pi < presetCount; pi++)
                 {
                     var p = presets[pi];
@@ -820,7 +819,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 if (newIndex > 0)
                 {
                     var presets = _presetCatalog.presets;
-                    var chosen = presets[newIndex - 1];
+                    var chosen  = presets[newIndex - 1];
                     ApplyPresetToWidget(chosen, w);
                     _so.ApplyModifiedProperties();
                 }
@@ -839,13 +838,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (rectMode == WidgetRectMode.OverrideInSlot)
         {
             float labelWidth = 90f;
-            float fieldGap = 4f;
-            float rowHeight = lineH;
+            float fieldGap   = 4f;
+            float rowHeight  = lineH;
 
             Rect MakeRowRect() => new Rect(rect.x, y, rect.width, rowHeight);
 
             // Anchor Min
-            var rowRect = MakeRowRect();
+            var rowRect   = MakeRowRect();
             var labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
             var valueRect = new Rect(
                 rowRect.x + labelWidth + fieldGap,
@@ -856,12 +855,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             EditorGUI.LabelField(labelRect, "Anchor Min");
             var anchorMinValue = anchorMinProp.vector2Value;
-            anchorMinValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMinValue);
+            anchorMinValue     = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMinValue);
             anchorMinProp.vector2Value = anchorMinValue;
             y += rowHeight + vGap;
 
             // Anchor Max
-            rowRect = MakeRowRect();
+            rowRect   = MakeRowRect();
             labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
             valueRect = new Rect(
                 rowRect.x + labelWidth + fieldGap,
@@ -871,13 +870,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             );
 
             EditorGUI.LabelField(labelRect, "Anchor Max");
-            var anchorMaxValue = anchorMaxProp.vector2Value;
-            anchorMaxValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMaxValue);
+            var anchorMaxValue  = anchorMaxProp.vector2Value;
+            anchorMaxValue      = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMaxValue);
             anchorMaxProp.vector2Value = anchorMaxValue;
             y += rowHeight + vGap;
 
             // Pivot
-            rowRect = MakeRowRect();
+            rowRect   = MakeRowRect();
             labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
             valueRect = new Rect(
                 rowRect.x + labelWidth + fieldGap,
@@ -887,13 +886,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             );
 
             EditorGUI.LabelField(labelRect, "Pivot");
-            var pivotValue = pivotProp.vector2Value;
-            pivotValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, pivotValue);
+            var pivotValue   = pivotProp.vector2Value;
+            pivotValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, pivotValue);
             pivotProp.vector2Value = pivotValue;
             y += rowHeight + vGap;
 
             // Size
-            rowRect = MakeRowRect();
+            rowRect   = MakeRowRect();
             labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
             valueRect = new Rect(
                 rowRect.x + labelWidth + fieldGap,
@@ -903,13 +902,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             );
 
             EditorGUI.LabelField(labelRect, "Size");
-            var sizeValue = sizeDeltaProp.vector2Value;
-            sizeValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, sizeValue);
+            var sizeValue   = sizeDeltaProp.vector2Value;
+            sizeValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, sizeValue);
             sizeDeltaProp.vector2Value = sizeValue;
             y += rowHeight + vGap;
 
             // Position
-            rowRect = MakeRowRect();
+            rowRect   = MakeRowRect();
             labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
             valueRect = new Rect(
                 rowRect.x + labelWidth + fieldGap,
@@ -919,12 +918,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             );
 
             EditorGUI.LabelField(labelRect, "Position");
-            var posValue = anchoredPosProp.vector2Value;
-            posValue = EditorGUI.Vector2Field(valueRect, GUIContent.none, posValue);
+            var posValue   = anchoredPosProp.vector2Value;
+            posValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, posValue);
             anchoredPosProp.vector2Value = posValue;
             y += rowHeight + vGap;
 
-            // 타입별 추가 옵션
+            // Type-specific options
             switch (widgetType)
             {
                 case WidgetType.Button:
@@ -1027,8 +1026,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         // Text
         {
-            int textLines = 2;
-            float textHeight = (lineH + 2f) * textLines;
+            int   textLines   = 2;
+            float textHeight  = (lineH + 2f) * textLines;
 
             var textRect = new Rect(rect.x, y, rect.width, textHeight);
             textProp.stringValue =
@@ -1044,7 +1043,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
     }
 
-    // Slot 위젯의 Slot Id를 기준으로 child Slot을 열고, 경로에 추가
+    // Open a child slot by Slot widget's Slot Id, and push it into the current slot path.
     private void OpenChildSlot(string slotName)
     {
         if (_slotsProp == null) return;
@@ -1052,50 +1051,51 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         slotName = (slotName ?? string.Empty).Trim();
         if (string.IsNullOrEmpty(slotName)) return;
 
-        // 🔹 현재 부모 슬롯 index (Breadcrumb의 마지막)
+        // Current parent slot index (last in the breadcrumb path)
         int currentParentIndex = -1;
         if (_slotPath != null && _slotPath.Count > 0)
             currentParentIndex = _slotPath[_slotPath.Count - 1];
 
-        // 🔹 1) 순환 구조(조상으로 되돌아가는 링크) 방지
+        // 1) Prevent simple cycles: linking to any ancestor in the current path
         if (WouldCreateCycleFromCurrentPath(slotName))
         {
             EditorUtility.DisplayDialog(
                 "Invalid Slot Link",
-                $"'{slotName}' 슬롯은 현재 Slot 경로의 조상 슬롯과 이름이 같아서\n" +
-                "순환 구조가 생길 수 있습니다.\n\n" +
-                "Root → ... → " + slotName + " → ... → " + slotName + " 형태는 허용되지 않습니다.",
+                $"The slot '{slotName}' matches an ancestor slot name in the current path.\n" +
+                "This may create a recursive structure.\n\n" +
+                "A pattern like 'Root → ... → " + slotName + " → ... → " + slotName + "' is not allowed.",
                 "OK"
             );
             return;
         }
 
-        // 🔹 2) 멀티 부모 구조 경고 (직계 조상은 아니지만, 이미 다른 부모가 있는 경우)
+        // 2) Warn if this slot name is already used as a child of another parent
         if (currentParentIndex >= 0 &&
             HasOtherParentForSlotName(slotName, currentParentIndex, out int otherParentIndex))
         {
             string currentParentName = GetSlotNameByIndex(currentParentIndex);
-            string otherParentName = GetSlotNameByIndex(otherParentIndex);
+            string otherParentName   = GetSlotNameByIndex(otherParentIndex);
 
             EditorUtility.DisplayDialog(
                 "Ambiguous Slot Graph",
-                $"슬롯 '{slotName}' 은 이미 다른 슬롯에서도 하위 슬롯으로 사용 중입니다.\n\n" +
-                $"- 기존 부모: '{otherParentName}'\n" +
-                $"- 현재 부모: '{currentParentName}'\n\n" +
-                "이렇게 하나의 Slot을 여러 부모가 공유하면,\n" +
-                "Slot Path 표시가 예상과 다르게 보이거나 구조가 복잡해질 수 있습니다.",
+                $"The slot '{slotName}' is already used as a child under another parent slot.\n\n" +
+                $"- Existing parent: '{otherParentName}'\n" +
+                $"- Current parent:  '{currentParentName}'\n\n" +
+                "Sharing the same slot under multiple parents can make the slot path\n" +
+                "more complex or harder to reason about.",
                 "OK"
             );
-            // ⚠️ 여기서는 '경고만' 하고 계속 진행 (원하면 나중에 여기서 return; 으로 차단도 가능)
+            // Only warn and continue. If you want strict single-parent rules,
+            // you can 'return;' here instead.
         }
 
-        // 🔹 3) 실제 child 슬롯 찾기 / 생성
+        // 3) Find or create the child slot with the given name
         int childIndex = -1;
         for (int i = 0; i < _slotsProp.arraySize; i++)
         {
-            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var slot     = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
-            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
             if (!string.IsNullOrEmpty(name) &&
                 string.Equals(name, slotName, StringComparison.Ordinal))
             {
@@ -1104,14 +1104,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             }
         }
 
-        // 없으면 새로 생성
         if (childIndex < 0)
         {
             childIndex = _slotsProp.arraySize;
             _slotsProp.InsertArrayElementAtIndex(childIndex);
 
-            var newSlot = _slotsProp.GetArrayElementAtIndex(childIndex);
-            var nameProp = newSlot.FindPropertyRelative("slotName");
+            var newSlot     = _slotsProp.GetArrayElementAtIndex(childIndex);
+            var nameProp    = newSlot.FindPropertyRelative("slotName");
             var widgetsProp = newSlot.FindPropertyRelative("widgets");
 
             if (nameProp != null)
@@ -1122,7 +1121,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _so.ApplyModifiedProperties();
         }
 
-        // 🔹 4) 경로에 child 추가 후 해당 Slot의 Widgets 표시
+        // 4) Push into the path and refresh widget list
         _slotPath.Add(childIndex);
         _selectedSlotIndex = childIndex;
         BuildWidgetsListForCurrentSlot();
@@ -1143,9 +1142,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         {
             if (newAsset == null)
             {
-                _asset = null;
-                _so = null;
-                _slotsList = null;
+                _asset       = null;
+                _so          = null;
+                _slotsList   = null;
                 _widgetsList = null;
                 _slotPath.Clear();
                 return;
@@ -1168,7 +1167,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (_asset == null || _so == null)
         {
             EditorGUILayout.HelpBox(
-                "UIScreenSpecAsset 를 선택하거나 드래그해서 열어주세요.\n(Project 창에서 Spec Asset 클릭 → 자동 바인딩됨)",
+                "Select or drag a UIScreenSpecAsset to begin editing.\n" +
+                "(Click a Spec Asset in the Project window to auto-bind.)",
                 MessageType.Info);
             return;
         }
@@ -1184,7 +1184,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            // 왼쪽: Slot 리스트
+            // Left: Slot list
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(position.width * 0.4f)))
             {
                 _slotsScroll = EditorGUILayout.BeginScrollView(_slotsScroll);
@@ -1194,7 +1194,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             GUILayout.Space(4f);
 
-            // 오른쪽: Slot Path + Widgets
+            // Right: Slot path + Widgets
             using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
             {
                 DrawSlotPathBreadcrumb();
@@ -1204,7 +1204,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 if (_widgetsList == null)
                 {
                     EditorGUILayout.HelpBox(
-                        "좌측에서 Slot을 선택하거나, Slot 위젯의 Slot Id를 입력한 후 'Open Child Slot' 버튼으로 하위 Slot을 열 수 있습니다.",
+                        "Select a Slot on the left, or enter a Slot Id in a Slot widget\n" +
+                        "and press 'Open Child Slot' to drill down into nested slots.",
                         MessageType.None);
                 }
                 else
@@ -1229,17 +1230,17 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 {
                     GUILayout.FlexibleSpace();
 
-                    // 🔹 Orphan 정리 버튼
+                    // Clean unlinked slots button
                     EditorGUI.BeginDisabledGroup(!hasAnySlot || _asset == null);
                     if (GUILayout.Button("Clean Unlinked Slots", GUILayout.Width(180f)))
                     {
-                        CleanupOrphanSlots();
+                        CleanupUnlinkedSlots();
                     }
                     EditorGUI.EndDisabledGroup();
 
                     GUILayout.Space(4f);
 
-                    // 🔹 기존 Enable All Widgets 버튼
+                    // Enable all widgets button
                     EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
                     if (GUILayout.Button("Enable All Widgets", GUILayout.Width(180f)))
                     {
@@ -1273,7 +1274,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             for (int i = 0; i < _slotPath.Count; i++)
             {
                 int slotIndex = _slotPath[i];
-                string name = $"Slot {slotIndex}";
+                string name   = $"Slot {slotIndex}";
 
                 if (slotIndex >= 0 && slotIndex < _slotsProp.arraySize)
                 {
@@ -1325,8 +1326,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (_slotsProp == null || slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
             return "(invalid)";
 
-        // child -> parent -> grandparent...
-        var chain = new List<int>();
+        // Walk child -> parent -> grandparent ...
+        var chain   = new List<int>();
         var visited = new HashSet<int>();
 
         int current = slotIndex;
@@ -1342,14 +1343,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             current = parent;
         }
 
-        // root -> ... -> child 순으로 뒤집기
+        // Reverse to get root -> ... -> child
         chain.Reverse();
         depth = chain.Count - 1;
 
         var names = new List<string>();
         foreach (int idx in chain)
         {
-            var slot = _slotsProp.GetArrayElementAtIndex(idx);
+            var slot     = _slotsProp.GetArrayElementAtIndex(idx);
             var nameProp = slot.FindPropertyRelative("slotName");
             string rawName = nameProp != null ? nameProp.stringValue : string.Empty;
 
@@ -1357,15 +1358,15 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             if (idx == 0)
             {
-                // 🔹 Root 슬롯: 사용자가 입력한 Root Slot Id를 그대로 사용
-                // 비어 있으면 "(root)"로 표시
+                // Root slot: use the user-entered root Slot Id directly.
+                // If empty, show "(root)".
                 label = string.IsNullOrWhiteSpace(rawName)
                     ? "(root)"
                     : rawName.Trim();
             }
             else
             {
-                // 🔹 나머지 슬롯은 기존 규칙 유지 (Slot 0, Slot 1 같은 기본 이름 숨기기)
+                // Non-root slots keep the normalized label behavior.
                 label = NormalizeSlotLabel(rawName);
             }
 
@@ -1380,25 +1381,25 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (slotsProp == null || childIndex < 0 || childIndex >= slotsProp.arraySize)
             return -1;
 
-        var childSlot = slotsProp.GetArrayElementAtIndex(childIndex);
+        var childSlot     = slotsProp.GetArrayElementAtIndex(childIndex);
         var childNameProp = childSlot.FindPropertyRelative("slotName");
-        string childName = (childNameProp != null ? childNameProp.stringValue : string.Empty)?.Trim();
+        string childName  = (childNameProp != null ? childNameProp.stringValue : string.Empty)?.Trim();
         if (string.IsNullOrEmpty(childName))
             return -1;
 
-        // 모든 슬롯을 돌면서, Slot 위젯의 slotId가 childName인 놈을 찾는다 → 그 슬롯이 부모
+        // Find any Slot widget whose slotId matches this slot's name → that slot is its parent.
         for (int i = 0; i < slotsProp.arraySize; i++)
         {
             if (i == childIndex) continue;
 
-            var slot = slotsProp.GetArrayElementAtIndex(i);
+            var slot        = slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
             for (int w = 0; w < widgetsProp.arraySize; w++)
             {
-                var widget = widgetsProp.GetArrayElementAtIndex(w);
-                var typeProp = widget.FindPropertyRelative("widgetType");
+                var widget     = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp   = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null || slotIdProp == null)
@@ -1424,7 +1425,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         string trimmed = rawName.Trim();
 
-        // "Slot 0", "Slot 1" 같이 기본 자동 이름이면 표시상으론 숨겨버리기
+        // Hide auto-generated names like "Slot 0", "Slot 1" etc. behind "(unnamed)".
         if (trimmed.StartsWith("Slot "))
         {
             bool allDigits = true;
@@ -1455,22 +1456,21 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (_slotPath == null || _slotPath.Count == 0)
             return false;
 
-        // 현재 Breadcrumb 경로에 있는 모든 Slot의 slotName을 검사
-        for (int i = 0; i < _slotPath.Count; i++)
+        // Check all slot names in the current breadcrumb path
+        foreach (int slotIndex in _slotPath)
         {
-            int slotIndex = _slotPath[i];
             if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
                 continue;
 
             var slotProp = _slotsProp.GetArrayElementAtIndex(slotIndex);
             var nameProp = slotProp.FindPropertyRelative("slotName");
-            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
 
             if (string.IsNullOrEmpty(name))
                 continue;
 
             if (string.Equals(name, targetSlotName, StringComparison.Ordinal))
-                return true; // 조상으로 되돌아가는 링크 → 잠재적 사이클
+                return true; // linking back to an ancestor → potential cycle
         }
 
         return false;
@@ -1489,19 +1489,19 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         for (int i = 0; i < _slotsProp.arraySize; i++)
         {
-            // 지금 열고 있는 부모 슬롯(현재 경로의 마지막)은 제외
+            // Skip the parent we're currently editing from
             if (i == currentParentIndex)
                 continue;
 
-            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var slot        = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null)
                 continue;
 
             for (int w = 0; w < widgetsProp.arraySize; w++)
             {
-                var widget = widgetsProp.GetArrayElementAtIndex(w);
-                var typeProp = widget.FindPropertyRelative("widgetType");
+                var widget     = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp   = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null || slotIdProp == null)
@@ -1528,9 +1528,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (_slotsProp == null || index < 0 || index >= _slotsProp.arraySize)
             return $"Slot {index}";
 
-        var slot = _slotsProp.GetArrayElementAtIndex(index);
+        var slot     = _slotsProp.GetArrayElementAtIndex(index);
         var nameProp = slot.FindPropertyRelative("slotName");
-        string name = nameProp != null ? nameProp.stringValue : null;
+        string name  = nameProp != null ? nameProp.stringValue : null;
 
         if (string.IsNullOrWhiteSpace(name))
             return $"Slot {index}";
@@ -1539,84 +1539,84 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     }
 
     // ─────────────────────────────────────────────
-    // 유틸
+    // Utility
     // ─────────────────────────────────────────────
     private void ApplyPresetToWidget(WidgetPreset preset, SerializedProperty widgetProp)
     {
         if (widgetProp == null) return;
 
-        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
-        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
-        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
-        var pivotProp = widgetProp.FindPropertyRelative("pivot");
-        var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
+        var rectModeProp      = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp     = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp     = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp         = widgetProp.FindPropertyRelative("pivot");
+        var anchoredPosProp   = widgetProp.FindPropertyRelative("anchoredPosition");
+        var sizeDeltaProp     = widgetProp.FindPropertyRelative("sizeDelta");
 
         rectModeProp.enumValueIndex = (int)preset.rectMode;
-        anchorMinProp.vector2Value = preset.anchorMin;
-        anchorMaxProp.vector2Value = preset.anchorMax;
-        pivotProp.vector2Value = preset.pivot;
+        anchorMinProp.vector2Value  = preset.anchorMin;
+        anchorMaxProp.vector2Value  = preset.anchorMax;
+        pivotProp.vector2Value      = preset.pivot;
         anchoredPosProp.vector2Value = preset.anchoredPosition;
-        sizeDeltaProp.vector2Value = preset.sizeDelta;
+        sizeDeltaProp.vector2Value  = preset.sizeDelta;
     }
 
     private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
     {
         if (widgetProp == null) return;
 
-        var typeProp = widgetProp.FindPropertyRelative("widgetType");
-        var nameTagProp = widgetProp.FindPropertyRelative("nameTag");
-        var textProp = widgetProp.FindPropertyRelative("text");
-        var routeProp = widgetProp.FindPropertyRelative("onClickRoute");
+        var typeProp           = widgetProp.FindPropertyRelative("widgetType");
+        var nameTagProp        = widgetProp.FindPropertyRelative("nameTag");
+        var textProp           = widgetProp.FindPropertyRelative("text");
+        var routeProp          = widgetProp.FindPropertyRelative("onClickRoute");
         var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
 
-        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
-        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
-        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
-        var pivotProp = widgetProp.FindPropertyRelative("pivot");
+        var rectModeProp    = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp   = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp   = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp       = widgetProp.FindPropertyRelative("pivot");
         var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
+        var sizeDeltaProp   = widgetProp.FindPropertyRelative("sizeDelta");
 
         var disabledProp = widgetProp.FindPropertyRelative("disabled");
 
-        typeProp.enumValueIndex = (int)WidgetType.Text;
-        nameTagProp.stringValue = $"Widget {index}";
-        textProp.stringValue = string.Empty;
-        routeProp.stringValue = string.Empty;
+        typeProp.enumValueIndex  = (int)WidgetType.Text;
+        nameTagProp.stringValue  = $"Widget {index}";
+        textProp.stringValue     = string.Empty;
+        routeProp.stringValue    = string.Empty;
         prefabOverrideProp.objectReferenceValue = null;
 
         rectModeProp.enumValueIndex = (int)WidgetRectMode.UseSlotLayout;
 
-        anchorMinProp.vector2Value = new Vector2(0.5f, 0.5f);
-        anchorMaxProp.vector2Value = new Vector2(0.5f, 0.5f);
-        pivotProp.vector2Value = new Vector2(0.5f, 0.5f);
+        anchorMinProp.vector2Value   = new Vector2(0.5f, 0.5f);
+        anchorMaxProp.vector2Value   = new Vector2(0.5f, 0.5f);
+        pivotProp.vector2Value       = new Vector2(0.5f, 0.5f);
         anchoredPosProp.vector2Value = Vector2.zero;
-        sizeDeltaProp.vector2Value = new Vector2(300f, 80f);
+        sizeDeltaProp.vector2Value   = new Vector2(300f, 80f);
 
         if (disabledProp != null)
             disabledProp.boolValue = false;
 
-        var imageColorProp = widgetProp.FindPropertyRelative("imageColor");
-        var imageNativeProp = widgetProp.FindPropertyRelative("imageSetNativeSize");
+        var imageColorProp    = widgetProp.FindPropertyRelative("imageColor");
+        var imageNativeProp   = widgetProp.FindPropertyRelative("imageSetNativeSize");
         var toggleInitialProp = widgetProp.FindPropertyRelative("toggleInitialValue");
         var toggleInteractProp = widgetProp.FindPropertyRelative("toggleInteractable");
-        var sliderMinProp = widgetProp.FindPropertyRelative("sliderMin");
-        var sliderMaxProp = widgetProp.FindPropertyRelative("sliderMax");
-        var sliderInitProp = widgetProp.FindPropertyRelative("sliderInitialValue");
-        var sliderWholeProp = widgetProp.FindPropertyRelative("sliderWholeNumbers");
+        var sliderMinProp     = widgetProp.FindPropertyRelative("sliderMin");
+        var sliderMaxProp     = widgetProp.FindPropertyRelative("sliderMax");
+        var sliderInitProp    = widgetProp.FindPropertyRelative("sliderInitialValue");
+        var sliderWholeProp   = widgetProp.FindPropertyRelative("sliderWholeNumbers");
 
         var imageSpriteProp = widgetProp.FindPropertyRelative("imageSprite");
         if (imageSpriteProp != null) imageSpriteProp.objectReferenceValue = null;
-        if (imageColorProp != null) imageColorProp.colorValue = Color.white;
-        if (imageNativeProp != null) imageNativeProp.boolValue = false;
+        if (imageColorProp  != null) imageColorProp.colorValue           = Color.white;
+        if (imageNativeProp != null) imageNativeProp.boolValue           = false;
 
-        if (toggleInitialProp != null) toggleInitialProp.boolValue = false;
+        if (toggleInitialProp != null) toggleInitialProp.boolValue   = false;
         if (toggleInteractProp != null) toggleInteractProp.boolValue = true;
 
-        if (sliderMinProp != null) sliderMinProp.floatValue = 0f;
-        if (sliderMaxProp != null) sliderMaxProp.floatValue = 1f;
-        if (sliderInitProp != null) sliderInitProp.floatValue = 0.5f;
-        if (sliderWholeProp != null) sliderWholeProp.boolValue = false;
+        if (sliderMinProp   != null) sliderMinProp.floatValue   = 0f;
+        if (sliderMaxProp   != null) sliderMaxProp.floatValue   = 1f;
+        if (sliderInitProp  != null) sliderInitProp.floatValue  = 0.5f;
+        if (sliderWholeProp != null) sliderWholeProp.boolValue  = false;
     }
 
     private static void EnableAllDisabledWidgets(UIScreenSpec s)
@@ -1637,19 +1637,19 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             }
         }
     }
-    
+
     private bool[] BuildHasParentFlags()
     {
         if (_slotsProp == null)
-            return System.Array.Empty<bool>();
+            return Array.Empty<bool>();
 
-        int slotCount = _slotsProp.arraySize;
-        var hasParent = new bool[slotCount];
+        int  slotCount = _slotsProp.arraySize;
+        var  hasParent = new bool[slotCount];
 
-        // Slot 위젯의 slotId -> SlotSpec.slotName 매칭으로 parent 정보 구성
+        // Fill parent information via Slot widgets (slotId → slotName).
         for (int i = 0; i < slotCount; i++)
         {
-            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var slot        = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
@@ -1667,7 +1667,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 string id = (slotIdProp.stringValue ?? string.Empty).Trim();
                 if (string.IsNullOrEmpty(id)) continue;
 
-                // id 와 같은 slotName 을 가진 Slot 이 있으면 그 Slot 은 "부모가 있다"
+                // If any slotName matches this id, that slot has a parent.
                 for (int j = 0; j < slotCount; j++)
                 {
                     var childSlot     = _slotsProp.GetArrayElementAtIndex(j);
@@ -1675,7 +1675,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     string childName  = (childNameProp != null ? childNameProp.stringValue : string.Empty).Trim();
                     if (string.IsNullOrEmpty(childName)) continue;
 
-                    if (string.Equals(childName, id, System.StringComparison.Ordinal))
+                    if (string.Equals(childName, id, StringComparison.Ordinal))
                     {
                         hasParent[j] = true;
                     }
@@ -1685,27 +1685,26 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         return hasParent;
     }
-    
-    private void CleanupOrphanSlots()
+
+    private void CleanupUnlinkedSlots()
     {
         if (_slotsProp == null || _slotsProp.arraySize == 0)
         {
             EditorUtility.DisplayDialog(
-                "Clean Orphan Slots",
-                "정리할 Slot이 없습니다.",
+                "Clean Unlinked Slots",
+                "There are no slots to clean.",
                 "OK");
             return;
         }
 
-        int slotCount = _slotsProp.arraySize;
-        var hasParent = BuildHasParentFlags();
+        int  slotCount = _slotsProp.arraySize;
+        var  hasParent = BuildHasParentFlags();
+        var  toDelete  = new List<int>();
 
-        var toDelete = new List<int>();
-
-        // 🔹 0번은 항상 진짜 Root로 보호.
+        // Slot index 0 is always the canonical root and is never removed.
         for (int i = 1; i < slotCount; i++)
         {
-            // 부모가 전혀 없으면 orphan
+            // Slots that are not referenced by any parent are considered "unlinked".
             if (!hasParent[i])
                 toDelete.Add(i);
         }
@@ -1713,23 +1712,24 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (toDelete.Count == 0)
         {
             EditorUtility.DisplayDialog(
-                "Clean Orphan Slots",
-                "부모가 없는 Slot은 없습니다.",
+                "Clean Unlinked Slots",
+                "No unlinked slots were found.",
                 "OK");
             return;
         }
 
         if (!EditorUtility.DisplayDialog(
-                "Clean Orphan Slots",
-                $"부모가 없는 Slot {toDelete.Count}개를 삭제합니다." +
-                "\n\n정말 계속할까요?",
+                "Clean Unlinked Slots",
+                $"This will remove {toDelete.Count} unlinked slots.\n\n" +
+                "These slots are not referenced by any parent slot.\n" +
+                "This action cannot be undone. Continue?",
                 "Delete",
                 "Cancel"))
         {
             return;
         }
 
-        // 인덱스 밀림 방지를 위해 뒤에서부터 삭제
+        // Delete from the end to avoid index shift issues
         toDelete.Sort();
         for (int idx = toDelete.Count - 1; idx >= 0; idx--)
         {
@@ -1739,7 +1739,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _so.ApplyModifiedProperties();
 
-        // 🔹 루트는 무조건 0번으로 취급
+        // Root is always slot index 0 after cleanup (or re-created if needed).
         _slotPath.Clear();
 
         if (_slotsProp.arraySize > 0)
@@ -1752,7 +1752,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _selectedSlotIndex = -1;
             _widgetsList       = null;
 
-            // 혹시 모르니 Root 재생성 (이론상 안 올 것)
+            // Very defensive fallback: recreate a root slot if nothing remains.
             EnsureRootSlotExists();
             _selectedSlotIndex = 0;
             SetRootSlot(0);
@@ -1761,7 +1761,5 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         BuildSlotsList();
         Repaint();
     }
-
-
 }
 #endif
