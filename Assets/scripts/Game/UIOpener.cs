@@ -13,7 +13,7 @@ public class UIOpener
 
     public void Open(UIActionKey action, object payload = null)
     {
-        _router.Navigate(new UIRequest(action, payload));
+        _router.Navigate(action);
     }
     
     public void SetGold(int goldValue)

@@ -36,11 +36,11 @@ public sealed class UIResolveResult
     }
 }
 
-public class UIResolver
+public sealed class UIResolver
 {
-    private readonly UIScreenCatalog  _catalog;
+    private readonly UIScreenCatalog   _catalog;
     private readonly UIVariantResolver _variantResolver;
-    private readonly UIContext         _context; // Current UIContext
+    private readonly UIContext         _context;
 
     public UIResolver(UIScreenCatalog catalog, UIContext context)
     {
@@ -49,32 +49,26 @@ public class UIResolver
         _context         = context;
     }
 
-    public UIResolveResult Resolve(ScreenKey screenKey, UIRequest request)
+    public UIResolveResult Resolve(ScreenKey screenKey, UIActionKey? action = null)
     {
         UIResolveTrace trace = new UIResolveTrace();
         trace.Add($"Resolve ScreenKey = {screenKey}");
-        trace.Add($"Action = {request.Action.Value}");
-        trace.Add($"Payload = {(request.Payload != null ? request.Payload.ToString() : "null")}");
 
-        // 1) Take UIScreenSpec from catalog
+        if (action.HasValue)
+            trace.Add($"Action = {action.Value.Value}");
+
         if (!_catalog.TryGetScreenSpec(screenKey, out UIScreenSpec baseSpec))
         {
             trace.Add($"[Resolver] No UIScreenSpec found for key={screenKey}.");
             Debug.LogError(trace.Dump());
         }
 
-        // 2) Resolve final prefab / theme / layout via VariantResolver
         ResolvedUIScreen resolved = _variantResolver.Resolve(baseSpec, _context);
         trace.Add(resolved.DecisionTrace);
 
-        // 3)Build IUIPatch list from theme / layout specs
-        List<IUIPatch> patches = new List<IUIPatch>();
-
-        if (resolved.Theme != null)
-            resolved.Theme.BuildPatches(patches);
-
-        if (resolved.Layout != null)
-            resolved.Layout.BuildPatches(patches);
+        List<IUIPatch> patches = new();
+        resolved.Theme?.BuildPatches(patches);
+        resolved.Layout?.BuildPatches(patches);
 
         return new UIResolveResult(resolved, patches, trace);
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public sealed class RouteKeyResolver
 {
@@ -37,27 +38,24 @@ public class UIRouter
     public bool TryGetScreen(ScreenKey key, out UIScreen screen)
         => _screens.TryGetValue(key, out screen);
     
-    public void Navigate(UIRequest request)
+    public void Navigate(UIActionKey action)
     {
-        UIActionKey action = request.Action;
-        
         if (!_routeKeyResolver.TryGetRouteKey(action, out ScreenKey key))
         {
-            UnityEngine.Debug.LogWarning($"[UIRouter] Unknown route='{action.Value}'. Fallback to {_defaultKey}.");
+            Debug.LogWarning($"[UIRouter] Unknown route='{action.Value}'. Fallback to {_defaultKey}.");
             key = _defaultKey;
         }
 
-        UIResolveResult result = _resolver.Resolve(key, request);
+        UIResolveResult result = _resolver.Resolve(key, action);
         UIScreen screen = _factory.Create(result);
-        
+
         screen.gameObject.name = key.ToString();
 
-        result.Trace.Dump();
+        // ✅ Dump()는 string을 반환하니까 Log로 찍어야 함
+        Debug.Log(result.Trace.Dump());
 
         if (_screens.TryGetValue(key, out UIScreen existing) && existing != null)
-        {
-            UnityEngine.Object.Destroy(existing.gameObject);
-        }
+            Object.Destroy(existing.gameObject);
 
         _screens[key] = screen;
         CurrentScreen = screen;

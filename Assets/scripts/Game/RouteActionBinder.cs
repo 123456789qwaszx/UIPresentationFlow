@@ -27,7 +27,7 @@ public sealed class RouteActionBinder : IUiActionBinder
         widget.Button.onClick.RemoveAllListeners();
         widget.Button.onClick.AddListener(() =>
         {
-            _getRouter()?.Navigate(new UIRequest(key));
+            _getRouter()?.Navigate(key);
         });
 
         return true;
