@@ -16,13 +16,7 @@ MonoBehaviour:
   - key:
       value: home
     specAsset: {fileID: 11400000, guid: df55a48437c21924895d4083042f5cde, type: 2}
-  - key:
-      value: shop
-    specAsset: {fileID: 11400000, guid: 3f9b9b3d5abe08c41ba5f2092ea99fe0, type: 2}
   routes:
   - route: default/nav/home
     key:
       value: home
-  - route: default/nav/shop
-    key:
-      value: shop

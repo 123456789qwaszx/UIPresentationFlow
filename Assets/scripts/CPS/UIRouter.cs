@@ -51,7 +51,6 @@ public class UIRouter
 
         screen.gameObject.name = key.ToString();
 
-        // ✅ Dump()는 string을 반환하니까 Log로 찍어야 함
         Debug.Log(result.Trace.Dump());
 
         if (_screens.TryGetValue(key, out UIScreen existing) && existing != null)

@@ -50,7 +50,7 @@ public sealed class UISlotBinder
                 map.Add(id, rect);
             }
 
-            //ValidateRequired(root, map, requiredSlotIds, strict);
+            ValidateRequired(root, map, requiredSlotIds, strict);
             return map;
         }
 

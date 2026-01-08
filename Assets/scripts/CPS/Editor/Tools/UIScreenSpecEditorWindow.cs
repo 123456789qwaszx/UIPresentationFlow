@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
@@ -77,6 +78,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         _slotsProp = _specProp.FindPropertyRelative("slots");
 
+        // 🔹 여기 추가: 최소 1개의 Root Slot 보장
+        EnsureRootSlotExists();
+
         BuildSlotsList();
 
         _slotPath.Clear();
@@ -93,12 +97,41 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
     }
 
+    private void EnsureRootSlotExists()
+    {
+        if (_slotsProp == null) return;
+
+        if (_slotsProp.arraySize == 0)
+        {
+            _slotsProp.InsertArrayElementAtIndex(0);
+            var root = _slotsProp.GetArrayElementAtIndex(0);
+
+            var nameProp = root.FindPropertyRelative("slotName");
+            var widgetsProp = root.FindPropertyRelative("widgets");
+
+            // 처음 기본 이름은 비워두거나 "Root" 정도로.
+            // 어차피 나중에 템플릿의 UISlot.id와 맞춰주기 위해 직접 수정 가능해야 함.
+            if (nameProp != null)
+                nameProp.stringValue = "Root";
+
+            if (widgetsProp != null)
+                widgetsProp.ClearArray();
+
+            _so.ApplyModifiedProperties();
+        }
+    }
+
     // ─────────────────────────────────────────────
     // Slots 리스트
     // ─────────────────────────────────────────────
     private void BuildSlotsList()
     {
-        _slotsList = new ReorderableList(_so, _slotsProp, true, true, true, true);
+        // 🔹 add/remove/drag 비활성화: 읽기 전용 리스트로
+        _slotsList = new ReorderableList(_so, _slotsProp,
+            draggable: false,
+            displayHeader: true,
+            displayAddButton: false,
+            displayRemoveButton: false);
 
         _slotsList.drawHeaderCallback = rect =>
             EditorGUI.LabelField(rect, "Slots");
@@ -155,28 +188,141 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         };
 
         _slotsList.elementHeightCallback = index =>
-            EditorGUIUtility.singleLineHeight + 6f;
-
-        _slotsList.drawElementCallback = (rect, index, isActive, isFocused) =>
         {
-            rect.y += 2f;
+            float lineH = EditorGUIUtility.singleLineHeight;
+            float vGap = 2f;
 
-            const float horizontalPadding = 4f;
-            rect.x += horizontalPadding;
-            rect.width -= horizontalPadding * 2f;
-            rect.height = EditorGUIUtility.singleLineHeight;
+            // root(0번)는 2줄, 나머지는 1줄
+            int lines = (index == 0) ? 2 : 1;
 
-            var slot = _slotsProp.GetArrayElementAtIndex(index);
-            var widgetsProp = slot.FindPropertyRelative("widgets");
-            int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
-
-            // 🔹 새로 추가할 부분: 경로 + depth 표시
-            int depth;
-            string pathLabel = GetSlotDisplayPath(index, out depth);
-
-            // 예: [depth2] Root > C1 > C2 (3)
-            EditorGUI.LabelField(rect, $"[depth{depth}] {pathLabel} ({widgetCount})");
+            return lines * (lineH + vGap) + 4f;
         };
+
+        _slotsList.drawElementCallback = DrawSlotElement;
+    }
+
+    private void DrawSlotElement(Rect rect, int index, bool isActive, bool isFocused)
+{
+    float lineH = EditorGUIUtility.singleLineHeight;
+    float vGap  = 2f;
+
+    rect.y += 2f;
+
+    const float horizontalPadding = 4f;
+    rect.x    += horizontalPadding;
+    rect.width -= horizontalPadding * 2f;
+    rect.height = lineH;
+
+    var slot        = _slotsProp.GetArrayElementAtIndex(index);
+    var nameProp    = slot.FindPropertyRelative("slotName");
+    var widgetsProp = slot.FindPropertyRelative("widgets");
+    int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
+
+    int    depth;
+    string pathLabel = GetSlotDisplayPath(index, out depth);
+
+    // orphan 여부 계산 (index 0은 Root)
+    bool isOrphan = false;
+    if (index > 0)
+    {
+        var hasParent = BuildHasParentFlags();
+        if (index < hasParent.Length)
+            isOrphan = !hasParent[index];
+    }
+
+    string labelText;
+    if (index == 0)
+    {
+        // Root 슬롯 표시용 라벨 (첫 줄)
+        labelText = $"[Root] {pathLabel} ({widgetCount})";
+    }
+    else if (isOrphan)
+    {
+        // 부모가 없는 슬롯
+        labelText = $"(!) [unlinked] {pathLabel} ({widgetCount})";
+    }
+    else
+    {
+        // 정상 depth 슬롯
+        labelText = $"[depth{depth}] {pathLabel} ({widgetCount})";
+    }
+
+    // ──────────────────────
+    // 1줄차: 라벨 + (Root가 아니면 ↑↓ 버튼 영역 고려)
+    // ──────────────────────
+    const float btnWidth = 18f;
+    const float btnGap   = 2f;
+
+    float labelWidth = rect.width;
+    if (index > 0)
+        labelWidth -= (btnWidth * 2f + btnGap * 2f);
+
+    var labelRect = new Rect(rect.x, rect.y, labelWidth, lineH);
+    EditorGUI.LabelField(labelRect, labelText);
+
+    // Root 이외 슬롯이면 ↑↓ 버튼
+    if (index > 0)
+    {
+        var upRect   = new Rect(labelRect.xMax + btnGap, rect.y, btnWidth, lineH);
+        var downRect = new Rect(upRect.xMax + btnGap, rect.y, btnWidth, lineH);
+
+        using (new EditorGUI.DisabledScope(index <= 1))
+        {
+            if (GUI.Button(upRect, "↑"))
+            {
+                MoveSlot(index, index - 1);
+            }
+        }
+
+        using (new EditorGUI.DisabledScope(index >= _slotsProp.arraySize - 1))
+        {
+            if (GUI.Button(downRect, "↓"))
+            {
+                MoveSlot(index, index + 1);
+            }
+        }
+    }
+
+    // ──────────────────────
+    // 2줄차: Root 한정 SlotId 편집
+    // ──────────────────────
+    if (index == 0)
+    {
+        var idRect = new Rect(rect.x, rect.y + lineH + vGap, rect.width, lineH);
+
+        string currentName = nameProp != null ? nameProp.stringValue : string.Empty;
+
+        EditorGUI.BeginChangeCheck();
+        string newName = EditorGUI.TextField(idRect, "Root Slot Id", currentName);
+        if (EditorGUI.EndChangeCheck() && nameProp != null)
+        {
+            nameProp.stringValue = newName;
+            _so.ApplyModifiedProperties();
+        }
+    }
+}
+
+
+    private void MoveSlot(int from, int to)
+    {
+        if (_slotsProp == null) return;
+
+        int size = _slotsProp.arraySize;
+        if (from < 0 || from >= size) return;
+        if (to < 0 || to >= size) return;
+
+        // 🔹 0번은 Root 고정이므로, 절대 to=0 으로 보내지 않는다.
+        if (to == 0) return;
+
+        _slotsProp.MoveArrayElement(from, to);
+        _so.ApplyModifiedProperties();
+
+        // 선택 인덱스 업데이트 + 경로 재구성
+        _slotsList.index = to;
+        _selectedSlotIndex = to;
+        RebuildSlotPathForSelected(to);
+
+        Repaint();
     }
 
     // ─────────────────────────────────────────────
@@ -906,12 +1052,52 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         slotName = (slotName ?? string.Empty).Trim();
         if (string.IsNullOrEmpty(slotName)) return;
 
+        // 🔹 현재 부모 슬롯 index (Breadcrumb의 마지막)
+        int currentParentIndex = -1;
+        if (_slotPath != null && _slotPath.Count > 0)
+            currentParentIndex = _slotPath[_slotPath.Count - 1];
+
+        // 🔹 1) 순환 구조(조상으로 되돌아가는 링크) 방지
+        if (WouldCreateCycleFromCurrentPath(slotName))
+        {
+            EditorUtility.DisplayDialog(
+                "Invalid Slot Link",
+                $"'{slotName}' 슬롯은 현재 Slot 경로의 조상 슬롯과 이름이 같아서\n" +
+                "순환 구조가 생길 수 있습니다.\n\n" +
+                "Root → ... → " + slotName + " → ... → " + slotName + " 형태는 허용되지 않습니다.",
+                "OK"
+            );
+            return;
+        }
+
+        // 🔹 2) 멀티 부모 구조 경고 (직계 조상은 아니지만, 이미 다른 부모가 있는 경우)
+        if (currentParentIndex >= 0 &&
+            HasOtherParentForSlotName(slotName, currentParentIndex, out int otherParentIndex))
+        {
+            string currentParentName = GetSlotNameByIndex(currentParentIndex);
+            string otherParentName = GetSlotNameByIndex(otherParentIndex);
+
+            EditorUtility.DisplayDialog(
+                "Ambiguous Slot Graph",
+                $"슬롯 '{slotName}' 은 이미 다른 슬롯에서도 하위 슬롯으로 사용 중입니다.\n\n" +
+                $"- 기존 부모: '{otherParentName}'\n" +
+                $"- 현재 부모: '{currentParentName}'\n\n" +
+                "이렇게 하나의 Slot을 여러 부모가 공유하면,\n" +
+                "Slot Path 표시가 예상과 다르게 보이거나 구조가 복잡해질 수 있습니다.",
+                "OK"
+            );
+            // ⚠️ 여기서는 '경고만' 하고 계속 진행 (원하면 나중에 여기서 return; 으로 차단도 가능)
+        }
+
+        // 🔹 3) 실제 child 슬롯 찾기 / 생성
         int childIndex = -1;
         for (int i = 0; i < _slotsProp.arraySize; i++)
         {
             var slot = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
-            if (nameProp != null && nameProp.stringValue == slotName)
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            if (!string.IsNullOrEmpty(name) &&
+                string.Equals(name, slotName, StringComparison.Ordinal))
             {
                 childIndex = i;
                 break;
@@ -936,7 +1122,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _so.ApplyModifiedProperties();
         }
 
-        // 현재 경로의 마지막 슬롯이 parent이므로, childIndex를 path 뒤에 붙임
+        // 🔹 4) 경로에 child 추가 후 해당 Slot의 Widgets 표시
         _slotPath.Add(childIndex);
         _selectedSlotIndex = childIndex;
         BuildWidgetsListForCurrentSlot();
@@ -1035,10 +1221,25 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     _slotsProp.arraySize > 0 &&
                     _slotPath.Count > 0;
 
+                bool hasAnySlot =
+                    _slotsProp != null &&
+                    _slotsProp.arraySize > 0;
+
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     GUILayout.FlexibleSpace();
 
+                    // 🔹 Orphan 정리 버튼
+                    EditorGUI.BeginDisabledGroup(!hasAnySlot || _asset == null);
+                    if (GUILayout.Button("Clean Unlinked Slots", GUILayout.Width(180f)))
+                    {
+                        CleanupOrphanSlots();
+                    }
+                    EditorGUI.EndDisabledGroup();
+
+                    GUILayout.Space(4f);
+
+                    // 🔹 기존 Enable All Widgets 버튼
                     EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
                     if (GUILayout.Button("Enable All Widgets", GUILayout.Width(180f)))
                     {
@@ -1116,6 +1317,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         EditorGUILayout.Space(4f);
     }
+
     private string GetSlotDisplayPath(int slotIndex, out int depth)
     {
         depth = 0;
@@ -1150,12 +1352,29 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             var slot = _slotsProp.GetArrayElementAtIndex(idx);
             var nameProp = slot.FindPropertyRelative("slotName");
             string rawName = nameProp != null ? nameProp.stringValue : string.Empty;
-            string label = NormalizeSlotLabel(rawName);
+
+            string label;
+
+            if (idx == 0)
+            {
+                // 🔹 Root 슬롯: 사용자가 입력한 Root Slot Id를 그대로 사용
+                // 비어 있으면 "(root)"로 표시
+                label = string.IsNullOrWhiteSpace(rawName)
+                    ? "(root)"
+                    : rawName.Trim();
+            }
+            else
+            {
+                // 🔹 나머지 슬롯은 기존 규칙 유지 (Slot 0, Slot 1 같은 기본 이름 숨기기)
+                label = NormalizeSlotLabel(rawName);
+            }
+
             names.Add(label);
         }
 
         return string.Join(" > ", names);
     }
+
     private static int FindParentSlotIndex(SerializedProperty slotsProp, int childIndex)
     {
         if (slotsProp == null || childIndex < 0 || childIndex >= slotsProp.arraySize)
@@ -1197,6 +1416,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         return -1;
     }
+
     private static string NormalizeSlotLabel(string rawName)
     {
         if (string.IsNullOrWhiteSpace(rawName))
@@ -1223,6 +1443,101 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         return trimmed;
     }
+
+    private bool WouldCreateCycleFromCurrentPath(string targetSlotName)
+    {
+        if (_slotsProp == null) return false;
+
+        targetSlotName = (targetSlotName ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(targetSlotName))
+            return false;
+
+        if (_slotPath == null || _slotPath.Count == 0)
+            return false;
+
+        // 현재 Breadcrumb 경로에 있는 모든 Slot의 slotName을 검사
+        for (int i = 0; i < _slotPath.Count; i++)
+        {
+            int slotIndex = _slotPath[i];
+            if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
+                continue;
+
+            var slotProp = _slotsProp.GetArrayElementAtIndex(slotIndex);
+            var nameProp = slotProp.FindPropertyRelative("slotName");
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+
+            if (string.IsNullOrEmpty(name))
+                continue;
+
+            if (string.Equals(name, targetSlotName, StringComparison.Ordinal))
+                return true; // 조상으로 되돌아가는 링크 → 잠재적 사이클
+        }
+
+        return false;
+    }
+
+    private bool HasOtherParentForSlotName(string targetSlotName, int currentParentIndex, out int otherParentIndex)
+    {
+        otherParentIndex = -1;
+
+        if (_slotsProp == null)
+            return false;
+
+        targetSlotName = (targetSlotName ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(targetSlotName))
+            return false;
+
+        for (int i = 0; i < _slotsProp.arraySize; i++)
+        {
+            // 지금 열고 있는 부모 슬롯(현재 경로의 마지막)은 제외
+            if (i == currentParentIndex)
+                continue;
+
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var widgetsProp = slot.FindPropertyRelative("widgets");
+            if (widgetsProp == null)
+                continue;
+
+            for (int w = 0; w < widgetsProp.arraySize; w++)
+            {
+                var widget = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp = widget.FindPropertyRelative("widgetType");
+                var slotIdProp = widget.FindPropertyRelative("slotId");
+
+                if (typeProp == null || slotIdProp == null)
+                    continue;
+
+                var widgetType = (WidgetType)typeProp.enumValueIndex;
+                if (widgetType != WidgetType.Slot)
+                    continue;
+
+                string id = (slotIdProp.stringValue ?? string.Empty).Trim();
+                if (string.Equals(id, targetSlotName, StringComparison.Ordinal))
+                {
+                    otherParentIndex = i;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private string GetSlotNameByIndex(int index)
+    {
+        if (_slotsProp == null || index < 0 || index >= _slotsProp.arraySize)
+            return $"Slot {index}";
+
+        var slot = _slotsProp.GetArrayElementAtIndex(index);
+        var nameProp = slot.FindPropertyRelative("slotName");
+        string name = nameProp != null ? nameProp.stringValue : null;
+
+        if (string.IsNullOrWhiteSpace(name))
+            return $"Slot {index}";
+
+        return name.Trim();
+    }
+
     // ─────────────────────────────────────────────
     // 유틸
     // ─────────────────────────────────────────────
@@ -1322,5 +1637,131 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             }
         }
     }
+    
+    private bool[] BuildHasParentFlags()
+    {
+        if (_slotsProp == null)
+            return System.Array.Empty<bool>();
+
+        int slotCount = _slotsProp.arraySize;
+        var hasParent = new bool[slotCount];
+
+        // Slot 위젯의 slotId -> SlotSpec.slotName 매칭으로 parent 정보 구성
+        for (int i = 0; i < slotCount; i++)
+        {
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var widgetsProp = slot.FindPropertyRelative("widgets");
+            if (widgetsProp == null) continue;
+
+            for (int w = 0; w < widgetsProp.arraySize; w++)
+            {
+                var widget     = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp   = widget.FindPropertyRelative("widgetType");
+                var slotIdProp = widget.FindPropertyRelative("slotId");
+
+                if (typeProp == null || slotIdProp == null) continue;
+
+                var widgetType = (WidgetType)typeProp.enumValueIndex;
+                if (widgetType != WidgetType.Slot) continue;
+
+                string id = (slotIdProp.stringValue ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(id)) continue;
+
+                // id 와 같은 slotName 을 가진 Slot 이 있으면 그 Slot 은 "부모가 있다"
+                for (int j = 0; j < slotCount; j++)
+                {
+                    var childSlot     = _slotsProp.GetArrayElementAtIndex(j);
+                    var childNameProp = childSlot.FindPropertyRelative("slotName");
+                    string childName  = (childNameProp != null ? childNameProp.stringValue : string.Empty).Trim();
+                    if (string.IsNullOrEmpty(childName)) continue;
+
+                    if (string.Equals(childName, id, System.StringComparison.Ordinal))
+                    {
+                        hasParent[j] = true;
+                    }
+                }
+            }
+        }
+
+        return hasParent;
+    }
+    
+    private void CleanupOrphanSlots()
+    {
+        if (_slotsProp == null || _slotsProp.arraySize == 0)
+        {
+            EditorUtility.DisplayDialog(
+                "Clean Orphan Slots",
+                "정리할 Slot이 없습니다.",
+                "OK");
+            return;
+        }
+
+        int slotCount = _slotsProp.arraySize;
+        var hasParent = BuildHasParentFlags();
+
+        var toDelete = new List<int>();
+
+        // 🔹 0번은 항상 진짜 Root로 보호.
+        for (int i = 1; i < slotCount; i++)
+        {
+            // 부모가 전혀 없으면 orphan
+            if (!hasParent[i])
+                toDelete.Add(i);
+        }
+
+        if (toDelete.Count == 0)
+        {
+            EditorUtility.DisplayDialog(
+                "Clean Orphan Slots",
+                "부모가 없는 Slot은 없습니다.",
+                "OK");
+            return;
+        }
+
+        if (!EditorUtility.DisplayDialog(
+                "Clean Orphan Slots",
+                $"부모가 없는 Slot {toDelete.Count}개를 삭제합니다." +
+                "\n\n정말 계속할까요?",
+                "Delete",
+                "Cancel"))
+        {
+            return;
+        }
+
+        // 인덱스 밀림 방지를 위해 뒤에서부터 삭제
+        toDelete.Sort();
+        for (int idx = toDelete.Count - 1; idx >= 0; idx--)
+        {
+            int slotIndex = toDelete[idx];
+            _slotsProp.DeleteArrayElementAtIndex(slotIndex);
+        }
+
+        _so.ApplyModifiedProperties();
+
+        // 🔹 루트는 무조건 0번으로 취급
+        _slotPath.Clear();
+
+        if (_slotsProp.arraySize > 0)
+        {
+            _selectedSlotIndex = 0;
+            SetRootSlot(0);
+        }
+        else
+        {
+            _selectedSlotIndex = -1;
+            _widgetsList       = null;
+
+            // 혹시 모르니 Root 재생성 (이론상 안 올 것)
+            EnsureRootSlotExists();
+            _selectedSlotIndex = 0;
+            SetRootSlot(0);
+        }
+
+        BuildSlotsList();
+        Repaint();
+    }
+
+
 }
 #endif
