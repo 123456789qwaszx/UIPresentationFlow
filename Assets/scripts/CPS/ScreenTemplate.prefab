@@ -101,5 +101,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08294e97707dd8343b59455cf5db203e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISlot
-  id: ttt
+  id: Root
   target: {fileID: 4210462730382022737}

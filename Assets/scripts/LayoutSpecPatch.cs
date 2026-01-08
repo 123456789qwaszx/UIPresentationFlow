@@ -11,6 +11,9 @@ public sealed class LayoutSpecPatch : IUIPatch
 
     public void Apply(UIScreen screen)
     {
+        if (_layout == null || screen == null)
+            return;
+        
         foreach (WidgetLayoutPatch widgetPatch in _layout.widgets)
         {
             string nameTag = (widgetPatch.nameTag ?? string.Empty).Trim();
