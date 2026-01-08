@@ -2,39 +2,21 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-public class ThemeSpecPatch : IUIPatch
-{
-    private readonly ThemeSpec _theme;
-
-    public ThemeSpecPatch(ThemeSpec theme)
-    {
-        _theme = theme;
-    }
-
-    public void Apply(UIScreen screen)
-    {
-        if (_theme == null || screen == null)
-            return;
-
-        Image rootImage = screen.GetComponent<Image>();
-        if (rootImage != null)
-        {
-            rootImage.color = _theme.backgroundColor;
-        }
-
-        TMP_Text[] texts = screen.GetComponentsInChildren<TMP_Text>(true);
-        foreach (TMP_Text text in texts)
-        {
-            text.color = _theme.textColor;
-        }
-    }
-}
-
 [CreateAssetMenu(menuName = "UI/ThemeSpec")]
 public class ThemeSpec : ScriptableObject
 {
+    [Header("Base Colors")]
     public Color backgroundColor = Color.white;
-    public Color textColor = Color.black;
+    public Color panelColor      = new Color(0.1f, 0.1f, 0.1f);
+    public Color primaryColor    = new Color(0.2f, 0.6f, 1.0f);
+    public Color textMainColor   = Color.white;
+    public Color textWeakColor   = Color.gray;
+
+    [Header("Typography")]
+    public TMP_FontAsset mainFont;
+    public int titleSize   = 28;
+    public int bodySize    = 16;
+    public int captionSize = 13;
 
     // Fonts, button styles, etc. can be added later if necessary
     public void BuildPatches(System.Collections.Generic.List<IUIPatch> patches)

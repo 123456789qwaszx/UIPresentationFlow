@@ -8,20 +8,6 @@ public class UIResolveTrace
     public string Dump() => "[Trace]\n- " + string.Join("\n- ", _lines);
 }
 
-public class UIRequest
-{
-    public UIActionKey Action { get; }
-    public object Payload;
-    
-    public string Route => Action.Value;
-
-    public UIRequest(UIActionKey action, object payload = null)
-    {
-        Action  = action;
-        Payload = payload;
-    }
-}
-
 public sealed class UIResolveResult
 {
     public ResolvedUIScreen Resolved { get; }
