@@ -297,8 +297,33 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             string newName = EditorGUI.TextField(idRect, "Root Slot Id", currentName);
             if (EditorGUI.EndChangeCheck() && nameProp != null)
             {
-                nameProp.stringValue = newName;
-                _so.ApplyModifiedProperties();
+                newName = (newName ?? string.Empty).Trim();
+
+                if (string.IsNullOrEmpty(newName))
+                {
+                    EditorUtility.DisplayDialog(
+                        "Invalid Root Slot Id",
+                        "Root Slot Id cannot be empty.\nPlease enter a unique id.",
+                        "OK"
+                    );
+                }
+                else if (IsSlotNameUsedByOtherSlots(0, newName))
+                {
+                    // 다른 슬롯에서 이미 사용 중인 이름이면 Root 로 쓸 수 없음
+                    EditorUtility.DisplayDialog(
+                        "Duplicate Root Slot Id",
+                        $"The id '{newName}' is already used by another slot.\n\n" +
+                        "Root Slot Id must be unique.\n" +
+                        "Please choose a different id or rename the other slot first.",
+                        "OK"
+                    );
+                }
+                else
+                {
+                    // 유효하고, 중복도 아니면 반영
+                    nameProp.stringValue = newName;
+                    _so.ApplyModifiedProperties();
+                }
             }
         }
     }
@@ -1317,6 +1342,34 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         EditorGUILayout.Space(4f);
+    }
+    private bool IsSlotNameUsedByOtherSlots(int selfIndex, string name)
+    {
+        if (_slotsProp == null)
+            return false;
+
+        name = (name ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        int slotCount = _slotsProp.arraySize;
+        for (int i = 0; i < slotCount; i++)
+        {
+            if (i == selfIndex)
+                continue;
+
+            var slot     = _slotsProp.GetArrayElementAtIndex(i);
+            var nameProp = slot.FindPropertyRelative("slotName");
+            string other = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+
+            if (string.IsNullOrEmpty(other))
+                continue;
+
+            if (string.Equals(other, name, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
     }
 
     private string GetSlotDisplayPath(int slotIndex, out int depth)

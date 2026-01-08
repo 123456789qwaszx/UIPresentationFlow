@@ -24,51 +24,55 @@ public sealed class UISlotBinder
 
         // 1) Marker-based (UISlot 컴포넌트 기준)
         UISlot[] markers = root.GetComponentsInChildren<UISlot>(_includeInactive);
-        if (markers != null && markers.Length > 0)
+if (markers != null && markers.Length > 0)
+{
+    for (int i = 0; i < markers.Length; i++)
+    {
+        UISlot marker = markers[i];
+        if (marker == null) continue;
+
+        string id = (marker.id ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(id))
         {
-            for (int i = 0; i < markers.Length; i++)
-            {
-                UISlot marker = markers[i];
-                if (marker == null) continue;
-
-                string id = (marker.id ?? string.Empty).Trim();
-                if (string.IsNullOrEmpty(id))
-                {
-                    if (strict)
-                        throw new InvalidOperationException($"[UIBinder] Empty UISlot.id under '{root.name}'.");
-                    Debug.LogWarning($"[UIBinder] Empty UISlot.id under '{root.name}'.", marker);
-                    continue;
-                }
-
-                RectTransform rect = marker.target != null
-                    ? marker.target
-                    : marker.GetComponent<RectTransform>();
-
-                if (rect == null)
-                {
-                    if (strict)
-                        throw new InvalidOperationException(
-                            $"[UIBinder] UISlot '{id}' has no RectTransform (root='{root.name}').");
-                    Debug.LogWarning($"[UIBinder] UISlot '{id}' has no RectTransform (root='{root.name}').", marker);
-                    continue;
-                }
-
-                if (map.ContainsKey(id))
-                {
-                    if (strict)
-                        throw new InvalidOperationException(
-                            $"[UIBinder] Duplicate slot id '{id}' under '{root.name}'.");
-                    Debug.LogWarning($"[UIBinder] Duplicate slot id '{id}' under '{root.name}'. Using first.", marker);
-                    continue;
-                }
-
-                map.Add(id, rect);
-            }
-
-            // 🔹 여기서 "필요한 slotId가 실제로 존재하는지" 검증하되, 예외는 절대 던지지 않게 한다.
-            ValidateRequired(root, map, requiredSlotIds, strict: false);
-            return map;
+            if (strict)
+                throw new InvalidOperationException($"[UIBinder] Empty UISlot.id under '{root.name}'.");
+            Debug.LogWarning($"[UIBinder] Empty UISlot.id under '{root.name}'.", marker);
+            continue;
         }
+
+        RectTransform rect = marker.target != null
+            ? marker.target
+            : marker.GetComponent<RectTransform>();
+
+        if (rect == null)
+        {
+            if (strict)
+                throw new InvalidOperationException(
+                    $"[UIBinder] UISlot '{id}' has no RectTransform (root='{root.name}').");
+            Debug.LogWarning($"[UIBinder] UISlot '{id}' has no RectTransform (root='{root.name}').", marker);
+            continue;
+        }
+
+        // 🔹 여기만 변경
+        if (map.TryGetValue(id, out var existingRect))
+        {
+            if (existingRect != rect)
+            {
+                Debug.LogWarning(
+                    $"[UIBinder] Duplicate slot id '{id}' under '{root.name}'. " +
+                    "The first one will be used, this one will be ignored.",
+                    marker);
+            }
+            continue;
+        }
+
+        map.Add(id, rect);
+    }
+
+    // required 검증은 이미 strict:false 로만 돌고 있음
+    ValidateRequired(root, map, requiredSlotIds, strict: false);
+    return map;
+}
 
         // 2) Marker 가 하나도 없을 때: 이름 기반 fallback
         foreach (string raw in requiredSlotIds)
