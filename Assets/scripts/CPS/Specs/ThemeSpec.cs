@@ -1,6 +1,5 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
 
 [CreateAssetMenu(menuName = "UI/ThemeSpec")]
 public class ThemeSpec : ScriptableObject
