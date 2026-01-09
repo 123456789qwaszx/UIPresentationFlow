@@ -1859,7 +1859,7 @@ MonoBehaviour:
   gameObjectPrefab: {fileID: 1930240663}
   uISlotPrefab: {fileID: 5192250922718123098, guid: fb5851a7374823f40a0f6c96cbeb554f, type: 3}
   uiRoot: {fileID: 1174595858}
-  catalog: {fileID: 11400000, guid: 77f24a0fd9bcd064eac0d042f9414cda, type: 2}
+  catalog: {fileID: 11400000, guid: 714475594930c514d851c6d355f9527a, type: 2}
 --- !u!4 &1649107831
 Transform:
   m_ObjectHideFlags: 0
@@ -1904,7 +1904,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8deb6acf927653479afc7b332463ee7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameBootstrap
-  uiCatalog: {fileID: 11400000, guid: 77f24a0fd9bcd064eac0d042f9414cda, type: 2}
+  uiCatalog: {fileID: 11400000, guid: 714475594930c514d851c6d355f9527a, type: 2}
 --- !u!4 &1691718480
 Transform:
   m_ObjectHideFlags: 0

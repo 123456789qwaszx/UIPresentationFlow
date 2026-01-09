@@ -1,27 +1,52 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class LayoutSpecPatch : IUIPatch
+[Serializable]
+public sealed class RectTransformPatch
 {
-    private readonly LayoutPatchSpec _layout;
+    [Header("Anchors")]
+    public bool   overrideAnchors;
+    public Vector2 anchorMin;
+    public Vector2 anchorMax;
 
-    public LayoutSpecPatch(LayoutPatchSpec layout)
-    {
-        _layout = layout;
-    }
+    [Header("Pivot")]
+    public bool   overridePivot;
+    public Vector2 pivot;
 
-    public void Apply(UIScreen screen)
-    {
-        // TODO: Add support for locale-specific layouts, padding, and alignment
-        UnityEngine.Debug.Log($"LayoutSpecPatch applied: {_layout.name}");
-    }
+    [Header("Position")]
+    public bool   overrideAnchoredPosition;
+    public Vector2 anchoredPosition;
+
+    [Header("Size")]
+    public bool   overrideSizeDelta;
+    public Vector2 sizeDelta;
+}
+
+[Serializable]
+public sealed class WidgetLayoutPatch
+{
+    [Tooltip("UIScreen.WidgetHandle.NameTag 와 일치해야 합니다.")]
+    public string nameTag;
+
+    [Header("Active")]
+    public bool overrideActive;
+    public bool active = true;
+
+    [Header("RectTransform")]
+    public RectTransformPatch rect = new RectTransformPatch();
 }
 
 [CreateAssetMenu(menuName = "UI/LayoutPatchSpec")]
-public class LayoutPatchSpec : ScriptableObject
+public sealed class LayoutPatchSpec : ScriptableObject
 {
-    // Reserved for future locale-specific line breaks, font sizes, and layout padding
+    [Tooltip("이 레이아웃 패치가 적용할 위젯 목록 (nameTag 기준)")]
+    public List<WidgetLayoutPatch> widgets = new();
 
-    public void BuildPatches(System.Collections.Generic.List<IUIPatch> patches)
+    // 나중에 SafeArea 같은 전역 옵션도 여기 추가 가능
+    // public bool useSafeArea;
+
+    public void BuildPatches(List<IUIPatch> patches)
     {
         patches.Add(new LayoutSpecPatch(this));
     }

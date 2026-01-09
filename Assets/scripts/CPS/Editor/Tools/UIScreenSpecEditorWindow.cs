@@ -32,6 +32,27 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     [SerializeField] private WidgetPresetCatalog _presetCatalog;
     private readonly Dictionary<string, int> _widgetPresetSelection = new();
 
+    // ─────────────────────────────────────────────
+// Slot graph caches (performance)
+// ─────────────────────────────────────────────
+    private bool _slotGraphDirty = true;
+    private bool[] _hasParentCache;
+    private int[] _parentIndexCache; // child -> parent slot index (first found), -1 if none
+    private int[] _depthCache;
+    private string[] _pathLabelCache;
+
+// ─────────────────────────────────────────────
+// Preset labels cache (avoid per-widget allocations)
+// ─────────────────────────────────────────────
+    private string[] _presetLabelsCache;
+    private int _presetLabelsCountCache = -1;
+    private bool _presetLabelsHasCatalogCache = false;
+
+
+    private readonly Dictionary<string, bool> _widgetSectionFoldoutStates = new();
+
+    private void MarkSlotGraphDirty() => _slotGraphDirty = true;
+
     [MenuItem("Tools/UI/UIScreen Spec Editor")]
     public static void Open()
     {
@@ -106,7 +127,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _slotsProp.InsertArrayElementAtIndex(0);
             var root = _slotsProp.GetArrayElementAtIndex(0);
 
-            var nameProp    = root.FindPropertyRelative("slotName");
+            var nameProp = root.FindPropertyRelative("slotName");
             var widgetsProp = root.FindPropertyRelative("widgets");
 
             // Initial root slot id can be customized later to match the UISlot.id on the template.
@@ -117,6 +138,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 widgetsProp.ClearArray();
 
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
         }
     }
 
@@ -147,7 +169,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _slotsProp.InsertArrayElementAtIndex(i);
             var slot = _slotsProp.GetArrayElementAtIndex(i);
 
-            var nameProp    = slot.FindPropertyRelative("slotName");
+            var nameProp = slot.FindPropertyRelative("slotName");
             var widgetsProp = slot.FindPropertyRelative("widgets");
 
             if (nameProp != null)
@@ -157,6 +179,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 widgetsProp.ClearArray();
 
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
 
             // Treat the newly created slot as a new root context for editing.
             SetRootSlot(i);
@@ -171,6 +194,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             _slotsProp.DeleteArrayElementAtIndex(removeIndex);
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
 
             if (_slotsProp.arraySize == 0)
             {
@@ -189,7 +213,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         _slotsList.elementHeightCallback = index =>
         {
             float lineH = EditorGUIUtility.singleLineHeight;
-            float vGap  = 2f;
+            float vGap = 2f;
 
             // Root (index 0) uses 2 lines (main + Root Slot Id field), others use 1 line.
             int lines = (index == 0) ? 2 : 1;
@@ -203,54 +227,46 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private void DrawSlotElement(Rect rect, int index, bool isActive, bool isFocused)
     {
         float lineH = EditorGUIUtility.singleLineHeight;
-        float vGap  = 2f;
+        float vGap = 2f;
 
         rect.y += 2f;
 
         const float horizontalPadding = 4f;
-        rect.x     += horizontalPadding;
+        rect.x += horizontalPadding;
         rect.width -= horizontalPadding * 2f;
         rect.height = lineH;
 
-        var slot        = _slotsProp.GetArrayElementAtIndex(index);
-        var nameProp    = slot.FindPropertyRelative("slotName");
+        var slot = _slotsProp.GetArrayElementAtIndex(index);
+        var nameProp = slot.FindPropertyRelative("slotName");
         var widgetsProp = slot.FindPropertyRelative("widgets");
         int widgetCount = widgetsProp != null ? widgetsProp.arraySize : 0;
 
-        int    depth;
-        string pathLabel = GetSlotDisplayPath(index, out depth);
+        // Use cached path/depth/parent flags
+        int depth = 0;
+        if (_depthCache != null && index >= 0 && index < _depthCache.Length)
+            depth = _depthCache[index];
 
-        // Check if this slot is unlinked (no parent) – index 0 is always treated as the root.
+        string pathLabel = "(...)";
+        if (_pathLabelCache != null && index >= 0 && index < _pathLabelCache.Length)
+            pathLabel = _pathLabelCache[index];
+
         bool isUnlinked = false;
-        if (index > 0)
-        {
-            var hasParent = BuildHasParentFlags();
-            if (index < hasParent.Length)
-                isUnlinked = !hasParent[index];
-        }
+        if (index > 0 && _hasParentCache != null && index < _hasParentCache.Length)
+            isUnlinked = !_hasParentCache[index];
 
         string labelText;
         if (index == 0)
-        {
-            // Root slot label (first line)
             labelText = $"[Root] {pathLabel} ({widgetCount})";
-        }
         else if (isUnlinked)
-        {
-            // Slot that has no parent reference in the current graph
             labelText = $"(!) [unlinked] {pathLabel} ({widgetCount})";
-        }
         else
-        {
-            // Normal slot with a valid parent chain
             labelText = $"[depth{depth}] {pathLabel} ({widgetCount})";
-        }
 
         // ──────────────────────
         // First line: label + (↑↓ controls for non-root slots)
         // ──────────────────────
         const float btnWidth = 18f;
-        const float btnGap   = 2f;
+        const float btnGap = 2f;
 
         float labelWidth = rect.width;
         if (index > 0)
@@ -259,28 +275,21 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var labelRect = new Rect(rect.x, rect.y, labelWidth, lineH);
         EditorGUI.LabelField(labelRect, labelText);
 
-        // Move buttons for non-root slots
         if (index > 0)
         {
-            var upRect   = new Rect(labelRect.xMax + btnGap, rect.y, btnWidth, lineH);
+            var upRect = new Rect(labelRect.xMax + btnGap, rect.y, btnWidth, lineH);
             var downRect = new Rect(upRect.xMax + btnGap, rect.y, btnWidth, lineH);
 
-            // Up: only from index >= 2 (index 1 cannot move into root position)
             using (new EditorGUI.DisabledScope(index <= 1))
             {
                 if (GUI.Button(upRect, "↑"))
-                {
                     MoveSlot(index, index - 1);
-                }
             }
 
-            // Down: any index that is not the last one
             using (new EditorGUI.DisabledScope(index >= _slotsProp.arraySize - 1))
             {
                 if (GUI.Button(downRect, "↓"))
-                {
                     MoveSlot(index, index + 1);
-                }
             }
         }
 
@@ -309,7 +318,6 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 }
                 else if (IsSlotNameUsedByOtherSlots(0, newName))
                 {
-                    // 다른 슬롯에서 이미 사용 중인 이름이면 Root 로 쓸 수 없음
                     EditorUtility.DisplayDialog(
                         "Duplicate Root Slot Id",
                         $"The id '{newName}' is already used by another slot.\n\n" +
@@ -320,13 +328,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 }
                 else
                 {
-                    // 유효하고, 중복도 아니면 반영
                     nameProp.stringValue = newName;
                     _so.ApplyModifiedProperties();
+                    MarkSlotGraphDirty(); // root id affects name->index and path labels
                 }
             }
         }
     }
+
 
     private void MoveSlot(int from, int to)
     {
@@ -334,16 +343,17 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         int size = _slotsProp.arraySize;
         if (from < 0 || from >= size) return;
-        if (to   < 0 || to   >= size) return;
+        if (to < 0 || to >= size) return;
 
         // Slot 0 is the canonical root and cannot be moved into.
         if (to == 0) return;
 
         _slotsProp.MoveArrayElement(from, to);
         _so.ApplyModifiedProperties();
+        MarkSlotGraphDirty();
 
         // Update selection and rebuild path
-        _slotsList.index  = to;
+        _slotsList.index = to;
         _selectedSlotIndex = to;
         RebuildSlotPathForSelected(to);
 
@@ -402,28 +412,28 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var nameToIndex = new Dictionary<string, int>();
         for (int i = 0; i < slotCount; i++)
         {
-            var slot     = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
-            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
             if (!string.IsNullOrEmpty(name) && !nameToIndex.ContainsKey(name))
                 nameToIndex.Add(name, i);
         }
 
         // 2) Build parent -> children graph using Slot widgets (slotId)
-        var children  = new List<int>[slotCount];
+        var children = new List<int>[slotCount];
         var hasParent = new bool[slotCount];
         for (int i = 0; i < slotCount; i++)
         {
             children[i] = new List<int>();
 
-            var slot        = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
             for (int wi = 0; wi < widgetsProp.arraySize; wi++)
             {
-                var widget     = widgetsProp.GetArrayElementAtIndex(wi);
-                var typeProp   = widget.FindPropertyRelative("widgetType");
+                var widget = widgetsProp.GetArrayElementAtIndex(wi);
+                var typeProp = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null) continue;
@@ -450,7 +460,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         // 4) DFS from each root to find a path to targetIndex
-        var path     = new List<int>();
+        var path = new List<int>();
         var visiting = new HashSet<int>();
 
         bool TryDfs(int current)
@@ -512,7 +522,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
             return;
 
-        var slot        = _slotsProp.GetArrayElementAtIndex(slotIndex);
+        var slot = _slotsProp.GetArrayElementAtIndex(slotIndex);
         var widgetsProp = slot.FindPropertyRelative("widgets");
 
         _widgetsList = new ReorderableList(_so, widgetsProp, true, true, true, true);
@@ -528,7 +538,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 rect.height - padding * 2f
             );
 
-            Color normalBg   = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+            Color normalBg = new Color(0.3f, 0.3f, 0.3f, 0.5f);
             Color selectedBg = new Color(0f, 0f, 0f, 0.24f);
 
             EditorGUI.DrawRect(bgRect, isActive ? selectedBg : normalBg);
@@ -554,6 +564,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             widgetsProp.DeleteArrayElementAtIndex(list.index);
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
             BuildWidgetsListForCurrentSlot();
             Repaint();
         };
@@ -571,6 +582,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             ResetWidgetSpecDefaults(newElem, insertIndex);
 
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
             BuildWidgetsListForCurrentSlot();
             if (_widgetsList != null)
                 _widgetsList.index = insertIndex;
@@ -584,80 +596,146 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         };
     }
 
+
+    #region DrawVec
+
     // ─────────────────────────────────────────────
     // Per-widget element height
     // ─────────────────────────────────────────────
     private float CalcWidgetElementHeight(SerializedProperty widgetsProp, int index)
+{
+    float lineH = EditorGUIUtility.singleLineHeight;
+    float vGap = 2f;
+    const float borderPadding = 2f;
+    const float innerTopGap = 2f;          // DrawWidgetElement에서 rect.y += vGap 했던 것과 유사
+    const float extra = 4f;                // 기존 리턴에 붙이던 여유
+
+    if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
+        return lineH + borderPadding * 2f + extra;
+
+    var w = widgetsProp.GetArrayElementAtIndex(index);
+    if (w == null)
+        return lineH + borderPadding * 2f + extra;
+
+    string foldKey = w.propertyPath;
+    bool expanded = _widgetFoldoutStates.TryGetValue(foldKey, out var v) ? v : true;
+
+    float h = 0f;
+
+    // borderRect 내부에서 시작할 컨텐츠 높이 누적
+    h += innerTopGap; // 첫 y 보정
+
+    // Header 1줄: Foldout + Enabled + Name + Type
+    h += lineH + vGap;
+
+    if (!expanded)
+        return h + borderPadding * 2f + extra;
+
+    // Preset 1줄
+    h += lineH + vGap;
+
+    // Layout Mode 1줄
+    h += lineH + vGap;
+
+    var rectModeProp = w.FindPropertyRelative("rectMode");
+    var rectMode = rectModeProp != null ? (WidgetRectMode)rectModeProp.enumValueIndex : WidgetRectMode.OverrideInSlot;
+
+    if (rectMode == WidgetRectMode.OverrideInSlot)
     {
-        float lineH         = EditorGUIUtility.singleLineHeight;
-        float vGap          = 2f;
-        float borderPadding = 2f;
-
-        if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
-            return lineH + 2f * borderPadding;
-
-        var w = widgetsProp.GetArrayElementAtIndex(index);
-
-        string foldKey = w.propertyPath;
-        bool expanded  = true;
-        _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
-
-        if (!expanded)
-        {
-            int   collapsedLines  = 1;
-            float collapsedHeight = collapsedLines * (lineH + vGap) + vGap;
-            return collapsedHeight + borderPadding * 2f + 4f;
-        }
-
-        int lines = 0;
-
-        // 1 line: Name + Type
-        lines += 1;
-        // Preset dropdown
-        lines += 1;
-        // Text 2 lines
-        lines += 2;
-
-        var typeProp   = w.FindPropertyRelative("widgetType");
-        var widgetType = (WidgetType)typeProp.enumValueIndex;
-
-        // Route + Prefab
-        lines += (widgetType == WidgetType.Button) ? 2 : 1;
-
-        // Layout Mode
-        lines += 1;
-
-        var rectModeProp = w.FindPropertyRelative("rectMode");
-        var rectMode     = (WidgetRectMode)rectModeProp.enumValueIndex;
-        if (rectMode == WidgetRectMode.OverrideInSlot)
-        {
-            // AnchorMin, AnchorMax, Pivot, Size, Position
-            lines += 5;
-        }
-
-        switch (widgetType)
-        {
-            case WidgetType.Button:
-                lines += 1;
-                break;
-            case WidgetType.Image:
-                lines += 4;
-                break;
-            case WidgetType.Toggle:
-                lines += 3;
-                break;
-            case WidgetType.Slider:
-                lines += 5;
-                break;
-            case WidgetType.Slot:
-                // [Slot Options] + Slot Id
-                lines += 2;
-                break;
-        }
-
-        float contentHeight = lines * (lineH + vGap) + vGap;
-        return contentHeight + borderPadding * 2f + 4f;
+        // Position / Size / AnchorMin / AnchorMax / Pivot : 5줄
+        h += 5f * (lineH + vGap);
     }
+
+    var typeProp = w.FindPropertyRelative("widgetType");
+    var widgetType = typeProp != null ? (WidgetType)typeProp.enumValueIndex : WidgetType.Text;
+
+    // ---- Type Options foldout header (Text도 foldout 쓰는 구조라면 포함) ----
+    bool hasOptionsSection =
+        widgetType == WidgetType.Text ||
+        widgetType == WidgetType.Button ||
+        widgetType == WidgetType.Image ||
+        widgetType == WidgetType.Toggle ||
+        widgetType == WidgetType.Slider ||
+        widgetType == WidgetType.Slot ||
+        widgetType == WidgetType.GameObject; // enum에 있다면
+
+    if (hasOptionsSection)
+    {
+        h += lineH + vGap; // Options foldout header
+
+        // options open?
+        string optionsKey = $"{w.propertyPath}/{widgetType}/" + widgetType switch
+        {
+            WidgetType.Text      => "TextOptions",
+            WidgetType.Button    => "ButtonOptions",
+            WidgetType.Image     => "ImageOptions",
+            WidgetType.Toggle    => "ToggleOptions",
+            WidgetType.Slider    => "SliderOptions",
+            WidgetType.Slot      => "SlotOptions",
+            WidgetType.GameObject=> "GameObjectOptions",
+            _ => "Options"
+        };
+
+        bool defaultOpen = (widgetType == WidgetType.Slot); // Slot만 기본 펼침
+        bool optionsOpen = GetSectionFoldout(optionsKey, defaultOpen);
+
+        if (optionsOpen)
+        {
+            // 각 타입별 옵션 라인 수 + (TextArea가 있으면 “실제 높이”로 더함)
+            float InlineTextAreaHeight(int lines)
+            {
+                float textHeight = (lineH + 2f) * lines;
+                // 라벨 1줄 + vGap + 텍스트영역 + vGap
+                return (lineH + vGap) + (textHeight + vGap);
+            }
+
+            switch (widgetType)
+            {
+                case WidgetType.Text:
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Button:
+                    h += (lineH + vGap);      // OnClick Route
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Image:
+                    h += 3f * (lineH + vGap); // Sprite/Color/Native
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Toggle:
+                    h += 2f * (lineH + vGap); // Initial/Interactable
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Slider:
+                    h += 4f * (lineH + vGap); // Min/Max/Init/Whole
+                    break;
+
+                case WidgetType.Slot:
+                    h += (lineH + vGap);      // Slot Id row
+                    break;
+
+                case WidgetType.GameObject:
+                    // 옵션이 있다면 여기에 줄 추가
+                    break;
+            }
+        }
+    }
+
+    // ---- Prefab Override foldout ----
+    string prefabKey = $"{w.propertyPath}/{widgetType}/PrefabOverride";
+    bool prefabOpen = GetSectionFoldout(prefabKey, defaultValue: false);
+
+    h += lineH + vGap;        // Prefab Override header
+    if (prefabOpen)
+        h += lineH + vGap;    // prefab field
+
+    return h + borderPadding * 2f + extra;
+}
+
 
     // ─────────────────────────────────────────────
     // Widget element rendering
@@ -686,45 +764,45 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         const float horizontalPadding = 6f;
 
         rect = borderRect;
-        rect.y     += vGap;
-        rect.x     += horizontalPadding;
+        rect.y += vGap;
+        rect.x += horizontalPadding;
         rect.width -= horizontalPadding * 2f;
 
         float lineH = EditorGUIUtility.singleLineHeight;
-        float y     = rect.y;
+        float y = rect.y;
 
         var w = widgetsProp.GetArrayElementAtIndex(index);
-        var typeProp       = w.FindPropertyRelative("widgetType");
-        var nameProp       = w.FindPropertyRelative("nameTag");
-        var textProp       = w.FindPropertyRelative("text");
-        var routeProp      = w.FindPropertyRelative("onClickRoute");
-        var prefabProp     = w.FindPropertyRelative("prefabOverride");
-        var rectModeProp   = w.FindPropertyRelative("rectMode");
-        var anchorMinProp  = w.FindPropertyRelative("anchorMin");
-        var anchorMaxProp  = w.FindPropertyRelative("anchorMax");
-        var pivotProp      = w.FindPropertyRelative("pivot");
+        var typeProp = w.FindPropertyRelative("widgetType");
+        var nameProp = w.FindPropertyRelative("nameTag");
+        var textProp = w.FindPropertyRelative("text");
+        var routeProp = w.FindPropertyRelative("onClickRoute");
+        var prefabProp = w.FindPropertyRelative("prefabOverride");
+        var rectModeProp = w.FindPropertyRelative("rectMode");
+        var anchorMinProp = w.FindPropertyRelative("anchorMin");
+        var anchorMaxProp = w.FindPropertyRelative("anchorMax");
+        var pivotProp = w.FindPropertyRelative("pivot");
         var anchoredPosProp = w.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp  = w.FindPropertyRelative("sizeDelta");
+        var sizeDeltaProp = w.FindPropertyRelative("sizeDelta");
 
         var imageSpriteProp = w.FindPropertyRelative("imageSprite");
-        var imageColorProp  = w.FindPropertyRelative("imageColor");
+        var imageColorProp = w.FindPropertyRelative("imageColor");
         var imageNativeProp = w.FindPropertyRelative("imageSetNativeSize");
 
         var toggleInitialProp = w.FindPropertyRelative("toggleInitialValue");
         var toggleInteractProp = w.FindPropertyRelative("toggleInteractable");
 
-        var sliderMinProp   = w.FindPropertyRelative("sliderMin");
-        var sliderMaxProp   = w.FindPropertyRelative("sliderMax");
-        var sliderInitProp  = w.FindPropertyRelative("sliderInitialValue");
+        var sliderMinProp = w.FindPropertyRelative("sliderMin");
+        var sliderMaxProp = w.FindPropertyRelative("sliderMax");
+        var sliderInitProp = w.FindPropertyRelative("sliderInitialValue");
         var sliderWholeProp = w.FindPropertyRelative("sliderWholeNumbers");
-        var disabledProp    = w.FindPropertyRelative("disabled");
+        var disabledProp = w.FindPropertyRelative("disabled");
 
         var slotIdProp = w.FindPropertyRelative("slotId");
 
         // Context menu (Add / Delete widget)
         if (e.type == EventType.ContextClick && borderRect.Contains(e.mousePosition))
         {
-            var menu          = new GenericMenu();
+            var menu = new GenericMenu();
             int capturedIndex = index;
 
             menu.AddItem(new GUIContent("Add Widget Below"), false, () =>
@@ -738,6 +816,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 ResetWidgetSpecDefaults(newElem, insertIndex);
 
                 _so.ApplyModifiedProperties();
+                MarkSlotGraphDirty();
                 BuildWidgetsListForCurrentSlot();
                 if (_widgetsList != null)
                     _widgetsList.index = insertIndex;
@@ -751,6 +830,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
                 widgetsProp.DeleteArrayElementAtIndex(capturedIndex);
                 _so.ApplyModifiedProperties();
+                MarkSlotGraphDirty();
                 BuildWidgetsListForCurrentSlot();
                 Repaint();
             });
@@ -761,8 +841,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         // Header: Foldout + Enabled toggle + Name + Type
         string foldKey = w.propertyPath;
-        bool   expanded = true;
-        _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
+        if (!_widgetFoldoutStates.TryGetValue(foldKey, out bool expanded))
+            expanded = true;
 
         var foldoutRect = new Rect(rect.x, y, 14f, lineH);
         expanded = EditorGUI.Foldout(foldoutRect, expanded, GUIContent.none);
@@ -779,17 +859,24 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         x = toggleRect.xMax + 4f;
 
         const float typeWidth = 70f;
-        const float gap       = 4f;
+        const float gap = 4f;
 
-        float typeX    = rect.x + rect.width - typeWidth;
-        var   typeRect = new Rect(typeX, y, typeWidth, lineH);
+        float typeX = rect.x + rect.width - typeWidth;
+        var typeRect = new Rect(typeX, y, typeWidth, lineH);
 
         float nameWidth = typeX - x - gap;
         if (nameWidth < 60f) nameWidth = 60f;
         var nameFieldRect = new Rect(x, y, nameWidth, lineH);
 
         nameProp.stringValue = EditorGUI.TextField(nameFieldRect, nameProp.stringValue);
+
+// ✅ 여기: 타입 변경이 Slot ↔ 다른 타입이면 slot graph에 영향
+        var oldType = (WidgetType)typeProp.enumValueIndex;
         EditorGUI.PropertyField(typeRect, typeProp, GUIContent.none);
+        var newType = (WidgetType)typeProp.enumValueIndex;
+
+        if (oldType != newType && (oldType == WidgetType.Slot || newType == WidgetType.Slot))
+            MarkSlotGraphDirty();
 
         y += lineH + vGap;
 
@@ -800,29 +887,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         // Preset selection
         {
-            string[] labels;
+            RefreshPresetLabelsIfNeeded();
+
             bool hasPresetCatalog =
                 _presetCatalog != null &&
                 _presetCatalog.presets != null &&
                 _presetCatalog.presets.Count > 0;
 
-            if (hasPresetCatalog)
-            {
-                var presets     = _presetCatalog.presets;
-                int presetCount = presets.Count;
-
-                labels      = new string[presetCount + 1];
-                labels[0]   = "Select Preset";
-                for (int pi = 0; pi < presetCount; pi++)
-                {
-                    var p = presets[pi];
-                    labels[pi + 1] = string.IsNullOrEmpty(p.id) ? $"Preset {pi}" : p.id;
-                }
-            }
-            else
-            {
-                labels = new[] { "(No presets configured)" };
-            }
+            var labels = _presetLabelsCache ?? new[] { "(No presets configured)" };
 
             var presetRect = new Rect(rect.x, y, rect.width, lineH);
 
@@ -843,10 +915,10 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
                 if (newIndex > 0)
                 {
-                    var presets = _presetCatalog.presets;
-                    var chosen  = presets[newIndex - 1];
+                    var chosen = _presetCatalog.presets[newIndex - 1];
                     ApplyPresetToWidget(chosen, w);
                     _so.ApplyModifiedProperties();
+                    // preset changes don't affect slot graph (unless preset touches slotId; currently it doesn't)
                 }
             }
 
@@ -863,209 +935,282 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (rectMode == WidgetRectMode.OverrideInSlot)
         {
             float labelWidth = 90f;
-            float fieldGap   = 4f;
-            float rowHeight  = lineH;
+            float fieldGap = 4f;
+            float rowHeight = lineH;
 
             Rect MakeRowRect() => new Rect(rect.x, y, rect.width, rowHeight);
 
-            // Anchor Min
-            var rowRect   = MakeRowRect();
-            var labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
-            var valueRect = new Rect(
-                rowRect.x + labelWidth + fieldGap,
-                rowRect.y,
-                rowRect.width - labelWidth - fieldGap,
-                rowHeight
-            );
+            void DrawVec2Row(string label, SerializedProperty prop)
+            {
+                var rowRect = MakeRowRect();
+                var labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
+                var valueRect = new Rect(
+                    rowRect.x + labelWidth + fieldGap,
+                    rowRect.y,
+                    rowRect.width - labelWidth - fieldGap,
+                    rowHeight
+                );
 
-            EditorGUI.LabelField(labelRect, "Anchor Min");
-            var anchorMinValue = anchorMinProp.vector2Value;
-            anchorMinValue     = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMinValue);
-            anchorMinProp.vector2Value = anchorMinValue;
-            y += rowHeight + vGap;
+                EditorGUI.LabelField(labelRect, label);
 
-            // Anchor Max
-            rowRect   = MakeRowRect();
-            labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
-            valueRect = new Rect(
-                rowRect.x + labelWidth + fieldGap,
-                rowRect.y,
-                rowRect.width - labelWidth - fieldGap,
-                rowHeight
-            );
+                Vector2 v = prop.vector2Value;
+                v = EditorGUI.Vector2Field(valueRect, GUIContent.none, v);
+                prop.vector2Value = v;
 
-            EditorGUI.LabelField(labelRect, "Anchor Max");
-            var anchorMaxValue  = anchorMaxProp.vector2Value;
-            anchorMaxValue      = EditorGUI.Vector2Field(valueRect, GUIContent.none, anchorMaxValue);
-            anchorMaxProp.vector2Value = anchorMaxValue;
-            y += rowHeight + vGap;
+                y += rowHeight + vGap;
+            }
 
-            // Pivot
-            rowRect   = MakeRowRect();
-            labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
-            valueRect = new Rect(
-                rowRect.x + labelWidth + fieldGap,
-                rowRect.y,
-                rowRect.width - labelWidth - fieldGap,
-                rowHeight
-            );
+            // ✅ 원하는 순서로 배치
+            DrawVec2Row("Position", anchoredPosProp);
+            DrawVec2Row("Size", sizeDeltaProp);
+            DrawVec2Row("Anchor Min", anchorMinProp);
+            DrawVec2Row("Anchor Max", anchorMaxProp);
+            DrawVec2Row("Pivot", pivotProp);
 
-            EditorGUI.LabelField(labelRect, "Pivot");
-            var pivotValue   = pivotProp.vector2Value;
-            pivotValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, pivotValue);
-            pivotProp.vector2Value = pivotValue;
-            y += rowHeight + vGap;
-
-            // Size
-            rowRect   = MakeRowRect();
-            labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
-            valueRect = new Rect(
-                rowRect.x + labelWidth + fieldGap,
-                rowRect.y,
-                rowRect.width - labelWidth - fieldGap,
-                rowHeight
-            );
-
-            EditorGUI.LabelField(labelRect, "Size");
-            var sizeValue   = sizeDeltaProp.vector2Value;
-            sizeValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, sizeValue);
-            sizeDeltaProp.vector2Value = sizeValue;
-            y += rowHeight + vGap;
-
-            // Position
-            rowRect   = MakeRowRect();
-            labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowHeight);
-            valueRect = new Rect(
-                rowRect.x + labelWidth + fieldGap,
-                rowRect.y,
-                rowRect.width - labelWidth - fieldGap,
-                rowHeight
-            );
-
-            EditorGUI.LabelField(labelRect, "Position");
-            var posValue   = anchoredPosProp.vector2Value;
-            posValue       = EditorGUI.Vector2Field(valueRect, GUIContent.none, posValue);
-            anchoredPosProp.vector2Value = posValue;
-            y += rowHeight + vGap;
 
             // Type-specific options
             switch (widgetType)
             {
-                case WidgetType.Button:
+                case WidgetType.Text:
                 {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/TextOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
                     var headerRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.LabelField(headerRect, "[Button Options]", EditorStyles.miniBoldLabel);
+                    open = EditorGUI.Foldout(headerRect, open, "[Text Options]", true);
+                    SetSectionFoldout(sectionKey, open);
                     y += lineH + vGap;
 
-                    var routeRect = new Rect(rect.x, y, rect.width, lineH);
-                    routeProp.stringValue =
-                        EditorGUI.TextField(routeRect, "OnClick Route", routeProp.stringValue);
-                    y += lineH + vGap;
-                    break;
-                }
-                case WidgetType.Image:
-                {
-                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.LabelField(headerRect, "[Image Options]", EditorStyles.miniBoldLabel);
-                    y += lineH + vGap;
-
-                    var spriteRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(spriteRect, imageSpriteProp, new GUIContent("Sprite"));
-                    y += lineH + vGap;
-
-                    var colorRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(colorRect, imageColorProp, new GUIContent("Color"));
-                    y += lineH + vGap;
-
-                    var nativeRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(nativeRect, imageNativeProp, new GUIContent("Set Native Size"));
-                    y += lineH + vGap;
-                    break;
-                }
-                case WidgetType.Toggle:
-                {
-                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.LabelField(headerRect, "[Toggle Options]", EditorStyles.miniBoldLabel);
-                    y += lineH + vGap;
-
-                    var initRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(initRect, toggleInitialProp, new GUIContent("Initial Value"));
-                    y += lineH + vGap;
-
-                    var interactRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(interactRect, toggleInteractProp, new GUIContent("Interactable"));
-                    y += lineH + vGap;
-                    break;
-                }
-                case WidgetType.Slider:
-                {
-                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.LabelField(headerRect, "[Slider Options]", EditorStyles.miniBoldLabel);
-                    y += lineH + vGap;
-
-                    var minRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(minRect, sliderMinProp, new GUIContent("Min"));
-                    y += lineH + vGap;
-
-                    var maxRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(maxRect, sliderMaxProp, new GUIContent("Max"));
-                    y += lineH + vGap;
-
-                    var initRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(initRect, sliderInitProp, new GUIContent("Initial Value"));
-                    y += lineH + vGap;
-
-                    var wholeRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.PropertyField(wholeRect, sliderWholeProp, new GUIContent("Whole Numbers"));
-                    y += lineH + vGap;
-                    break;
-                }
-                case WidgetType.Slot:
-                {
-                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
-                    EditorGUI.LabelField(headerRect, "[Slot Options]", EditorStyles.miniBoldLabel);
-                    y += lineH + vGap;
-
-                    var idRect = new Rect(rect.x, y, rect.width - 120f, lineH);
-                    slotIdProp.stringValue =
-                        EditorGUI.TextField(idRect, "Slot Id", slotIdProp.stringValue);
-
-                    var buttonRect = new Rect(idRect.xMax + 4f, y, 110f, lineH);
-                    using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(slotIdProp.stringValue)))
+                    if (open)
                     {
-                        if (GUI.Button(buttonRect, "Open Child Slot"))
-                        {
-                            string targetName = (slotIdProp.stringValue ?? string.Empty).Trim();
-                            if (!string.IsNullOrEmpty(targetName))
-                            {
-                                OpenChildSlot(targetName);
-                            }
-                        }
+                        // ✅ Text 위젯: 옵션 안에서 TextArea 표시
+                        DrawInlineTextArea(rect, ref y, lineH, vGap, textProp, lines: 2, label: "Text");
                     }
 
+                    break;
+                }
+
+                case WidgetType.Button:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/ButtonOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[Button Options]", true);
+                    SetSectionFoldout(sectionKey, open);
                     y += lineH + vGap;
+
+                    if (open)
+                    {
+                        var routeRect = new Rect(rect.x, y, rect.width, lineH);
+                        routeProp.stringValue = EditorGUI.TextField(routeRect, "OnClick Route", routeProp.stringValue);
+                        y += lineH + vGap;
+
+                        // ✅ Button 위젯: 옵션 안에서 TextArea 표시
+                        DrawInlineTextArea(rect, ref y, lineH, vGap, textProp, lines: 2, label: "Text");
+                    }
+
+                    break;
+                }
+
+                case WidgetType.Image:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/ImageOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[Image Options]", true);
+                    SetSectionFoldout(sectionKey, open);
+                    y += lineH + vGap;
+
+                    if (open)
+                    {
+                        var spriteRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(spriteRect, imageSpriteProp, new GUIContent("Sprite"));
+                        y += lineH + vGap;
+
+                        var colorRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(colorRect, imageColorProp, new GUIContent("Color"));
+                        y += lineH + vGap;
+
+                        var nativeRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(nativeRect, imageNativeProp, new GUIContent("Set Native Size"));
+                        y += lineH + vGap;
+
+                        // ✅ Image 위젯: 옵션 안에서 TextArea 표시
+                        DrawInlineTextArea(rect, ref y, lineH, vGap, textProp, lines: 2, label: "Text");
+                    }
+
+                    break;
+                }
+
+                case WidgetType.Toggle:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/ToggleOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[Toggle Options]", true);
+                    SetSectionFoldout(sectionKey, open);
+                    y += lineH + vGap;
+
+                    if (open)
+                    {
+                        var initRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(initRect, toggleInitialProp, new GUIContent("Initial Value"));
+                        y += lineH + vGap;
+
+                        var interactRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(interactRect, toggleInteractProp, new GUIContent("Interactable"));
+                        y += lineH + vGap;
+
+                        // ✅ Toggle 위젯: 옵션 안에서 TextArea 표시
+                        DrawInlineTextArea(rect, ref y, lineH, vGap, textProp, lines: 2, label: "Text");
+                    }
+
+                    break;
+                }
+
+                case WidgetType.Slider:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/SliderOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[Slider Options]", true);
+                    SetSectionFoldout(sectionKey, open);
+                    y += lineH + vGap;
+
+                    if (open)
+                    {
+                        var minRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(minRect, sliderMinProp, new GUIContent("Min"));
+                        y += lineH + vGap;
+
+                        var maxRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(maxRect, sliderMaxProp, new GUIContent("Max"));
+                        y += lineH + vGap;
+
+                        var initRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(initRect, sliderInitProp, new GUIContent("Initial Value"));
+                        y += lineH + vGap;
+
+                        var wholeRect = new Rect(rect.x, y, rect.width, lineH);
+                        EditorGUI.PropertyField(wholeRect, sliderWholeProp, new GUIContent("Whole Numbers"));
+                        y += lineH + vGap;
+
+                        // ❌ Slider는 TextArea 표시 안 함
+                    }
+
+                    break;
+                }
+
+                // enum에 GameObject가 실제로 있다면:
+                case WidgetType.GameObject:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/GameObjectOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: false); // 기본 접힘
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[GameObject Options]", true);
+                    SetSectionFoldout(sectionKey, open);
+                    y += lineH + vGap;
+
+                    if (open)
+                    {
+                        // 여기서 GameObject 전용 옵션이 있으면 그리면 됨.
+                        // (없으면 그냥 비워둬도 OK)
+                        // ❌ GameObject는 TextArea 표시 안 함
+                    }
+
+                    break;
+                }
+
+                case WidgetType.Slot:
+                {
+                    string sectionKey = $"{w.propertyPath}/{widgetType}/SlotOptions";
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: true); // ✅ Slot만 기본 펼침
+
+                    var headerRect = new Rect(rect.x, y, rect.width, lineH);
+                    open = EditorGUI.Foldout(headerRect, open, "[Slot Options]", true);
+                    SetSectionFoldout(sectionKey, open);
+                    y += lineH + vGap;
+
+                    if (open)
+                    {
+                        var idRect = new Rect(rect.x, y, rect.width - 120f, lineH);
+
+                        EditorGUI.BeginChangeCheck();
+                        string newId = EditorGUI.TextField(idRect, "Slot Id", slotIdProp.stringValue);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            slotIdProp.stringValue = (newId ?? string.Empty).Trim();
+                            MarkSlotGraphDirty(); // slot edge 변경
+                        }
+
+                        var buttonRect = new Rect(idRect.xMax + 4f, y, 110f, lineH);
+                        using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(slotIdProp.stringValue)))
+                        {
+                            if (GUI.Button(buttonRect, "Open Child Slot"))
+                            {
+                                string targetName = (slotIdProp.stringValue ?? string.Empty).Trim();
+                                if (!string.IsNullOrEmpty(targetName))
+                                    OpenChildSlot(targetName);
+                            }
+                        }
+
+                        y += lineH + vGap;
+
+                        // ❌ Slot은 TextArea 표시 안 함
+                    }
+
                     break;
                 }
             }
         }
 
-        // Text
-        {
-            int   textLines   = 2;
-            float textHeight  = (lineH + 2f) * textLines;
-
-            var textRect = new Rect(rect.x, y, rect.width, textHeight);
-            textProp.stringValue =
-                EditorGUI.TextArea(textRect, textProp.stringValue, EditorStyles.textArea);
-            y += textHeight + vGap;
-        }
-
         // Prefab Override
         {
-            var prefabRect = new Rect(rect.x, y, rect.width, lineH);
-            EditorGUI.PropertyField(prefabRect, prefabProp, new GUIContent("Prefab Override"));
+            string sectionKey = $"{w.propertyPath}/{widgetType}/PrefabOverride";
+            bool open = GetSectionFoldout(sectionKey, defaultValue: false); // ✅ 기본 접힘
+
+            var headerRect = new Rect(rect.x, y, rect.width, lineH);
+            open = EditorGUI.Foldout(headerRect, open, "Prefab Override", true);
+            SetSectionFoldout(sectionKey, open);
             y += lineH + vGap;
+
+            if (open)
+            {
+                var prefabRect = new Rect(rect.x, y, rect.width, lineH);
+                EditorGUI.PropertyField(prefabRect, prefabProp, GUIContent.none);
+                y += lineH + vGap;
+            }
         }
+    }
+
+    #endregion
+
+    private static void DrawInlineTextArea(
+        Rect rect,
+        ref float y,
+        float lineH,
+        float vGap,
+        SerializedProperty textProp,
+        int lines = 2,
+        string label = "Text"
+    )
+    {
+        if (textProp == null) return;
+
+        // 라벨 1줄 + 텍스트 영역
+        var labelRect = new Rect(rect.x, y, rect.width, lineH);
+        EditorGUI.LabelField(labelRect, label, EditorStyles.miniBoldLabel);
+        y += lineH + vGap;
+
+        float textHeight = (lineH + 2f) * lines;
+        var textRect = new Rect(rect.x, y, rect.width, textHeight);
+        textProp.stringValue = EditorGUI.TextArea(textRect, textProp.stringValue, EditorStyles.textArea);
+        y += textHeight + vGap;
     }
 
     // Open a child slot by Slot widget's Slot Id, and push it into the current slot path.
@@ -1099,7 +1244,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             HasOtherParentForSlotName(slotName, currentParentIndex, out int otherParentIndex))
         {
             string currentParentName = GetSlotNameByIndex(currentParentIndex);
-            string otherParentName   = GetSlotNameByIndex(otherParentIndex);
+            string otherParentName = GetSlotNameByIndex(otherParentIndex);
 
             EditorUtility.DisplayDialog(
                 "Ambiguous Slot Graph",
@@ -1118,9 +1263,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         int childIndex = -1;
         for (int i = 0; i < _slotsProp.arraySize; i++)
         {
-            var slot     = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
-            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
             if (!string.IsNullOrEmpty(name) &&
                 string.Equals(name, slotName, StringComparison.Ordinal))
             {
@@ -1134,8 +1279,8 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             childIndex = _slotsProp.arraySize;
             _slotsProp.InsertArrayElementAtIndex(childIndex);
 
-            var newSlot     = _slotsProp.GetArrayElementAtIndex(childIndex);
-            var nameProp    = newSlot.FindPropertyRelative("slotName");
+            var newSlot = _slotsProp.GetArrayElementAtIndex(childIndex);
+            var nameProp = newSlot.FindPropertyRelative("slotName");
             var widgetsProp = newSlot.FindPropertyRelative("widgets");
 
             if (nameProp != null)
@@ -1144,6 +1289,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 widgetsProp.ClearArray();
 
             _so.ApplyModifiedProperties();
+            MarkSlotGraphDirty();
         }
 
         // 4) Push into the path and refresh widget list
@@ -1167,9 +1313,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         {
             if (newAsset == null)
             {
-                _asset       = null;
-                _so          = null;
-                _slotsList   = null;
+                _asset = null;
+                _so = null;
+                _slotsList = null;
                 _widgetsList = null;
                 _slotPath.Clear();
                 return;
@@ -1199,6 +1345,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         _so.Update();
+        if (_slotGraphDirty && Event.current.type == EventType.Layout)
+        {
+            RebuildSlotGraphCache();
+            _slotGraphDirty = false;
+        }
 
         var prefabProp = _specProp.FindPropertyRelative("templatePrefab");
 
@@ -1261,6 +1412,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     {
                         CleanupUnlinkedSlots();
                     }
+
                     EditorGUI.EndDisabledGroup();
 
                     GUILayout.Space(4f);
@@ -1274,6 +1426,23 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                         EditorUtility.SetDirty(_asset);
                         BuildWidgetsListForCurrentSlot();
                         Repaint();
+                    }
+
+                    EditorGUI.EndDisabledGroup();
+                    
+                    GUILayout.Space(4f);
+
+// ✅ Expand / Collapse All (current slot)
+                    EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
+                    if (GUILayout.Button("Expand All", GUILayout.Width(110f)))
+                    {
+                        _so.Update();
+                        SetAllWidgetFoldoutsInCurrentSlot(true);
+                    }
+                    if (GUILayout.Button("Collapse All", GUILayout.Width(110f)))
+                    {
+                        _so.Update();
+                        SetAllWidgetFoldoutsInCurrentSlot(false);
                     }
                     EditorGUI.EndDisabledGroup();
                 }
@@ -1299,7 +1468,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             for (int i = 0; i < _slotPath.Count; i++)
             {
                 int slotIndex = _slotPath[i];
-                string name   = $"Slot {slotIndex}";
+                string name = $"Slot {slotIndex}";
 
                 if (slotIndex >= 0 && slotIndex < _slotsProp.arraySize)
                 {
@@ -1343,6 +1512,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         EditorGUILayout.Space(4f);
     }
+
     private bool IsSlotNameUsedByOtherSlots(int selfIndex, string name)
     {
         if (_slotsProp == null)
@@ -1358,7 +1528,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             if (i == selfIndex)
                 continue;
 
-            var slot     = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var nameProp = slot.FindPropertyRelative("slotName");
             string other = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
 
@@ -1380,7 +1550,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             return "(invalid)";
 
         // Walk child -> parent -> grandparent ...
-        var chain   = new List<int>();
+        var chain = new List<int>();
         var visited = new HashSet<int>();
 
         int current = slotIndex;
@@ -1403,7 +1573,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var names = new List<string>();
         foreach (int idx in chain)
         {
-            var slot     = _slotsProp.GetArrayElementAtIndex(idx);
+            var slot = _slotsProp.GetArrayElementAtIndex(idx);
             var nameProp = slot.FindPropertyRelative("slotName");
             string rawName = nameProp != null ? nameProp.stringValue : string.Empty;
 
@@ -1434,9 +1604,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (slotsProp == null || childIndex < 0 || childIndex >= slotsProp.arraySize)
             return -1;
 
-        var childSlot     = slotsProp.GetArrayElementAtIndex(childIndex);
+        var childSlot = slotsProp.GetArrayElementAtIndex(childIndex);
         var childNameProp = childSlot.FindPropertyRelative("slotName");
-        string childName  = (childNameProp != null ? childNameProp.stringValue : string.Empty)?.Trim();
+        string childName = (childNameProp != null ? childNameProp.stringValue : string.Empty)?.Trim();
         if (string.IsNullOrEmpty(childName))
             return -1;
 
@@ -1445,14 +1615,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         {
             if (i == childIndex) continue;
 
-            var slot        = slotsProp.GetArrayElementAtIndex(i);
+            var slot = slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
             for (int w = 0; w < widgetsProp.arraySize; w++)
             {
-                var widget     = widgetsProp.GetArrayElementAtIndex(w);
-                var typeProp   = widget.FindPropertyRelative("widgetType");
+                var widget = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null || slotIdProp == null)
@@ -1517,7 +1687,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             var slotProp = _slotsProp.GetArrayElementAtIndex(slotIndex);
             var nameProp = slotProp.FindPropertyRelative("slotName");
-            string name  = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
 
             if (string.IsNullOrEmpty(name))
                 continue;
@@ -1546,15 +1716,15 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             if (i == currentParentIndex)
                 continue;
 
-            var slot        = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null)
                 continue;
 
             for (int w = 0; w < widgetsProp.arraySize; w++)
             {
-                var widget     = widgetsProp.GetArrayElementAtIndex(w);
-                var typeProp   = widget.FindPropertyRelative("widgetType");
+                var widget = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null || slotIdProp == null)
@@ -1581,14 +1751,28 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (_slotsProp == null || index < 0 || index >= _slotsProp.arraySize)
             return $"Slot {index}";
 
-        var slot     = _slotsProp.GetArrayElementAtIndex(index);
+        var slot = _slotsProp.GetArrayElementAtIndex(index);
         var nameProp = slot.FindPropertyRelative("slotName");
-        string name  = nameProp != null ? nameProp.stringValue : null;
+        string name = nameProp != null ? nameProp.stringValue : null;
 
         if (string.IsNullOrWhiteSpace(name))
             return $"Slot {index}";
 
         return name.Trim();
+    }
+
+
+    private bool GetSectionFoldout(string key, bool defaultValue)
+    {
+        if (_widgetSectionFoldoutStates.TryGetValue(key, out bool v))
+            return v;
+        _widgetSectionFoldoutStates[key] = defaultValue;
+        return defaultValue;
+    }
+
+    private void SetSectionFoldout(string key, bool value)
+    {
+        _widgetSectionFoldoutStates[key] = value;
     }
 
     // ─────────────────────────────────────────────
@@ -1598,78 +1782,78 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     {
         if (widgetProp == null) return;
 
-        var rectModeProp      = widgetProp.FindPropertyRelative("rectMode");
-        var anchorMinProp     = widgetProp.FindPropertyRelative("anchorMin");
-        var anchorMaxProp     = widgetProp.FindPropertyRelative("anchorMax");
-        var pivotProp         = widgetProp.FindPropertyRelative("pivot");
-        var anchoredPosProp   = widgetProp.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp     = widgetProp.FindPropertyRelative("sizeDelta");
+        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp = widgetProp.FindPropertyRelative("pivot");
+        var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
+        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
 
         rectModeProp.enumValueIndex = (int)preset.rectMode;
-        anchorMinProp.vector2Value  = preset.anchorMin;
-        anchorMaxProp.vector2Value  = preset.anchorMax;
-        pivotProp.vector2Value      = preset.pivot;
+        anchorMinProp.vector2Value = preset.anchorMin;
+        anchorMaxProp.vector2Value = preset.anchorMax;
+        pivotProp.vector2Value = preset.pivot;
         anchoredPosProp.vector2Value = preset.anchoredPosition;
-        sizeDeltaProp.vector2Value  = preset.sizeDelta;
+        sizeDeltaProp.vector2Value = preset.sizeDelta;
     }
 
     private void ResetWidgetSpecDefaults(SerializedProperty widgetProp, int index)
     {
         if (widgetProp == null) return;
 
-        var typeProp           = widgetProp.FindPropertyRelative("widgetType");
-        var nameTagProp        = widgetProp.FindPropertyRelative("nameTag");
-        var textProp           = widgetProp.FindPropertyRelative("text");
-        var routeProp          = widgetProp.FindPropertyRelative("onClickRoute");
+        var typeProp = widgetProp.FindPropertyRelative("widgetType");
+        var nameTagProp = widgetProp.FindPropertyRelative("nameTag");
+        var textProp = widgetProp.FindPropertyRelative("text");
+        var routeProp = widgetProp.FindPropertyRelative("onClickRoute");
         var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
 
-        var rectModeProp    = widgetProp.FindPropertyRelative("rectMode");
-        var anchorMinProp   = widgetProp.FindPropertyRelative("anchorMin");
-        var anchorMaxProp   = widgetProp.FindPropertyRelative("anchorMax");
-        var pivotProp       = widgetProp.FindPropertyRelative("pivot");
+        var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
+        var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
+        var anchorMaxProp = widgetProp.FindPropertyRelative("anchorMax");
+        var pivotProp = widgetProp.FindPropertyRelative("pivot");
         var anchoredPosProp = widgetProp.FindPropertyRelative("anchoredPosition");
-        var sizeDeltaProp   = widgetProp.FindPropertyRelative("sizeDelta");
+        var sizeDeltaProp = widgetProp.FindPropertyRelative("sizeDelta");
 
         var disabledProp = widgetProp.FindPropertyRelative("disabled");
 
-        typeProp.enumValueIndex  = (int)WidgetType.Text;
-        nameTagProp.stringValue  = $"Widget {index}";
-        textProp.stringValue     = string.Empty;
-        routeProp.stringValue    = string.Empty;
+        typeProp.enumValueIndex = (int)WidgetType.Text;
+        nameTagProp.stringValue = $"Widget {index}";
+        textProp.stringValue = string.Empty;
+        routeProp.stringValue = string.Empty;
         prefabOverrideProp.objectReferenceValue = null;
 
-        rectModeProp.enumValueIndex = (int)WidgetRectMode.UseSlotLayout;
+        rectModeProp.enumValueIndex = (int)WidgetRectMode.OverrideInSlot;
 
-        anchorMinProp.vector2Value   = new Vector2(0.5f, 0.5f);
-        anchorMaxProp.vector2Value   = new Vector2(0.5f, 0.5f);
-        pivotProp.vector2Value       = new Vector2(0.5f, 0.5f);
+        anchorMinProp.vector2Value = new Vector2(0.5f, 0.5f);
+        anchorMaxProp.vector2Value = new Vector2(0.5f, 0.5f);
+        pivotProp.vector2Value = new Vector2(0.5f, 0.5f);
         anchoredPosProp.vector2Value = Vector2.zero;
-        sizeDeltaProp.vector2Value   = new Vector2(300f, 80f);
+        sizeDeltaProp.vector2Value = new Vector2(300f, 80f);
 
         if (disabledProp != null)
             disabledProp.boolValue = false;
 
-        var imageColorProp    = widgetProp.FindPropertyRelative("imageColor");
-        var imageNativeProp   = widgetProp.FindPropertyRelative("imageSetNativeSize");
+        var imageColorProp = widgetProp.FindPropertyRelative("imageColor");
+        var imageNativeProp = widgetProp.FindPropertyRelative("imageSetNativeSize");
         var toggleInitialProp = widgetProp.FindPropertyRelative("toggleInitialValue");
         var toggleInteractProp = widgetProp.FindPropertyRelative("toggleInteractable");
-        var sliderMinProp     = widgetProp.FindPropertyRelative("sliderMin");
-        var sliderMaxProp     = widgetProp.FindPropertyRelative("sliderMax");
-        var sliderInitProp    = widgetProp.FindPropertyRelative("sliderInitialValue");
-        var sliderWholeProp   = widgetProp.FindPropertyRelative("sliderWholeNumbers");
+        var sliderMinProp = widgetProp.FindPropertyRelative("sliderMin");
+        var sliderMaxProp = widgetProp.FindPropertyRelative("sliderMax");
+        var sliderInitProp = widgetProp.FindPropertyRelative("sliderInitialValue");
+        var sliderWholeProp = widgetProp.FindPropertyRelative("sliderWholeNumbers");
 
         var imageSpriteProp = widgetProp.FindPropertyRelative("imageSprite");
         if (imageSpriteProp != null) imageSpriteProp.objectReferenceValue = null;
-        if (imageColorProp  != null) imageColorProp.colorValue           = Color.white;
-        if (imageNativeProp != null) imageNativeProp.boolValue           = false;
+        if (imageColorProp != null) imageColorProp.colorValue = Color.white;
+        if (imageNativeProp != null) imageNativeProp.boolValue = false;
 
-        if (toggleInitialProp != null) toggleInitialProp.boolValue   = false;
+        if (toggleInitialProp != null) toggleInitialProp.boolValue = false;
         if (toggleInteractProp != null) toggleInteractProp.boolValue = true;
 
-        if (sliderMinProp   != null) sliderMinProp.floatValue   = 0f;
-        if (sliderMaxProp   != null) sliderMaxProp.floatValue   = 1f;
-        if (sliderInitProp  != null) sliderInitProp.floatValue  = 0.5f;
-        if (sliderWholeProp != null) sliderWholeProp.boolValue  = false;
+        if (sliderMinProp != null) sliderMinProp.floatValue = 0f;
+        if (sliderMaxProp != null) sliderMaxProp.floatValue = 1f;
+        if (sliderInitProp != null) sliderInitProp.floatValue = 0.5f;
+        if (sliderWholeProp != null) sliderWholeProp.boolValue = false;
     }
 
     private static void EnableAllDisabledWidgets(UIScreenSpec s)
@@ -1691,25 +1875,129 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
     }
 
+    private void RebuildSlotGraphCache()
+    {
+        if (_slotsProp == null)
+        {
+            _hasParentCache = null;
+            _parentIndexCache = null;
+            _depthCache = null;
+            _pathLabelCache = null;
+            return;
+        }
+
+        int n = _slotsProp.arraySize;
+        _hasParentCache = new bool[n];
+        _parentIndexCache = new int[n];
+        _depthCache = new int[n];
+        _pathLabelCache = new string[n];
+
+        for (int i = 0; i < n; i++)
+            _parentIndexCache[i] = -1;
+
+        // 1) slotName -> index
+        var nameToIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < n; i++)
+        {
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
+            var nameProp = slot.FindPropertyRelative("slotName");
+            string name = (nameProp != null ? nameProp.stringValue : string.Empty)?.Trim();
+            if (!string.IsNullOrEmpty(name) && !nameToIndex.ContainsKey(name))
+                nameToIndex.Add(name, i);
+        }
+
+        // 2) build parentIndex + hasParent via Slot widgets
+        for (int parent = 0; parent < n; parent++)
+        {
+            var slot = _slotsProp.GetArrayElementAtIndex(parent);
+            var widgetsProp = slot.FindPropertyRelative("widgets");
+            if (widgetsProp == null) continue;
+
+            for (int wi = 0; wi < widgetsProp.arraySize; wi++)
+            {
+                var widget = widgetsProp.GetArrayElementAtIndex(wi);
+                var typeProp = widget.FindPropertyRelative("widgetType");
+                if (typeProp == null) continue;
+
+                if ((WidgetType)typeProp.enumValueIndex != WidgetType.Slot)
+                    continue;
+
+                var slotIdProp = widget.FindPropertyRelative("slotId");
+                string id = (slotIdProp != null ? slotIdProp.stringValue : string.Empty)?.Trim();
+                if (string.IsNullOrEmpty(id)) continue;
+
+                if (!nameToIndex.TryGetValue(id, out int child))
+                    continue;
+
+                _hasParentCache[child] = true;
+
+                // Keep the first discovered parent (matches old FindParentSlotIndex "first hit" behavior)
+                if (_parentIndexCache[child] < 0)
+                    _parentIndexCache[child] = parent;
+            }
+        }
+
+        // 3) depth + path label
+        for (int i = 0; i < n; i++)
+            BuildDepthAndPathForSlot(i);
+    }
+
+    private void BuildDepthAndPathForSlot(int slotIndex)
+    {
+        // build chain child -> parent -> ...
+        var chain = new List<int>(8);
+        var visited = new HashSet<int>();
+
+        int cur = slotIndex;
+        while (cur >= 0 && cur < _parentIndexCache.Length && !visited.Contains(cur))
+        {
+            visited.Add(cur);
+            chain.Add(cur);
+            cur = _parentIndexCache[cur];
+        }
+
+        chain.Reverse();
+        _depthCache[slotIndex] = Math.Max(0, chain.Count - 1);
+
+        var names = new List<string>(chain.Count);
+        foreach (int idx in chain)
+        {
+            var slot = _slotsProp.GetArrayElementAtIndex(idx);
+            var nameProp = slot.FindPropertyRelative("slotName");
+            string raw = nameProp != null ? nameProp.stringValue : string.Empty;
+
+            string label;
+            if (idx == 0)
+                label = string.IsNullOrWhiteSpace(raw) ? "(root)" : raw.Trim();
+            else
+                label = NormalizeSlotLabel(raw);
+
+            names.Add(label);
+        }
+
+        _pathLabelCache[slotIndex] = string.Join(" > ", names);
+    }
+
+
     private bool[] BuildHasParentFlags()
     {
         if (_slotsProp == null)
             return Array.Empty<bool>();
 
-        int  slotCount = _slotsProp.arraySize;
-        var  hasParent = new bool[slotCount];
+        int slotCount = _slotsProp.arraySize;
+        var hasParent = new bool[slotCount];
 
         // Fill parent information via Slot widgets (slotId → slotName).
         for (int i = 0; i < slotCount; i++)
         {
-            var slot        = _slotsProp.GetArrayElementAtIndex(i);
+            var slot = _slotsProp.GetArrayElementAtIndex(i);
             var widgetsProp = slot.FindPropertyRelative("widgets");
             if (widgetsProp == null) continue;
 
             for (int w = 0; w < widgetsProp.arraySize; w++)
             {
-                var widget     = widgetsProp.GetArrayElementAtIndex(w);
-                var typeProp   = widget.FindPropertyRelative("widgetType");
+                var widget = widgetsProp.GetArrayElementAtIndex(w);
+                var typeProp = widget.FindPropertyRelative("widgetType");
                 var slotIdProp = widget.FindPropertyRelative("slotId");
 
                 if (typeProp == null || slotIdProp == null) continue;
@@ -1723,9 +2011,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 // If any slotName matches this id, that slot has a parent.
                 for (int j = 0; j < slotCount; j++)
                 {
-                    var childSlot     = _slotsProp.GetArrayElementAtIndex(j);
+                    var childSlot = _slotsProp.GetArrayElementAtIndex(j);
                     var childNameProp = childSlot.FindPropertyRelative("slotName");
-                    string childName  = (childNameProp != null ? childNameProp.stringValue : string.Empty).Trim();
+                    string childName = (childNameProp != null ? childNameProp.stringValue : string.Empty).Trim();
                     if (string.IsNullOrEmpty(childName)) continue;
 
                     if (string.Equals(childName, id, StringComparison.Ordinal))
@@ -1739,6 +2027,87 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         return hasParent;
     }
 
+    private void RefreshPresetLabelsIfNeeded()
+    {
+        int count = (_presetCatalog != null && _presetCatalog.presets != null) ? _presetCatalog.presets.Count : 0;
+        bool hasCatalog = count > 0;
+
+        if (_presetLabelsCache != null &&
+            _presetLabelsCountCache == count &&
+            _presetLabelsHasCatalogCache == hasCatalog)
+            return;
+
+        _presetLabelsHasCatalogCache = hasCatalog;
+        _presetLabelsCountCache = count;
+
+        if (!hasCatalog)
+        {
+            _presetLabelsCache = new[] { "(No presets configured)" };
+            return;
+        }
+
+        _presetLabelsCache = new string[count + 1];
+        _presetLabelsCache[0] = "Select Preset";
+        for (int i = 0; i < count; i++)
+        {
+            var p = _presetCatalog.presets[i];
+            _presetLabelsCache[i + 1] = string.IsNullOrEmpty(p.id) ? $"Preset {i}" : p.id;
+        }
+    }
+    
+    private bool TryGetCurrentWidgetsProp(out SerializedProperty widgetsProp)
+    {
+        widgetsProp = null;
+
+        if (_slotsProp == null || _slotPath == null || _slotPath.Count == 0)
+            return false;
+
+        int slotIndex = _slotPath[_slotPath.Count - 1];
+        if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
+            return false;
+
+        var slot = _slotsProp.GetArrayElementAtIndex(slotIndex);
+        widgetsProp = slot.FindPropertyRelative("widgets");
+        return widgetsProp != null;
+    }
+
+    private void SetAllWidgetFoldoutsInCurrentSlot(bool expanded)
+    {
+        if (!TryGetCurrentWidgetsProp(out var widgetsProp))
+            return;
+
+        // 현재 슬롯의 모든 위젯 foldout을 강제로 동일 상태로 세팅
+        for (int i = 0; i < widgetsProp.arraySize; i++)
+        {
+            var w = widgetsProp.GetArrayElementAtIndex(i);
+            if (w == null) continue;
+
+            _widgetFoldoutStates[w.propertyPath] = expanded;
+
+            // (선택) 섹션 폴드아웃까지 같이 접고/펼치고 싶으면 아래도 같이 켜.
+            // GetSectionFoldout/SetSectionFoldout을 이미 쓰고 있으니, key 규칙에 맞춰서 밀어 넣는다.
+            var typeProp = w.FindPropertyRelative("widgetType");
+            if (typeProp != null)
+            {
+                var widgetType = (WidgetType)typeProp.enumValueIndex;
+
+                // 너가 쓰는 key 규칙: $"{w.propertyPath}/{widgetType}/XxxOptions"
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ButtonOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ImageOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ToggleOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/SliderOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/SlotOptions", expanded);
+
+                // Prefab Override는 공통 섹션 키를 쓰는 버전도 있었어서 둘 다 커버
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/PrefabOverride", expanded);
+                SetSectionFoldout($"{w.propertyPath}/PrefabOverride", expanded);
+            }
+        }
+
+        Repaint();
+    }
+
+
     private void CleanupUnlinkedSlots()
     {
         if (_slotsProp == null || _slotsProp.arraySize == 0)
@@ -1750,9 +2119,16 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             return;
         }
 
-        int  slotCount = _slotsProp.arraySize;
-        var  hasParent = BuildHasParentFlags();
-        var  toDelete  = new List<int>();
+        int slotCount = _slotsProp.arraySize;
+        // Make sure cache is up-to-date before cleaning
+        if (_slotGraphDirty)
+        {
+            RebuildSlotGraphCache();
+            _slotGraphDirty = false;
+        }
+
+        var hasParent = _hasParentCache ?? Array.Empty<bool>();
+        var toDelete = new List<int>();
 
         // Slot index 0 is always the canonical root and is never removed.
         for (int i = 1; i < slotCount; i++)
@@ -1791,6 +2167,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         _so.ApplyModifiedProperties();
+        MarkSlotGraphDirty();
 
         // Root is always slot index 0 after cleanup (or re-created if needed).
         _slotPath.Clear();
@@ -1803,7 +2180,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         else
         {
             _selectedSlotIndex = -1;
-            _widgetsList       = null;
+            _widgetsList = null;
 
             // Very defensive fallback: recreate a root slot if nothing remains.
             EnsureRootSlotExists();
