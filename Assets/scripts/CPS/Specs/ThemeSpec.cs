@@ -5,9 +5,6 @@ using TMPro;
 public class ThemeSpec : ScriptableObject
 {
     [Header("Base Colors")]
-    public Color backgroundColor = Color.white;
-    public Color panelColor      = new Color(0.1f, 0.1f, 0.1f);
-    public Color primaryColor    = new Color(0.2f, 0.6f, 1.0f);
     public Color textMainColor   = Color.white;
     public Color textWeakColor   = Color.gray;
 

@@ -1,7 +1,3 @@
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-
 public enum UITextRole
 {
     Title,
@@ -9,63 +5,51 @@ public enum UITextRole
     Caption,
 }
 
-public sealed class UITextRoleTag : MonoBehaviour
+public class ThemeSpecPatch : IUIPatch
 {
-    public UITextRole role;
-}
+    private readonly ThemeSpec _theme;
 
-
-
-    public class ThemeSpecPatch : IUIPatch
+    public ThemeSpecPatch(ThemeSpec theme)
     {
-        private readonly ThemeSpec _theme;
+        _theme = theme;
+    }
 
-        public ThemeSpecPatch(ThemeSpec theme)
+    public void Apply(UIScreen screen)
+    {
+        if (_theme == null || screen == null)
+            return;
+
+        // 텍스트 전용 패치
+        foreach (var widget in screen.GetAllWidgets())
         {
-            _theme = theme;
-        }
+            var text = widget.Text;
+            if (text == null)
+                continue;
 
-        public void Apply(UIScreen screen)
-        {
-            if (_theme == null || screen == null)
-                return;
+            // 1) 폰트: 지정되어 있으면 통일, 아니면 건드리지 않기
+            if (_theme.mainFont != null)
+                text.font = _theme.mainFont;
 
-            // 1) Background
-            Image rootImage = screen.GetComponent<Image>();
-            if (rootImage != null)
-                rootImage.color = _theme.backgroundColor;
-
-            // 2) Panels (필요하면 유지)
-            var images = screen.GetComponentsInChildren<Image>(true);
-            foreach (var img in images)
+            // 2) 역할별 크기 + 색
+            switch (widget.TextRole)
             {
-                if (img.gameObject.name.Contains("Panel"))
-                    img.color = _theme.panelColor;
+                case UITextRole.Title:
+                    text.fontSize = _theme.titleSize;
+                    text.color    = _theme.textMainColor;
+                    break;
+
+                case UITextRole.Body:
+                    text.fontSize = _theme.bodySize;
+                    text.color    = _theme.textMainColor;
+                    break;
+
+                case UITextRole.Caption:
+                    text.fontSize = _theme.captionSize;
+                    text.color    = _theme.textWeakColor;
+                    break;
             }
 
-            // 3) Text : WidgetHandle + TextRole 기반
-            foreach (var widget in screen.GetAllWidgets())
-            {
-                if (widget.Text == null)
-                    continue;
-
-                widget.Text.font = _theme.mainFont;
-
-                switch (widget.TextRole)
-                {
-                    case UITextRole.Title:
-                        widget.Text.fontSize = _theme.titleSize;
-                        widget.Text.color    = _theme.textMainColor;
-                        break;
-                    case UITextRole.Body:
-                        widget.Text.fontSize = _theme.bodySize;
-                        widget.Text.color    = _theme.textMainColor;
-                        break;
-                    case UITextRole.Caption:
-                        widget.Text.fontSize = _theme.captionSize;
-                        widget.Text.color    = _theme.textWeakColor;
-                        break;
-                }
-            }
+            // 3) Alignment / FontStyle 는 여기서 건드리지 않는다 (레이아웃/연출 영역)
         }
     }
+}
