@@ -8,7 +8,7 @@ public struct UIRouteEntry
 {
     [UIRouteKey]
     public string route;
-    public ScreenKey key;
+    public ScreenKey screenKey;
 }
 
 [CreateAssetMenu(menuName = "UI/Screen Catalog", fileName = "UIScreenCatalog")]
@@ -17,7 +17,7 @@ public class UIScreenCatalog : ScriptableObject
     [Serializable]
     public class ScreenEntry
     {
-        public ScreenKey key;
+        public ScreenKey screenKey;
         public UIScreenSpecAsset specAsset;
     }
     public List<ScreenEntry> entries = new();
@@ -42,7 +42,7 @@ public class UIScreenCatalog : ScriptableObject
         {
             if (e?.specAsset == null)
                 continue;
-            _screenMap[e.key] = e.specAsset.spec;
+            _screenMap[e.screenKey] = e.specAsset.spec;
         }
     }
 
@@ -52,7 +52,7 @@ public class UIScreenCatalog : ScriptableObject
         
         foreach (UIRouteEntry r in routes)
         {
-            if (!_routeMap.TryAdd(r.route, r.key))
+            if (!_routeMap.TryAdd(r.route, r.screenKey))
             {
                 Debug.LogWarning($"[UIScreenCatalog] Duplicate route detected: '{r.route}' in catalog '{name}'.");
             }
@@ -120,7 +120,7 @@ public class UIScreenCatalog : ScriptableObject
             if (e.specAsset == null)
             {
                 Debug.LogWarning(
-                    $"[UIScreenCatalog] ScreenEntry '{e.key.Value}' has no UIScreenSpecAsset",
+                    $"[UIScreenCatalog] ScreenEntry '{e.screenKey.Value}' has no UIScreenSpecAsset",
                     this);
                 warningCount++;
             }
@@ -141,7 +141,7 @@ public class UIScreenCatalog : ScriptableObject
         foreach (var e in entries)
         {
             if (e != null)
-                definedKeys.Add(e.key);
+                definedKeys.Add(e.screenKey);
         }
 
         foreach (var r in routes)
@@ -166,10 +166,10 @@ public class UIScreenCatalog : ScriptableObject
             }
 
             // 3. 정의되지 않은 ScreenKey 참조
-            if (!definedKeys.Contains(r.key))
+            if (!definedKeys.Contains(r.screenKey))
             {
                 Debug.LogWarning(
-                    $"[UIScreenCatalog] Route '{r.route}' references ScreenKey '{r.key.Value}' which is not defined in entries",
+                    $"[UIScreenCatalog] Route '{r.route}' references ScreenKey '{r.screenKey.Value}' which is not defined in entries",
                     this);
                 warningCount++;
             }

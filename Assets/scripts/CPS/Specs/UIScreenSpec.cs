@@ -32,6 +32,9 @@ public sealed class WidgetSpec
     public GameObject prefabOverride;
     
     public WidgetRectMode rectMode = WidgetRectMode.UseSlotLayout;
+    
+    // 텍스트 위젯일 때, ThemeSpec에서 어떤 역할(Title/Body/Caption) 스타일을 적용할지.
+    public UITextRole textRole = UITextRole.Body;
 
     
     /// <summary>

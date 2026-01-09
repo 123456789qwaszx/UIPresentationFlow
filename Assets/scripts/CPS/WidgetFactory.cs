@@ -85,7 +85,7 @@ public class WidgetFactory
         }
 
         // ---- 일반 위젯 핸들 생성 ----
-        var handle = new WidgetHandle(spec.widgetType, spec.nameTag, go);
+        var handle = new WidgetHandle(spec.widgetType, spec.nameTag, go, spec.textRole);
 
         // RectMode가 OverrideInSlot이면 RectTransform 보정
         var rectTransform = go.GetComponent<RectTransform>();

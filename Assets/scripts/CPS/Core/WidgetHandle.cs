@@ -16,8 +16,10 @@ public sealed class WidgetHandle
     public Toggle Toggle { get; }
     public Slider Slider { get; }
     public CanvasGroup CanvasGroup { get; }
+    
+    public UITextRole TextRole { get; }
 
-    public WidgetHandle(WidgetType type, string nameTag, GameObject go)
+    public WidgetHandle(WidgetType type, string nameTag, GameObject go, UITextRole textRole = UITextRole.Body)
     {
         Type         = type;
         NameTag      = nameTag;
@@ -30,6 +32,8 @@ public sealed class WidgetHandle
         Toggle      = go.GetComponentInChildren<Toggle>();
         Slider      = go.GetComponentInChildren<Slider>();
         CanvasGroup = go.GetComponent<CanvasGroup>();
+        
+        TextRole    = textRole;
     }
 
     public void SetActive(bool active) => GameObject.SetActive(active);

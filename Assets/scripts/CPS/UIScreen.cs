@@ -22,6 +22,18 @@ public class UIScreen : MonoBehaviour
 
         return handle;
     }
+    
+    public IEnumerable<WidgetHandle> GetAllWidgets()
+    {
+        if (_widgetsByNameTag == null)
+            yield break;
+
+        foreach (var kv in _widgetsByNameTag)
+        {
+            if (kv.Value != null)
+                yield return kv.Value;
+        }
+    }
 
     public RectTransform GetSlot(string slotName)
     {

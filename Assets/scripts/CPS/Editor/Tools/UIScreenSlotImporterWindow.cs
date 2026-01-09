@@ -463,6 +463,8 @@ public sealed class UIScreenSlotImporterWindow : EditorWindow
             text = w.text,
             onClickRoute = w.onClickRoute,
             prefabOverride = w.prefabOverride,
+            
+            textRole   = w.textRole,
 
             rectMode = w.rectMode,
             disabled = w.disabled,

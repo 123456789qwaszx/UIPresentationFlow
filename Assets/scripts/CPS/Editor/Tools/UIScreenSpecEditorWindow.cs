@@ -65,6 +65,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     {
         minSize = new Vector2(530, 380);
         Selection.selectionChanged += TryAutoBindFromSelection;
+        Undo.undoRedoPerformed += OnUndoRedo;
         TryAutoBindFromSelection();
 
         _slotsScroll = Vector2.zero;
@@ -74,6 +75,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private void OnDisable()
     {
         Selection.selectionChanged -= TryAutoBindFromSelection;
+        Undo.undoRedoPerformed -= OnUndoRedo;
     }
 
     private void TryAutoBindFromSelection()
@@ -215,7 +217,6 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             float lineH = EditorGUIUtility.singleLineHeight;
             float vGap = 2f;
 
-            // Root (index 0) uses 2 lines (main + Root Slot Id field), others use 1 line.
             int lines = (index == 0) ? 2 : 1;
 
             return lines * (lineH + vGap) + 4f;
@@ -302,8 +303,11 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
             string currentName = nameProp != null ? nameProp.stringValue : string.Empty;
 
+            // Root면 라벨만 "Root Slot Id"로 다르게
+            string label = (index == 0) ? "Root Slot Id" : "Slot Id";
+
             EditorGUI.BeginChangeCheck();
-            string newName = EditorGUI.TextField(idRect, "Root Slot Id", currentName);
+            string newName = EditorGUI.TextField(idRect, label, currentName);
             if (EditorGUI.EndChangeCheck() && nameProp != null)
             {
                 newName = (newName ?? string.Empty).Trim();
@@ -311,17 +315,17 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 if (string.IsNullOrEmpty(newName))
                 {
                     EditorUtility.DisplayDialog(
-                        "Invalid Root Slot Id",
-                        "Root Slot Id cannot be empty.\nPlease enter a unique id.",
+                        "Invalid Slot Id",
+                        "Slot Id cannot be empty.\nPlease enter a unique id.",
                         "OK"
                     );
                 }
-                else if (IsSlotNameUsedByOtherSlots(0, newName))
+                else if (IsSlotNameUsedByOtherSlots(index, newName))
                 {
                     EditorUtility.DisplayDialog(
-                        "Duplicate Root Slot Id",
+                        "Duplicate Slot Id",
                         $"The id '{newName}' is already used by another slot.\n\n" +
-                        "Root Slot Id must be unique.\n" +
+                        "Slot Id must be unique.\n" +
                         "Please choose a different id or rename the other slot first.",
                         "OK"
                     );
@@ -330,7 +334,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 {
                     nameProp.stringValue = newName;
                     _so.ApplyModifiedProperties();
-                    MarkSlotGraphDirty(); // root id affects name->index and path labels
+                    MarkSlotGraphDirty(); // 이름이 바뀌면 그래프/경로 캐시 모두 영향
                 }
             }
         }
@@ -603,138 +607,146 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     // Per-widget element height
     // ─────────────────────────────────────────────
     private float CalcWidgetElementHeight(SerializedProperty widgetsProp, int index)
-{
-    float lineH = EditorGUIUtility.singleLineHeight;
-    float vGap = 2f;
-    const float borderPadding = 2f;
-    const float innerTopGap = 2f;          // DrawWidgetElement에서 rect.y += vGap 했던 것과 유사
-    const float extra = 4f;                // 기존 리턴에 붙이던 여유
-
-    if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
-        return lineH + borderPadding * 2f + extra;
-
-    var w = widgetsProp.GetArrayElementAtIndex(index);
-    if (w == null)
-        return lineH + borderPadding * 2f + extra;
-
-    string foldKey = w.propertyPath;
-    bool expanded = _widgetFoldoutStates.TryGetValue(foldKey, out var v) ? v : true;
-
-    float h = 0f;
-
-    // borderRect 내부에서 시작할 컨텐츠 높이 누적
-    h += innerTopGap; // 첫 y 보정
-
-    // Header 1줄: Foldout + Enabled + Name + Type
-    h += lineH + vGap;
-
-    if (!expanded)
-        return h + borderPadding * 2f + extra;
-
-    // Preset 1줄
-    h += lineH + vGap;
-
-    // Layout Mode 1줄
-    h += lineH + vGap;
-
-    var rectModeProp = w.FindPropertyRelative("rectMode");
-    var rectMode = rectModeProp != null ? (WidgetRectMode)rectModeProp.enumValueIndex : WidgetRectMode.OverrideInSlot;
-
-    if (rectMode == WidgetRectMode.OverrideInSlot)
     {
-        // Position / Size / AnchorMin / AnchorMax / Pivot : 5줄
-        h += 5f * (lineH + vGap);
-    }
+        float lineH = EditorGUIUtility.singleLineHeight;
+        float vGap = 2f;
+        const float borderPadding = 2f;
+        const float innerTopGap = 2f; // DrawWidgetElement에서 rect.y += vGap 했던 것과 유사
+        const float extra = 4f; // 기존 리턴에 붙이던 여유
 
-    var typeProp = w.FindPropertyRelative("widgetType");
-    var widgetType = typeProp != null ? (WidgetType)typeProp.enumValueIndex : WidgetType.Text;
+        if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
+            return lineH + borderPadding * 2f + extra;
 
-    // ---- Type Options foldout header (Text도 foldout 쓰는 구조라면 포함) ----
-    bool hasOptionsSection =
-        widgetType == WidgetType.Text ||
-        widgetType == WidgetType.Button ||
-        widgetType == WidgetType.Image ||
-        widgetType == WidgetType.Toggle ||
-        widgetType == WidgetType.Slider ||
-        widgetType == WidgetType.Slot ||
-        widgetType == WidgetType.GameObject; // enum에 있다면
+        var w = widgetsProp.GetArrayElementAtIndex(index);
+        if (w == null)
+            return lineH + borderPadding * 2f + extra;
 
-    if (hasOptionsSection)
-    {
-        h += lineH + vGap; // Options foldout header
+        string foldKey = w.propertyPath;
+        bool expanded = _widgetFoldoutStates.TryGetValue(foldKey, out var v) ? v : true;
 
-        // options open?
-        string optionsKey = $"{w.propertyPath}/{widgetType}/" + widgetType switch
+        float h = 0f;
+
+        // borderRect 내부에서 시작할 컨텐츠 높이 누적
+        h += innerTopGap; // 첫 y 보정
+
+        // Header 1줄: Foldout + Enabled + Name + Type
+        h += lineH + vGap;
+
+        if (!expanded)
+            return h + borderPadding * 2f + extra;
+
+        // Preset 1줄
+        h += lineH + vGap;
+
+
+        // Layout Mode 1줄
+        h += lineH + vGap;
+
+        var rectModeProp = w.FindPropertyRelative("rectMode");
+        var rectMode = rectModeProp != null
+            ? (WidgetRectMode)rectModeProp.enumValueIndex
+            : WidgetRectMode.OverrideInSlot;
+
+        if (rectMode == WidgetRectMode.OverrideInSlot)
         {
-            WidgetType.Text      => "TextOptions",
-            WidgetType.Button    => "ButtonOptions",
-            WidgetType.Image     => "ImageOptions",
-            WidgetType.Toggle    => "ToggleOptions",
-            WidgetType.Slider    => "SliderOptions",
-            WidgetType.Slot      => "SlotOptions",
-            WidgetType.GameObject=> "GameObjectOptions",
-            _ => "Options"
-        };
+            // Position / Size / AnchorMin / AnchorMax / Pivot : 5줄
+            h += 5f * (lineH + vGap);
+        }
 
-        bool defaultOpen = (widgetType == WidgetType.Slot); // Slot만 기본 펼침
-        bool optionsOpen = GetSectionFoldout(optionsKey, defaultOpen);
+        var typeProp = w.FindPropertyRelative("widgetType");
+        var widgetType = typeProp != null ? (WidgetType)typeProp.enumValueIndex : WidgetType.Text;
 
-        if (optionsOpen)
+        if (WidgetTypeSupportsTextRole(widgetType))
         {
-            // 각 타입별 옵션 라인 수 + (TextArea가 있으면 “실제 높이”로 더함)
-            float InlineTextAreaHeight(int lines)
+            h += lineH + vGap;
+        }
+
+        // ---- Type Options foldout header (Text도 foldout 쓰는 구조라면 포함) ----
+        bool hasOptionsSection =
+            widgetType == WidgetType.Text ||
+            widgetType == WidgetType.Button ||
+            widgetType == WidgetType.Image ||
+            widgetType == WidgetType.Toggle ||
+            widgetType == WidgetType.Slider ||
+            widgetType == WidgetType.Slot ||
+            widgetType == WidgetType.GameObject; // enum에 있다면
+
+        if (hasOptionsSection)
+        {
+            h += lineH + vGap; // Options foldout header
+
+            // options open?
+            string optionsKey = $"{w.propertyPath}/{widgetType}/" + widgetType switch
             {
-                float textHeight = (lineH + 2f) * lines;
-                // 라벨 1줄 + vGap + 텍스트영역 + vGap
-                return (lineH + vGap) + (textHeight + vGap);
-            }
+                WidgetType.Text => "TextOptions",
+                WidgetType.Button => "ButtonOptions",
+                WidgetType.Image => "ImageOptions",
+                WidgetType.Toggle => "ToggleOptions",
+                WidgetType.Slider => "SliderOptions",
+                WidgetType.Slot => "SlotOptions",
+                WidgetType.GameObject => "GameObjectOptions",
+                _ => "Options"
+            };
 
-            switch (widgetType)
+            bool defaultOpen = (widgetType == WidgetType.Slot); // Slot만 기본 펼침
+            bool optionsOpen = GetSectionFoldout(optionsKey, defaultOpen);
+
+            if (optionsOpen)
             {
-                case WidgetType.Text:
-                    h += InlineTextAreaHeight(2);
-                    break;
+                // 각 타입별 옵션 라인 수 + (TextArea가 있으면 “실제 높이”로 더함)
+                float InlineTextAreaHeight(int lines)
+                {
+                    float textHeight = (lineH + 2f) * lines;
+                    // 라벨 1줄 + vGap + 텍스트영역 + vGap
+                    return (lineH + vGap) + (textHeight + vGap);
+                }
 
-                case WidgetType.Button:
-                    h += (lineH + vGap);      // OnClick Route
-                    h += InlineTextAreaHeight(2);
-                    break;
+                switch (widgetType)
+                {
+                    case WidgetType.Text:
+                        h += InlineTextAreaHeight(2);
+                        break;
 
-                case WidgetType.Image:
-                    h += 3f * (lineH + vGap); // Sprite/Color/Native
-                    h += InlineTextAreaHeight(2);
-                    break;
+                    case WidgetType.Button:
+                        h += (lineH + vGap); // OnClick Route
+                        h += InlineTextAreaHeight(2);
+                        break;
 
-                case WidgetType.Toggle:
-                    h += 2f * (lineH + vGap); // Initial/Interactable
-                    h += InlineTextAreaHeight(2);
-                    break;
+                    case WidgetType.Image:
+                        h += 3f * (lineH + vGap); // Sprite/Color/Native
+                        h += InlineTextAreaHeight(2);
+                        break;
 
-                case WidgetType.Slider:
-                    h += 4f * (lineH + vGap); // Min/Max/Init/Whole
-                    break;
+                    case WidgetType.Toggle:
+                        h += 2f * (lineH + vGap); // Initial/Interactable
+                        h += InlineTextAreaHeight(2);
+                        break;
 
-                case WidgetType.Slot:
-                    h += (lineH + vGap);      // Slot Id row
-                    break;
+                    case WidgetType.Slider:
+                        h += 4f * (lineH + vGap); // Min/Max/Init/Whole
+                        break;
 
-                case WidgetType.GameObject:
-                    // 옵션이 있다면 여기에 줄 추가
-                    break;
+                    case WidgetType.Slot:
+                        h += (lineH + vGap); // Slot Id row
+                        break;
+
+                    case WidgetType.GameObject:
+                        // 옵션이 있다면 여기에 줄 추가
+                        break;
+                }
             }
         }
+
+        // ---- Prefab Override foldout ----
+        string prefabKey = $"{w.propertyPath}/{widgetType}/PrefabOverride";
+        bool prefabOpen = GetSectionFoldout(prefabKey, defaultValue: false);
+
+        h += lineH + vGap; // Prefab Override header
+        if (prefabOpen)
+            h += lineH + vGap; // prefab field
+
+        return h + borderPadding * 2f + extra;
     }
-
-    // ---- Prefab Override foldout ----
-    string prefabKey = $"{w.propertyPath}/{widgetType}/PrefabOverride";
-    bool prefabOpen = GetSectionFoldout(prefabKey, defaultValue: false);
-
-    h += lineH + vGap;        // Prefab Override header
-    if (prefabOpen)
-        h += lineH + vGap;    // prefab field
-
-    return h + borderPadding * 2f + extra;
-}
 
 
     // ─────────────────────────────────────────────
@@ -778,6 +790,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var routeProp = w.FindPropertyRelative("onClickRoute");
         var prefabProp = w.FindPropertyRelative("prefabOverride");
         var rectModeProp = w.FindPropertyRelative("rectMode");
+        var textRoleProp = w.FindPropertyRelative("textRole");
         var anchorMinProp = w.FindPropertyRelative("anchorMin");
         var anchorMaxProp = w.FindPropertyRelative("anchorMax");
         var pivotProp = w.FindPropertyRelative("pivot");
@@ -922,6 +935,12 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 }
             }
 
+            y += lineH + vGap;
+        }
+        if (WidgetTypeSupportsTextRole(widgetType) && textRoleProp != null)
+        {
+            var roleRect = new Rect(rect.x, y, rect.width, lineH);
+            EditorGUI.PropertyField(roleRect, textRoleProp, new GUIContent("Text Role"));
             y += lineH + vGap;
         }
 
@@ -1374,6 +1393,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
             {
                 DrawSlotPathBreadcrumb();
+                DrawCurrentSlotHeader();
 
                 _widgetsScroll = EditorGUILayout.BeginScrollView(_widgetsScroll);
 
@@ -1429,7 +1449,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     }
 
                     EditorGUI.EndDisabledGroup();
-                    
+
                     GUILayout.Space(4f);
 
 // ✅ Expand / Collapse All (current slot)
@@ -1439,11 +1459,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                         _so.Update();
                         SetAllWidgetFoldoutsInCurrentSlot(true);
                     }
+
                     if (GUILayout.Button("Collapse All", GUILayout.Width(110f)))
                     {
                         _so.Update();
                         SetAllWidgetFoldoutsInCurrentSlot(false);
                     }
+
                     EditorGUI.EndDisabledGroup();
                 }
             }
@@ -1806,6 +1828,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         var textProp = widgetProp.FindPropertyRelative("text");
         var routeProp = widgetProp.FindPropertyRelative("onClickRoute");
         var prefabOverrideProp = widgetProp.FindPropertyRelative("prefabOverride");
+        var textRoleProp = widgetProp.FindPropertyRelative("textRole");
 
         var rectModeProp = widgetProp.FindPropertyRelative("rectMode");
         var anchorMinProp = widgetProp.FindPropertyRelative("anchorMin");
@@ -2027,6 +2050,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         return hasParent;
     }
 
+
     private void RefreshPresetLabelsIfNeeded()
     {
         int count = (_presetCatalog != null && _presetCatalog.presets != null) ? _presetCatalog.presets.Count : 0;
@@ -2054,7 +2078,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             _presetLabelsCache[i + 1] = string.IsNullOrEmpty(p.id) ? $"Preset {i}" : p.id;
         }
     }
-    
+
     private bool TryGetCurrentWidgetsProp(out SerializedProperty widgetsProp)
     {
         widgetsProp = null;
@@ -2189,6 +2213,133 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         BuildSlotsList();
+        Repaint();
+    }
+
+    private static bool WidgetTypeSupportsTextRole(WidgetType t)
+    {
+        return t == WidgetType.Text
+               || t == WidgetType.Button
+               || t == WidgetType.Toggle
+               || t == WidgetType.Image;
+        // 필요하면 Slider도 텍스트 라벨 쓸 경우 여기 추가 가능
+    }
+
+    private void DrawCurrentSlotHeader()
+    {
+        if (_slotsProp == null || _slotPath == null || _slotPath.Count == 0)
+            return;
+
+        int slotIndex = _slotPath[_slotPath.Count - 1];
+        if (slotIndex < 0 || slotIndex >= _slotsProp.arraySize)
+            return;
+
+        var slotProp = _slotsProp.GetArrayElementAtIndex(slotIndex);
+        var nameProp = slotProp.FindPropertyRelative("slotName");
+        string currentName = nameProp != null ? nameProp.stringValue : string.Empty;
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (slotIndex == 0)
+            {
+                // 🔹 Root는 기존처럼 왼쪽 리스트에서 편집하되,
+                // 오른쪽에는 읽기 전용으로 표시만 해도 됨.
+                EditorGUILayout.LabelField("Root Slot Id", GUILayout.Width(90f));
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.TextField(currentName);
+                }
+            }
+            else
+            {
+                EditorGUILayout.LabelField("Slot Id", GUILayout.Width(50f));
+
+                EditorGUI.BeginChangeCheck();
+                string newName = EditorGUILayout.TextField(currentName);
+                if (EditorGUI.EndChangeCheck() && nameProp != null)
+                {
+                    newName = (newName ?? string.Empty).Trim();
+
+                    if (string.IsNullOrEmpty(newName))
+                    {
+                        EditorUtility.DisplayDialog(
+                            "Invalid Slot Id",
+                            "Slot Id cannot be empty.\nPlease enter a unique id.",
+                            "OK"
+                        );
+                    }
+                    else if (IsSlotNameUsedByOtherSlots(slotIndex, newName))
+                    {
+                        EditorUtility.DisplayDialog(
+                            "Duplicate Slot Id",
+                            $"The id '{newName}' is already used by another slot.\n\n" +
+                            "Slot Id must be unique.\n" +
+                            "Please choose a different id or rename the other slot first.",
+                            "OK"
+                        );
+                    }
+                    else
+                    {
+                        nameProp.stringValue = newName;
+                        _so.ApplyModifiedProperties();
+                        MarkSlotGraphDirty(); // 이름 바뀌면 그래프/경로/레이블 다시 계산
+                    }
+                }
+            }
+        }
+
+        EditorGUILayout.Space(4f);
+    }
+
+    private void OnUndoRedo()
+    {
+        // 이 창과 관련 없는 Undo일 수도 있으니 방어
+        if (_asset == null)
+            return;
+
+        // SerializedObject 다시 동기화
+        if (_so == null)
+            _so = new SerializedObject(_asset);
+        else
+            _so.Update();
+
+        // spec / slots 프로퍼티 다시 찾아두기 (혹시 구조가 바뀌었을 수도 있으니)
+        if (_specProp == null)
+            _specProp = _so.FindProperty("spec");
+
+        if (_specProp != null)
+            _slotsProp = _specProp.FindPropertyRelative("slots");
+        else
+            _slotsProp = null;
+
+        // 슬롯 개수가 줄었을 수 있으니 path/선택 인덱스 정리
+        if (_slotsProp == null || _slotsProp.arraySize == 0)
+        {
+            _slotPath.Clear();
+            _selectedSlotIndex = -1;
+            _widgetsList = null;
+        }
+        else
+        {
+            // path가 비어 있으면 0번(root)로 초기화
+            if (_slotPath.Count == 0)
+                _slotPath.Add(0);
+
+            int last = _slotPath[_slotPath.Count - 1];
+            if (last < 0 || last >= _slotsProp.arraySize)
+            {
+                last = Mathf.Clamp(last, 0, _slotsProp.arraySize - 1);
+                _slotPath[_slotPath.Count - 1] = last;
+            }
+
+            _selectedSlotIndex = last;
+            BuildWidgetsListForCurrentSlot(); // 오른쪽 widgets 리스트도 다시 바인딩
+        }
+
+        // 슬롯 그래프 캐시(부모/깊이/경로 라벨) 다시 계산하도록 플래그
+        MarkSlotGraphDirty();
+
+        // 화면 다시 그리기
         Repaint();
     }
 }
