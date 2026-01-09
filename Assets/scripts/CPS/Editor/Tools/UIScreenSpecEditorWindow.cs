@@ -603,76 +603,139 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     // Per-widget element height
     // ─────────────────────────────────────────────
     private float CalcWidgetElementHeight(SerializedProperty widgetsProp, int index)
+{
+    float lineH = EditorGUIUtility.singleLineHeight;
+    float vGap = 2f;
+    const float borderPadding = 2f;
+    const float innerTopGap = 2f;          // DrawWidgetElement에서 rect.y += vGap 했던 것과 유사
+    const float extra = 4f;                // 기존 리턴에 붙이던 여유
+
+    if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
+        return lineH + borderPadding * 2f + extra;
+
+    var w = widgetsProp.GetArrayElementAtIndex(index);
+    if (w == null)
+        return lineH + borderPadding * 2f + extra;
+
+    string foldKey = w.propertyPath;
+    bool expanded = _widgetFoldoutStates.TryGetValue(foldKey, out var v) ? v : true;
+
+    float h = 0f;
+
+    // borderRect 내부에서 시작할 컨텐츠 높이 누적
+    h += innerTopGap; // 첫 y 보정
+
+    // Header 1줄: Foldout + Enabled + Name + Type
+    h += lineH + vGap;
+
+    if (!expanded)
+        return h + borderPadding * 2f + extra;
+
+    // Preset 1줄
+    h += lineH + vGap;
+
+    // Layout Mode 1줄
+    h += lineH + vGap;
+
+    var rectModeProp = w.FindPropertyRelative("rectMode");
+    var rectMode = rectModeProp != null ? (WidgetRectMode)rectModeProp.enumValueIndex : WidgetRectMode.OverrideInSlot;
+
+    if (rectMode == WidgetRectMode.OverrideInSlot)
     {
-        float lineH = EditorGUIUtility.singleLineHeight;
-        float vGap = 2f;
-        float borderPadding = 2f;
-
-        if (widgetsProp == null || index < 0 || index >= widgetsProp.arraySize)
-            return lineH + 2f * borderPadding;
-
-        var w = widgetsProp.GetArrayElementAtIndex(index);
-
-        string foldKey = w.propertyPath;
-        bool expanded = true;
-        _widgetFoldoutStates.TryGetValue(foldKey, out expanded);
-
-        if (!expanded)
-        {
-            int collapsedLines = 1;
-            float collapsedHeight = collapsedLines * (lineH + vGap) + vGap;
-            return collapsedHeight + borderPadding * 2f + 4f;
-        }
-
-        int lines = 0;
-
-        // 1 line: Name + Type
-        lines += 1;
-        // Preset dropdown
-        lines += 1;
-        // Text 2 lines
-        lines += 2;
-
-        var typeProp = w.FindPropertyRelative("widgetType");
-        var widgetType = (WidgetType)typeProp.enumValueIndex;
-
-        // Route + Prefab
-        lines += (widgetType == WidgetType.Button) ? 2 : 1;
-
-        // Layout Mode
-        lines += 1;
-
-        var rectModeProp = w.FindPropertyRelative("rectMode");
-        var rectMode = (WidgetRectMode)rectModeProp.enumValueIndex;
-        if (rectMode == WidgetRectMode.OverrideInSlot)
-        {
-            // AnchorMin, AnchorMax, Pivot, Size, Position
-            lines += 5;
-        }
-
-        switch (widgetType)
-        {
-            case WidgetType.Button:
-                lines += 1;
-                break;
-            case WidgetType.Image:
-                lines += 4;
-                break;
-            case WidgetType.Toggle:
-                lines += 3;
-                break;
-            case WidgetType.Slider:
-                lines += 5;
-                break;
-            case WidgetType.Slot:
-                // [Slot Options] + Slot Id
-                lines += 2;
-                break;
-        }
-
-        float contentHeight = lines * (lineH + vGap) + vGap;
-        return contentHeight + borderPadding * 2f + 4f;
+        // Position / Size / AnchorMin / AnchorMax / Pivot : 5줄
+        h += 5f * (lineH + vGap);
     }
+
+    var typeProp = w.FindPropertyRelative("widgetType");
+    var widgetType = typeProp != null ? (WidgetType)typeProp.enumValueIndex : WidgetType.Text;
+
+    // ---- Type Options foldout header (Text도 foldout 쓰는 구조라면 포함) ----
+    bool hasOptionsSection =
+        widgetType == WidgetType.Text ||
+        widgetType == WidgetType.Button ||
+        widgetType == WidgetType.Image ||
+        widgetType == WidgetType.Toggle ||
+        widgetType == WidgetType.Slider ||
+        widgetType == WidgetType.Slot ||
+        widgetType == WidgetType.GameObject; // enum에 있다면
+
+    if (hasOptionsSection)
+    {
+        h += lineH + vGap; // Options foldout header
+
+        // options open?
+        string optionsKey = $"{w.propertyPath}/{widgetType}/" + widgetType switch
+        {
+            WidgetType.Text      => "TextOptions",
+            WidgetType.Button    => "ButtonOptions",
+            WidgetType.Image     => "ImageOptions",
+            WidgetType.Toggle    => "ToggleOptions",
+            WidgetType.Slider    => "SliderOptions",
+            WidgetType.Slot      => "SlotOptions",
+            WidgetType.GameObject=> "GameObjectOptions",
+            _ => "Options"
+        };
+
+        bool defaultOpen = (widgetType == WidgetType.Slot); // Slot만 기본 펼침
+        bool optionsOpen = GetSectionFoldout(optionsKey, defaultOpen);
+
+        if (optionsOpen)
+        {
+            // 각 타입별 옵션 라인 수 + (TextArea가 있으면 “실제 높이”로 더함)
+            float InlineTextAreaHeight(int lines)
+            {
+                float textHeight = (lineH + 2f) * lines;
+                // 라벨 1줄 + vGap + 텍스트영역 + vGap
+                return (lineH + vGap) + (textHeight + vGap);
+            }
+
+            switch (widgetType)
+            {
+                case WidgetType.Text:
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Button:
+                    h += (lineH + vGap);      // OnClick Route
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Image:
+                    h += 3f * (lineH + vGap); // Sprite/Color/Native
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Toggle:
+                    h += 2f * (lineH + vGap); // Initial/Interactable
+                    h += InlineTextAreaHeight(2);
+                    break;
+
+                case WidgetType.Slider:
+                    h += 4f * (lineH + vGap); // Min/Max/Init/Whole
+                    break;
+
+                case WidgetType.Slot:
+                    h += (lineH + vGap);      // Slot Id row
+                    break;
+
+                case WidgetType.GameObject:
+                    // 옵션이 있다면 여기에 줄 추가
+                    break;
+            }
+        }
+    }
+
+    // ---- Prefab Override foldout ----
+    string prefabKey = $"{w.propertyPath}/{widgetType}/PrefabOverride";
+    bool prefabOpen = GetSectionFoldout(prefabKey, defaultValue: false);
+
+    h += lineH + vGap;        // Prefab Override header
+    if (prefabOpen)
+        h += lineH + vGap;    // prefab field
+
+    return h + borderPadding * 2f + extra;
+}
+
 
     // ─────────────────────────────────────────────
     // Widget element rendering
@@ -2013,34 +2076,31 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         if (!TryGetCurrentWidgetsProp(out var widgetsProp))
             return;
 
+        // 현재 슬롯의 모든 위젯 foldout을 강제로 동일 상태로 세팅
         for (int i = 0; i < widgetsProp.arraySize; i++)
         {
             var w = widgetsProp.GetArrayElementAtIndex(i);
             if (w == null) continue;
 
-            // ✅ Expand/Collapse All은 "위젯 폴드아웃"만 제어
             _widgetFoldoutStates[w.propertyPath] = expanded;
 
-            // ✅ Collapse 할 때만: 섹션 옵션 / PrefabOverride도 같이 접어준다.
-            //    Expand 할 때는 섹션 상태를 "그대로 유지" (기본적으로 계속 접힌채 유지됨)
-            if (!expanded)
+            // (선택) 섹션 폴드아웃까지 같이 접고/펼치고 싶으면 아래도 같이 켜.
+            // GetSectionFoldout/SetSectionFoldout을 이미 쓰고 있으니, key 규칙에 맞춰서 밀어 넣는다.
+            var typeProp = w.FindPropertyRelative("widgetType");
+            if (typeProp != null)
             {
-                var typeProp = w.FindPropertyRelative("widgetType");
-                if (typeProp != null)
-                {
-                    var widgetType = (WidgetType)typeProp.enumValueIndex;
+                var widgetType = (WidgetType)typeProp.enumValueIndex;
 
-                    // 너가 쓰는 key 규칙 기준
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/ButtonOptions", false);
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/ImageOptions", false);
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/ToggleOptions", false);
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/SliderOptions", false);
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/SlotOptions", false);
+                // 너가 쓰는 key 규칙: $"{w.propertyPath}/{widgetType}/XxxOptions"
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ButtonOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ImageOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/ToggleOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/SliderOptions", expanded);
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/SlotOptions", expanded);
 
-                    // PrefabOverride 키(혹시 두 버전 섞여있을 수 있어서 둘 다)
-                    SetSectionFoldout($"{w.propertyPath}/{widgetType}/PrefabOverride", false);
-                    SetSectionFoldout($"{w.propertyPath}/PrefabOverride", false);
-                }
+                // Prefab Override는 공통 섹션 키를 쓰는 버전도 있었어서 둘 다 커버
+                SetSectionFoldout($"{w.propertyPath}/{widgetType}/PrefabOverride", expanded);
+                SetSectionFoldout($"{w.propertyPath}/PrefabOverride", expanded);
             }
         }
 
