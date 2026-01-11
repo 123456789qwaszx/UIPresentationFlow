@@ -47,9 +47,20 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
     private string[] _presetLabelsCache;
     private int _presetLabelsCountCache = -1;
     private bool _presetLabelsHasCatalogCache = false;
+    
+    
+    const float CenterMinWidth = 3000f;
+    const float CenterMaxWidth = 380f;
+    const float RightMinWidth  = 120f;
+    const float RightMaxWidth  = 130f;
 
 
     private readonly Dictionary<string, bool> _widgetSectionFoldoutStates = new();
+
+    private const string WidgetClipboardPrefix = "CPS_WIDGETSPEC_CLIP:";
+
+    // ✅ 오른쪽 "All Widgets" 패널용 스크롤
+    private Vector2 _allWidgetsScroll;
 
     private void MarkSlotGraphDirty() => _slotGraphDirty = true;
 
@@ -63,7 +74,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        minSize = new Vector2(530, 380);
+        minSize = new Vector2(250, 40);
         Selection.selectionChanged += TryAutoBindFromSelection;
         Undo.undoRedoPerformed += OnUndoRedo;
         TryAutoBindFromSelection();
@@ -256,12 +267,14 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             isUnlinked = !_hasParentCache[index];
 
         string labelText;
+        string countLabel = widgetCount == 1 ? "1 widget" : $"{widgetCount} widgets";
+
         if (index == 0)
-            labelText = $"[Root] {pathLabel} ({widgetCount})";
+            labelText = $"[Root] {pathLabel} ({countLabel})";
         else if (isUnlinked)
-            labelText = $"(!) [unlinked] {pathLabel} ({widgetCount})";
+            labelText = $"(!) [unlinked] {pathLabel} ({countLabel})";
         else
-            labelText = $"[depth{depth}] {pathLabel} ({widgetCount})";
+            labelText = $"[depth{depth}] {pathLabel} ({countLabel})";
 
         // ──────────────────────
         // First line: label + (↑↓ controls for non-root slots)
@@ -818,6 +831,9 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
             var menu = new GenericMenu();
             int capturedIndex = index;
 
+            // ─────────────
+            // 위젯 추가 / 복사 계열 (같은 그룹)
+            // ─────────────
             menu.AddItem(new GUIContent("Add Widget Below"), false, () =>
             {
                 if (widgetsProp == null) return;
@@ -835,6 +851,38 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     _widgetsList.index = insertIndex;
                 Repaint();
             });
+
+            // Copy / Paste / Duplicate
+            menu.AddItem(new GUIContent("Copy Widget"), false, () =>
+            {
+                if (_widgetsList != null) _widgetsList.index = capturedIndex;
+                CopySelectedWidget();
+            });
+
+            bool canPaste = TryReadClipboardPayload(out _);
+            if (canPaste)
+            {
+                menu.AddItem(new GUIContent("Paste Widget Below"), false, () =>
+                {
+                    if (_widgetsList != null) _widgetsList.index = capturedIndex;
+                    PasteWidgetBelowSelected();
+                });
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Paste Widget Below"), true);
+            }
+
+            menu.AddItem(new GUIContent("Duplicate Widget"), false, () =>
+            {
+                if (_widgetsList != null) _widgetsList.index = capturedIndex;
+                DuplicateSelectedWidget();
+            });
+
+            // ─────────────
+            // 여기서 Delete 앞에 선 하나
+            // ─────────────
+            menu.AddSeparator(string.Empty);
 
             menu.AddItem(new GUIContent("Delete Widget"), false, () =>
             {
@@ -1139,7 +1187,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     {
                         // 여기서 GameObject 전용 옵션이 있으면 그리면 됨.
                         // (없으면 그냥 비워둬도 OK)
-                        // ❌ GameObject는 TextArea 표시 안 함
+                        // GameObject는 TextArea 표시 안 함
                     }
 
                     break;
@@ -1148,7 +1196,7 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                 case WidgetType.Slot:
                 {
                     string sectionKey = $"{w.propertyPath}/{widgetType}/SlotOptions";
-                    bool open = GetSectionFoldout(sectionKey, defaultValue: true); // ✅ Slot만 기본 펼침
+                    bool open = GetSectionFoldout(sectionKey, defaultValue: true); // Slot만 기본 펼침
 
                     var headerRect = new Rect(rect.x, y, rect.width, lineH);
                     open = EditorGUI.Foldout(headerRect, open, "[Slot Options]", true);
@@ -1157,20 +1205,34 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
                     if (open)
                     {
-                        var idRect = new Rect(rect.x, y, rect.width - 120f, lineH);
+                        const float buttonWidth   = 110f;
+                        const float buttonGap     = 4f;
+                        const float minTextWidth  = 80f; // Slot Id 텍스트 최소 폭 (원하는 값으로 조절)
+
+                        float availableWidth = rect.width - buttonWidth - buttonGap;
+                        float textWidth      = Mathf.Max(minTextWidth, availableWidth);
+
+                        var idRect = new Rect(rect.x, y, textWidth, lineH);
+                        var buttonRect = new Rect(idRect.xMax + buttonGap, y, buttonWidth, lineH);
+
+                        // (선택) 라벨 폭도 줄여서 텍스트 영역 확보
+                        float oldLabelWidth = EditorGUIUtility.labelWidth;
+                        EditorGUIUtility.labelWidth = 60f; // 기본보다 살짝 줄이기
 
                         EditorGUI.BeginChangeCheck();
                         string newId = EditorGUI.TextField(idRect, "Slot Id", slotIdProp.stringValue);
                         if (EditorGUI.EndChangeCheck())
                         {
-                            slotIdProp.stringValue = (newId ?? string.Empty).Trim();
-                            MarkSlotGraphDirty(); // slot edge 변경
+                            newId = (newId ?? string.Empty).Trim();
+                            slotIdProp.stringValue = newId;
+                            MarkSlotGraphDirty();
                         }
 
-                        var buttonRect = new Rect(idRect.xMax + 4f, y, 110f, lineH);
+                        EditorGUIUtility.labelWidth = oldLabelWidth; // 원복
+
                         using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(slotIdProp.stringValue)))
                         {
-                            if (GUI.Button(buttonRect, "Open Child Slot"))
+                            if (GUI.Button(buttonRect, "Create Child Slot"))
                             {
                                 string targetName = (slotIdProp.stringValue ?? string.Empty).Trim();
                                 if (!string.IsNullOrEmpty(targetName))
@@ -1179,8 +1241,6 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                         }
 
                         y += lineH + vGap;
-
-                        // ❌ Slot은 TextArea 표시 안 함
                     }
 
                     break;
@@ -1364,6 +1424,28 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         }
 
         _so.Update();
+        var e = Event.current;
+        if (e.type == EventType.KeyDown && !EditorGUIUtility.editingTextField)
+        {
+            bool action = e.control || e.command; // Win: Ctrl, Mac: Cmd
+
+            if (action && e.keyCode == KeyCode.C)
+            {
+                CopySelectedWidget();
+                e.Use();
+            }
+            else if (action && e.keyCode == KeyCode.V)
+            {
+                PasteWidgetBelowSelected();
+                e.Use();
+            }
+            else if (action && e.keyCode == KeyCode.D)
+            {
+                DuplicateSelectedWidget();
+                e.Use();
+            }
+        }
+
         if (_slotGraphDirty && Event.current.type == EventType.Layout)
         {
             RebuildSlotGraphCache();
@@ -1379,18 +1461,40 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            // Left: Slot list
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(position.width * 0.4f)))
+            // 1) Left: Slots
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(position.width * 0.42f)))
             {
                 _slotsScroll = EditorGUILayout.BeginScrollView(_slotsScroll);
                 _slotsList?.DoLayoutList();
                 EditorGUILayout.EndScrollView();
+
+                EditorGUILayout.Space(4f);
+
+                // Slots 패널 아래쪽, 오른쪽 정렬된 Clean 버튼
+                bool hasAnySlot =
+                    _slotsProp != null &&
+                    _slotsProp.arraySize > 0;
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace(); // 오른쪽으로 밀기
+
+                    EditorGUI.BeginDisabledGroup(!hasAnySlot || _asset == null);
+                    if (GUILayout.Button("Clean Unlinked Slots", GUILayout.Width(160f)))
+                    {
+                        CleanupUnlinkedSlots();
+                    }
+                    EditorGUI.EndDisabledGroup();
+                }
             }
 
             GUILayout.Space(4f);
 
-            // Right: Slot path + Widgets
-            using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
+            // 2) Center: 현재 Slot의 Widgets (기존 그대로)
+            using (new EditorGUILayout.VerticalScope(
+                       GUILayout.MinWidth(CenterMinWidth),
+                       GUILayout.MaxWidth(CenterMaxWidth),
+                       GUILayout.ExpandWidth(false)))
             {
                 DrawSlotPathBreadcrumb();
                 DrawCurrentSlotHeader();
@@ -1418,28 +1522,13 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
                     _slotsProp.arraySize > 0 &&
                     _slotPath.Count > 0;
 
-                bool hasAnySlot =
-                    _slotsProp != null &&
-                    _slotsProp.arraySize > 0;
-
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     GUILayout.FlexibleSpace();
-
-                    // Clean unlinked slots button
-                    EditorGUI.BeginDisabledGroup(!hasAnySlot || _asset == null);
-                    if (GUILayout.Button("Clean Unlinked Slots", GUILayout.Width(180f)))
-                    {
-                        CleanupUnlinkedSlots();
-                    }
-
-                    EditorGUI.EndDisabledGroup();
-
-                    GUILayout.Space(4f);
-
-                    // Enable all widgets button
+                    
+                    // Enable all widgets
                     EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
-                    if (GUILayout.Button("Enable All Widgets", GUILayout.Width(180f)))
+                    if (GUILayout.Button("Enable All Widgets", GUILayout.Width(140f)))
                     {
                         EnableAllDisabledWidgets(_asset.spec);
                         _so.Update();
@@ -1452,15 +1541,15 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
                     GUILayout.Space(4f);
 
-// ✅ Expand / Collapse All (current slot)
+                    // Expand / Collapse All (current slot)
                     EditorGUI.BeginDisabledGroup(!hasSlotSelected || _asset == null);
-                    if (GUILayout.Button("Expand All", GUILayout.Width(110f)))
+                    if (GUILayout.Button("Expand All", GUILayout.Width(90f)))
                     {
                         _so.Update();
                         SetAllWidgetFoldoutsInCurrentSlot(true);
                     }
 
-                    if (GUILayout.Button("Collapse All", GUILayout.Width(110f)))
+                    if (GUILayout.Button("Collapse All", GUILayout.Width(90f)))
                     {
                         _so.Update();
                         SetAllWidgetFoldoutsInCurrentSlot(false);
@@ -1468,6 +1557,17 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
                     EditorGUI.EndDisabledGroup();
                 }
+            }
+
+            GUILayout.Space(4f);
+
+            // 3) Right: All Widgets (새 패널)
+            using (new EditorGUILayout.VerticalScope(
+                       GUILayout.MinWidth(RightMinWidth),
+                       GUILayout.MaxWidth(RightMaxWidth),
+                       GUILayout.ExpandWidth(true)))
+            {
+                DrawAllWidgetsPanel();
             }
         }
 
@@ -2291,6 +2391,105 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
         EditorGUILayout.Space(4f);
     }
 
+    private void DrawAllWidgetsPanel()
+    {
+        EditorGUILayout.LabelField("All Widgets (All Slots)", EditorStyles.boldLabel);
+        EditorGUILayout.Space(2f);
+
+        if (_slotsProp == null || _slotsProp.arraySize == 0)
+        {
+            EditorGUILayout.HelpBox("No slots defined.", MessageType.None);
+            return;
+        }
+
+        // 현재 선택 상태 (중앙 패널 기준)
+        int currentSlotIndex = -1;
+        int currentWidgetIndex = -1;
+
+        if (_slotPath != null && _slotPath.Count > 0)
+            currentSlotIndex = _slotPath[_slotPath.Count - 1];
+
+        if (_widgetsList != null)
+            currentWidgetIndex = _widgetsList.index;
+
+        _allWidgetsScroll = EditorGUILayout.BeginScrollView(_allWidgetsScroll);
+
+        for (int i = 0; i < _slotsProp.arraySize; i++)
+        {
+            var slotProp = _slotsProp.GetArrayElementAtIndex(i);
+            var nameProp = slotProp.FindPropertyRelative("slotName");
+            var widgetsProp = slotProp.FindPropertyRelative("widgets");
+
+            string slotName = (nameProp != null && !string.IsNullOrWhiteSpace(nameProp.stringValue))
+                ? nameProp.stringValue.Trim()
+                : $"Slot {i}";
+
+            // 슬롯 헤더
+            EditorGUILayout.LabelField(slotName, EditorStyles.miniBoldLabel);
+
+            if (widgetsProp == null || widgetsProp.arraySize == 0)
+            {
+                EditorGUILayout.LabelField("  (no widgets)", EditorStyles.miniLabel);
+                EditorGUILayout.Space(2f);
+                continue;
+            }
+
+            EditorGUI.indentLevel++;
+            for (int wIndex = 0; wIndex < widgetsProp.arraySize; wIndex++)
+            {
+                var w = widgetsProp.GetArrayElementAtIndex(wIndex);
+                if (w == null) continue;
+
+                var nameTagProp = w.FindPropertyRelative("nameTag");
+                var typeProp = w.FindPropertyRelative("widgetType");
+                var disabledProp = w.FindPropertyRelative("disabled");
+
+                string nameTag = (nameTagProp != null && !string.IsNullOrWhiteSpace(nameTagProp.stringValue))
+                    ? nameTagProp.stringValue.Trim()
+                    : $"Widget {wIndex}";
+
+                WidgetType widgetType = typeProp != null
+                    ? (WidgetType)typeProp.enumValueIndex
+                    : WidgetType.Text;
+
+                bool isDisabled = disabledProp != null && disabledProp.boolValue;
+
+                bool isSelected =
+                    (i == currentSlotIndex) &&
+                    (wIndex == currentWidgetIndex);
+
+                string label = $"{nameTag}  [{widgetType}]";
+                if (isDisabled)
+                    label += "  (disabled)";
+
+                GUIStyle style = isSelected ? EditorStyles.miniButtonMid : EditorStyles.miniButton;
+
+                if (GUILayout.Button(label, style))
+                {
+                    // 🔗 오른쪽에서 클릭 → 왼쪽 Slot + 중앙 Widgets 모두 해당 항목으로 이동/선택
+                    if (_slotsList != null)
+                        _slotsList.index = i;
+
+                    // Slot path / WidgetsList 재설정
+                    RebuildSlotPathForSelected(i);
+
+                    if (_widgetsList != null)
+                        _widgetsList.index = wIndex;
+                    ScrollWidgetsToIndex(wIndex);
+
+                    Repaint();
+                }
+            }
+
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(4f);
+        }
+
+        EditorGUILayout.EndScrollView();
+    }
+
+
     private void OnUndoRedo()
     {
         // 이 창과 관련 없는 Undo일 수도 있으니 방어
@@ -2341,6 +2540,249 @@ public sealed class UIScreenSpecEditorWindow : EditorWindow
 
         // 화면 다시 그리기
         Repaint();
+    }
+
+    [Serializable]
+    private sealed class WidgetClipboardPayload
+    {
+        public string kind; // sanity marker
+        public string json; // EditorJsonUtility serialized WidgetSpec
+        public List<ObjectRef> refs; // UnityEngine.Object refs (prefab/sprite/etc.)
+    }
+
+    [Serializable]
+    private sealed class ObjectRef
+    {
+        public string field; // field name on WidgetSpec
+        public string globalId; // GlobalObjectId string
+    }
+
+    private bool TryGetCurrentSlotIndex(out int slotIndex)
+    {
+        slotIndex = -1;
+        if (_slotsProp == null || _slotPath == null || _slotPath.Count == 0)
+            return false;
+
+        slotIndex = _slotPath[_slotPath.Count - 1];
+        return slotIndex >= 0 && slotIndex < _asset.spec.slots.Count;
+    }
+
+    private bool TryGetSelectedWidgetIndex(out int widgetIndex)
+    {
+        widgetIndex = -1;
+        if (_widgetsList == null) return false;
+
+        widgetIndex = _widgetsList.index;
+        if (widgetIndex < 0) return false;
+        return true;
+    }
+
+    private static IEnumerable<System.Reflection.FieldInfo> EnumerateUnityObjectFields(Type t)
+    {
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.NonPublic;
+
+        foreach (var f in t.GetFields(flags))
+        {
+            // public field OR [SerializeField] private field
+            bool serializable =
+                f.IsPublic ||
+                Attribute.IsDefined(f, typeof(SerializeField));
+
+            if (!serializable) continue;
+
+            if (typeof(UnityEngine.Object).IsAssignableFrom(f.FieldType))
+                yield return f;
+        }
+    }
+
+    private static string MakeClipboardString(WidgetClipboardPayload payload)
+    {
+        string json = JsonUtility.ToJson(payload);
+        return WidgetClipboardPrefix + json;
+    }
+
+    private static bool TryReadClipboardPayload(out WidgetClipboardPayload payload)
+    {
+        payload = null;
+
+        string buf = EditorGUIUtility.systemCopyBuffer;
+        if (string.IsNullOrEmpty(buf)) return false;
+        if (!buf.StartsWith(WidgetClipboardPrefix, StringComparison.Ordinal)) return false;
+
+        string json = buf.Substring(WidgetClipboardPrefix.Length);
+        if (string.IsNullOrEmpty(json)) return false;
+
+        try
+        {
+            payload = JsonUtility.FromJson<WidgetClipboardPayload>(json);
+            if (payload == null) return false;
+            if (payload.kind != "WidgetSpec") return false;
+            if (string.IsNullOrEmpty(payload.json)) return false;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void CaptureUnityObjectRefs(object widgetSpecInstance, WidgetClipboardPayload payload)
+    {
+        if (widgetSpecInstance == null) return;
+
+        payload.refs ??= new List<ObjectRef>();
+        payload.refs.Clear();
+
+#if UNITY_2020_1_OR_NEWER
+        var type = widgetSpecInstance.GetType();
+        foreach (var f in EnumerateUnityObjectFields(type))
+        {
+            var obj = f.GetValue(widgetSpecInstance) as UnityEngine.Object;
+            if (obj == null) continue;
+
+            // GlobalObjectId는 프로젝트 에셋/서브에셋 참조 복원에 비교적 안정적
+            GlobalObjectId gid = GlobalObjectId.GetGlobalObjectIdSlow(obj);
+            payload.refs.Add(new ObjectRef
+            {
+                field = f.Name,
+                globalId = gid.ToString()
+            });
+        }
+#endif
+    }
+
+    private static void RestoreUnityObjectRefs(object widgetSpecInstance, WidgetClipboardPayload payload)
+    {
+        if (widgetSpecInstance == null) return;
+        if (payload == null || payload.refs == null || payload.refs.Count == 0) return;
+
+#if UNITY_2020_1_OR_NEWER
+        var type = widgetSpecInstance.GetType();
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.NonPublic;
+
+        foreach (var r in payload.refs)
+        {
+            if (string.IsNullOrEmpty(r.field) || string.IsNullOrEmpty(r.globalId))
+                continue;
+
+            var f = type.GetField(r.field, flags);
+            if (f == null) continue;
+            if (!typeof(UnityEngine.Object).IsAssignableFrom(f.FieldType))
+                continue;
+
+            if (!GlobalObjectId.TryParse(r.globalId, out var gid))
+                continue;
+
+            var obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(gid);
+            if (obj == null) continue;
+
+            // 타입 호환 확인
+            if (!f.FieldType.IsInstanceOfType(obj))
+                continue;
+
+            f.SetValue(widgetSpecInstance, obj);
+        }
+#endif
+    }
+
+    private void CopySelectedWidget()
+    {
+        if (_asset == null) return;
+        if (!TryGetCurrentSlotIndex(out int slotIndex)) return;
+        if (!TryGetSelectedWidgetIndex(out int widgetIndex)) return;
+
+        var slot = _asset.spec.slots[slotIndex];
+        if (slot?.widgets == null) return;
+        if (widgetIndex < 0 || widgetIndex >= slot.widgets.Count) return;
+
+        var widget = slot.widgets[widgetIndex];
+        if (widget == null) return;
+
+        // JSON + UnityEngine.Object refs
+        var payload = new WidgetClipboardPayload
+        {
+            kind = "WidgetSpec",
+            json = EditorJsonUtility.ToJson(widget, true),
+            refs = new List<ObjectRef>()
+        };
+        CaptureUnityObjectRefs(widget, payload);
+
+        EditorGUIUtility.systemCopyBuffer = MakeClipboardString(payload);
+    }
+
+    private void PasteWidgetBelowSelected()
+    {
+        if (_asset == null) return;
+        if (!TryGetCurrentSlotIndex(out int slotIndex)) return;
+
+        if (!TryReadClipboardPayload(out var payload))
+            return;
+
+        // 새 위젯 생성 & 복원
+        var newWidget = new WidgetSpec();
+        EditorJsonUtility.FromJsonOverwrite(payload.json, newWidget);
+        RestoreUnityObjectRefs(newWidget, payload);
+
+        // 삽입 위치: 선택된 위젯 아래, 없으면 맨 뒤
+        int insertIndex = 0;
+        if (TryGetSelectedWidgetIndex(out int selected))
+            insertIndex = Mathf.Clamp(selected + 1, 0, _asset.spec.slots[slotIndex].widgets.Count);
+        else
+            insertIndex = _asset.spec.slots[slotIndex].widgets.Count;
+
+        Undo.RecordObject(_asset, "Paste Widget");
+        var slot = _asset.spec.slots[slotIndex];
+        slot.widgets ??= new List<WidgetSpec>();
+        slot.widgets.Insert(insertIndex, newWidget);
+
+        EditorUtility.SetDirty(_asset);
+
+        // Slot 위젯 붙여넣으면 그래프 영향 가능
+        if (newWidget.widgetType == WidgetType.Slot)
+            MarkSlotGraphDirty();
+
+        // UI 갱신
+        _so.Update();
+        BuildWidgetsListForCurrentSlot();
+        if (_widgetsList != null) _widgetsList.index = insertIndex;
+        Repaint();
+    }
+
+    private void DuplicateSelectedWidget()
+    {
+        // Copy → Paste를 이용해서 바로 복제
+        CopySelectedWidget();
+        PasteWidgetBelowSelected();
+    }
+
+    private void ScrollWidgetsToIndex(int widgetIndex)
+    {
+        if (!TryGetCurrentWidgetsProp(out var widgetsProp))
+            return;
+
+        if (widgetsProp.arraySize == 0)
+            return;
+
+        widgetIndex = Mathf.Clamp(widgetIndex, 0, widgetsProp.arraySize - 1);
+
+        float y = 0f;
+
+        // 위에 있는 위젯들의 높이를 전부 더해서 목표 스크롤 위치 계산
+        for (int i = 0; i < widgetIndex; i++)
+        {
+            y += CalcWidgetElementHeight(widgetsProp, i);
+        }
+
+        // 헤더/여백 조금 보정
+        y += 24f;
+
+        _widgetsScroll.y = y;
     }
 }
 #endif
