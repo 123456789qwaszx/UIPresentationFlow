@@ -11,7 +11,6 @@ public class WidgetFactory
     private readonly GameObject _gameObjectPrefab;
     private readonly GameObject _slotPrefab;
 
-    //private readonly IUiActionBinder _actionBinder;
     private readonly bool _strict;
     
     public WidgetFactory(
@@ -22,7 +21,6 @@ public class WidgetFactory
         GameObject sliderPrefab,
         GameObject gameObjectPrefab,
         GameObject slotPrefab,
-        //IUiActionBinder actionBinder,
         bool strictMode = false
     )
     {
@@ -34,7 +32,6 @@ public class WidgetFactory
         _gameObjectPrefab = gameObjectPrefab;
         _slotPrefab       = slotPrefab;
 
-        //_actionBinder = actionBinder;
         _strict       = strictMode;
     }
     
@@ -132,23 +129,10 @@ public class WidgetFactory
 
             handle.Slider.value = v;
         }
-        
-        // ---- 액션 바인딩 ----
-        if (!string.IsNullOrEmpty(spec.onClickRoute))
-        {
-            BindActionIfNeeded(spec, handle);
-        }
 
         return handle;
     }
-    
-    
-    private void BindActionIfNeeded(WidgetSpec spec, WidgetHandle widget)
-    {
-        UIActionKey key = UIActionKeyRegistry.Get(spec.onClickRoute);
-        //_actionBinder?.TryBind(widget, key);
-    }
-    
+
     private GameObject ResolvePrefab(WidgetSpec spec)
     {
         if (spec.prefabOverride != null)

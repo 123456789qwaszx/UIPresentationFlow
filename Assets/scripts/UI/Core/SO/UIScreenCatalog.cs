@@ -6,7 +6,6 @@ using UnityEngine.Serialization;
 [Serializable]
 public struct UIRouteEntry
 {
-    [UIRouteKey]
     public string route;
     public ScreenKey screenKey;
 }
