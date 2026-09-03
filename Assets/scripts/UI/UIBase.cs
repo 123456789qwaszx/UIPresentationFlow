@@ -27,7 +27,7 @@ public abstract class UIBase : MonoBehaviour
     protected virtual void OnInitialize() { }
 }
 
-public abstract class UIBase<TRefs> : UIBase
+public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
     where TRefs : struct, Enum
 {
     protected sealed class RefView
@@ -55,6 +55,11 @@ public abstract class UIBase<TRefs> : UIBase
 
     protected RefView View { get; private set; }
 
+    // Presentation sees semantic string ids.
+    // Ordinary screen code continues to use typed Refs through View.
+    public IReadOnlyList<string> TextTargetIds
+        => UIRefMetadataCache<TRefs>.TextTargetIds;
+
     protected override void PreInitialize()
     {
         if (_refsBuilt)
@@ -69,6 +74,33 @@ public abstract class UIBase<TRefs> : UIBase
     {
         _componentCache.Clear();
     }
+
+    public bool TryGetRect(string refId, out RectTransform rect)
+    {
+        rect = null;
+
+        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+            return false;
+
+        EnsureInitialized();
+        rect = GetRectCached(key);
+        return rect != null;
+    }
+
+    public bool TryGetText(string refId, out TMP_Text text)
+    {
+        text = null;
+
+        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+            return false;
+
+        EnsureInitialized();
+        text = GetCached<TMP_Text>(key);
+        return text != null;
+    }
+
+    public bool TryGetTextRole(string refId, out UITextRole role)
+        => UIRefMetadataCache<TRefs>.TryGetTextRole(refId, out role);
 
     private void BindObjects()
     {

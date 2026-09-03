@@ -7,10 +7,15 @@ public sealed class TitleUIRoot : UIBase<TitleUIRoot.Refs>
     public enum Refs
     {
         TitleBG_Image,
+        
         LobbyBtn_Button,
+        
+        [UIRefTextRole(UITextRole.Title)] 
         LobbyBtn_Text,
         
         StartBtn_Button,
+        
+        [UIRefTextRole(UITextRole.Body)]
         StartBtn_Text
     }
 
@@ -18,12 +23,10 @@ public sealed class TitleUIRoot : UIBase<TitleUIRoot.Refs>
     
     private Button _lobbyButton;
     
-    [UIRefTextRole(UITextRole.Title)]
     private TMP_Text _lobbyBtnText;
     
     private Button _startButton;
     
-    [UIRefTextRole(UITextRole.Body)]
     private TMP_Text _startBtnText;
 
     protected override void OnInitialize()
