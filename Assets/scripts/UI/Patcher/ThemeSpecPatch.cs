@@ -1,10 +1,3 @@
-public enum UITextRole
-{
-    Title,
-    Body,
-    Caption,
-}
-
 public class ThemeSpecPatch : IUIPatch
 {
     private readonly ThemeSpec _theme;
