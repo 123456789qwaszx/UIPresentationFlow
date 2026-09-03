@@ -17,7 +17,7 @@ public sealed class UIWidgetTag : MonoBehaviour
 
     public string NameTag => (nameTag ?? string.Empty).Trim();
 
-    public WidgetHandle CreateHandle() => new WidgetHandle(NameTag, gameObject, textRole);
+    public WidgetHandle CreateHandle() => new(NameTag, gameObject, textRole);
 
     // Every tagged descendant of `root`, including inactive ones (a variant may
     // re-activate them). Empty tags are skipped with a warning.

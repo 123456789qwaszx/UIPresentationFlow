@@ -92,7 +92,7 @@ public class UnityDisplayContextProviderTests
         int expectedW = Screen.width;
         int expectedH = Screen.height;
 
-        var ctx = new UnityDisplayContextProvider().GetCurrent();
+        var ctx = UnityDisplayContextProvider.GetCurrent();
 
         Assert.That(ctx.IsValid, Is.True);
         Assert.That(ctx.Resolution, Is.EqualTo(new Vector2Int(expectedW, expectedH)));

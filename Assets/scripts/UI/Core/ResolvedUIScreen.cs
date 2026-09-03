@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Immutable output of UIVariantResolver: what to materialize, and which
-// rules participated. The explanation of *why* lives in UIResolveTrace,
-// which travels alongside this in UIResolveResult.
 public sealed class ResolvedUIScreen
 {
     public ScreenKey ScreenKey { get; }

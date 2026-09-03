@@ -2,25 +2,19 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// The decision step: (spec, ui, display) -> ResolvedUIScreen.
-//
 // Contract
-//   - never mutates the spec (authored data) or either context
-//   - reads no global state; same inputs -> same output
-//   - explains itself through the optional UIResolveTrace
+//  - never mutates the spec (authored data) or either context
+//  - reads no global state; same inputs -> same output
+//  - explains itself through the optional UIResolveTrace
 //
 // Priority policy: highest priority wins, per field.
-//   Rules are visited in priority-descending order; ties keep authored
-//   (array) order. The first matching rule that overrides a field locks that
-//   field. A field no matching rule overrides keeps the base value. So
-//   `p100 {layout=Wide}` + `p50 {theme=Dark}` yields Wide AND Dark.
+//  Rules are visited in priority-descending order; ties keep authored (array) order.
+//  The first matching rule that overrides a field locks that field.
+//  A field no matching rule overrides keeps the base value.
 //
 // Forced override (UIContext.ScreenOverrides[screenKey] = variantId):
-//   A debug/QA tool. The named rule is applied without evaluating its
-//   condition and no other rule is considered. If no rule has that id the
-//   override is traced and ignored, and normal evaluation runs. Duplicate
-//   ids are an authoring error (UIScreenSpecValidator); at runtime the first
-//   authored match wins so the outcome is still deterministic.
+//  A debug/QA tool.
+//  The named rule is applied without evaluating its condition and no other rule is considered.
 public sealed class UIVariantResolver
 {
     public ResolvedUIScreen Resolve(
@@ -29,18 +23,10 @@ public sealed class UIVariantResolver
         in DisplayContext display,
         UIResolveTrace trace = null)
     {
-        if (spec == null)
-            throw new ArgumentNullException(nameof(spec));
-
-        if (!display.IsValid)
-            throw new ArgumentException(
-                "DisplayContext is invalid (default). Capture one from an IDisplayContextProvider.",
-                nameof(display));
-
-        GameObject      prefab = spec.templatePrefab;
-        ThemeSpec       theme  = spec.baseTheme;
-        LayoutPatchSpec layout = spec.baseLayout;
-        var applied = new List<string>(4);
+        GameObject      prefab    = spec.templatePrefab;
+        ThemeSpec       theme     = spec.baseTheme;
+        LayoutPatchSpec layout    = spec.baseLayout;
+        List<string> matchedRules = new(4);
 
         trace?.Add($"[Resolve] screen={spec.screenKey} base prefab={Name(prefab)} theme={Name(theme)} layout={Name(layout)}");
         trace?.Add($"[Input] ui theme={ui.ThemeId} locale={ui.LocaleId} experiments={ui.Experiments?.Count ?? 0} overrides={ui.ScreenOverrides?.Count ?? 0}");
@@ -54,14 +40,14 @@ public sealed class UIVariantResolver
             UIVariantRule forced = FindFirstById(rules, forcedId);
             if (forced != null)
             {
-                applied.Add(forced.variantId);
+                matchedRules.Add(forced.variantId);
                 if (forced.overridePrefab != null) prefab = forced.overridePrefab;
                 if (forced.overrideTheme  != null) theme  = forced.overrideTheme;
                 if (forced.overrideLayout != null) layout = forced.overrideLayout;
 
                 trace?.Add($"[Forced] variantId={forcedId} applied; rule conditions skipped");
-                trace?.Add(ResultLine(prefab, theme, layout, applied));
-                return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, applied);
+                trace?.Add(ResultLine(prefab, theme, layout, matchedRules));
+                return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, matchedRules);
             }
 
             trace?.Add($"[Forced] variantId={forcedId} not found in spec; evaluating rules normally");
@@ -85,7 +71,7 @@ public sealed class UIVariantResolver
                 if (!match)
                     continue;
 
-                applied.Add(rule.variantId);
+                matchedRules.Add(rule.variantId);
 
                 if (!prefabLocked && rule.overridePrefab != null)
                 {
@@ -110,8 +96,8 @@ public sealed class UIVariantResolver
             }
         }
 
-        trace?.Add(ResultLine(prefab, theme, layout, applied));
-        return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, applied);
+        trace?.Add(ResultLine(prefab, theme, layout, matchedRules));
+        return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, matchedRules);
     }
 
     // Priority descending, then authored index ascending. The comparison

@@ -9,13 +9,11 @@ public class UIScreenFactory
 {
     private readonly Transform      _uiRoot;
     private readonly UIPatchApplier _patcher;
-    private readonly bool           _strict;
 
-    public UIScreenFactory(Transform uiRoot, UIPatchApplier patcher, bool strict = true)
+    public UIScreenFactory(Transform uiRoot, UIPatchApplier patcher)
     {
-        _uiRoot  = uiRoot  ?? throw new ArgumentNullException(nameof(uiRoot));
-        _patcher = patcher ?? throw new ArgumentNullException(nameof(patcher));
-        _strict  = strict;
+        _uiRoot  = uiRoot;
+        _patcher = patcher;
     }
 
     public UIScreen Create(UIResolveResult result)
@@ -25,10 +23,7 @@ public class UIScreenFactory
         GameObject prefab = resolved.Prefab;
         if (prefab == null)
         {
-            string message = $"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}";
-            if (_strict)
-                throw new InvalidOperationException(message);
-            Debug.LogWarning(message);
+            Debug.LogWarning($"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}");
             return null;
         }
 
@@ -36,10 +31,7 @@ public class UIScreenFactory
         UIScreen screen = go.GetComponent<UIScreen>();
         if (screen == null)
         {
-            string message = $"[UIScreenFactory] Prefab '{prefab.name}' must have a {nameof(UIScreen)} component. screen={resolved.ScreenKey}";
-            if (_strict)
-                throw new InvalidOperationException(message);
-            Debug.LogError(message);
+            Debug.LogError($"[UIScreenFactory] Prefab '{prefab.name}' must have a {nameof(UIScreen)} component. screen={resolved.ScreenKey}");
             Object.Destroy(go);
             return null;
         }

@@ -1,23 +1,13 @@
 using System;
 using UnityEngine;
 
-// Immutable snapshot of the display environment: what the device *is*,
-// not what the UI should do about it. Classification (aspect classes,
-// safe-area policy) lives outside this type so the same facts can be
-// interpreted by different policies.
-//
-// Derived values (AspectRatio, Orientation, SafeAreaNormalized) are computed
-// from the stored facts, never stored themselves, so a context cannot hold
-// contradictory state such as Resolution=1920x1080 with AspectRatio=1.2.
-//
-// Construction is strict: an invalid resolution or a safe area outside the
-// resolution throws. The only invalid instance that can exist is
-// default(DisplayContext), which reports IsValid == false.
+// 한 시점의 Display 상태를 찍어둔 Snapshot.
+// 잘못된 해상도나 Safe Area로는 생성 불가.
 public readonly struct DisplayContext : IEquatable<DisplayContext>
 {
     public Vector2Int Resolution { get; }
 
-    // Pixel rect with bottom-left origin, same convention as Screen.safeArea.
+    // Pixel rect with bottom-left origin.
     public Rect SafeAreaPixels { get; }
 
     public DisplayPlatform Platform { get; }
@@ -39,11 +29,9 @@ public readonly struct DisplayContext : IEquatable<DisplayContext>
         Platform       = platform;
     }
 
-    // Convenience for the common case of no cutouts.
     public static DisplayContext FullScreen(int width, int height, DisplayPlatform platform = DisplayPlatform.Unknown)
         => new DisplayContext(new Vector2Int(width, height), new Rect(0, 0, width, height), platform);
 
-    // False only for default(DisplayContext); the constructor never produces an invalid instance.
     public bool IsValid => Resolution.x > 0 && Resolution.y > 0;
 
     public float AspectRatio => IsValid ? (float)Resolution.x / Resolution.y : 0f;
@@ -111,9 +99,4 @@ public readonly struct DisplayContext : IEquatable<DisplayContext>
 
     public static bool operator ==(DisplayContext a, DisplayContext b) => a.Equals(b);
     public static bool operator !=(DisplayContext a, DisplayContext b) => !a.Equals(b);
-
-    public override string ToString()
-        => IsValid
-            ? $"{Resolution.x}x{Resolution.y} aspect={AspectRatio:F4} {Orientation} {Platform} safe=({SafeAreaPixels.x},{SafeAreaPixels.y},{SafeAreaPixels.width},{SafeAreaPixels.height})"
-            : "DisplayContext(invalid)";
 }

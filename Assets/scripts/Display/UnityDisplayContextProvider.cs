@@ -1,33 +1,20 @@
-using System;
 using UnityEngine;
 
-// The single place in the runtime that reads Unity's global display state.
-// After M2 no presentation rule may call Screen.* or Application.platform
-// directly; rules receive the DisplayContext this provider captures.
-//
-// Works under the Editor's Device Simulator as well, because the simulator
-// overrides Screen.* and Application.platform at the same API surface.
-public sealed class UnityDisplayContextProvider : IDisplayContextProvider
+// The runtime boundary for Unity's global display state.
+// Presentation rules use the captured DisplayContext instead of reading Screen.
+public static class UnityDisplayContextProvider
 {
-    public DisplayContext GetCurrent()
+    public static DisplayContext GetCurrent()
     {
         int width  = Screen.width;
         int height = Screen.height;
 
-        if (width <= 0 || height <= 0)
-            throw new InvalidOperationException(
-                $"[UnityDisplayContextProvider] Screen reports {width}x{height}. " +
-                "Capture the display context after the screen is initialized.");
-
-        var resolution = new Vector2Int(width, height);
+        Vector2Int resolution = new(width, height);
         Rect safeArea  = ClampToResolution(Screen.safeArea, resolution);
 
         return new DisplayContext(resolution, safeArea, MapPlatform(Application.platform));
     }
 
-    // Screen.safeArea can lag Screen.width/height by a frame during a resize or
-    // orientation change. Clamp here, at the boundary, so DisplayContext itself
-    // can stay strict and never carry a rect outside the resolution.
     public static Rect ClampToResolution(Rect rect, Vector2Int resolution)
     {
         if (!IsFinite(rect.x) || !IsFinite(rect.y) || !IsFinite(rect.width) || !IsFinite(rect.height))
@@ -43,8 +30,6 @@ public sealed class UnityDisplayContextProvider : IDisplayContextProvider
 
     private static bool IsFinite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
 
-    // RuntimePlatform -> DisplayPlatform. Anything not listed is Unknown on
-    // purpose; add a mapping only when a rule actually needs it.
     public static DisplayPlatform MapPlatform(RuntimePlatform platform)
     {
         switch (platform)

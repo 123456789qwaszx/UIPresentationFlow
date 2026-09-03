@@ -5,12 +5,11 @@ using UnityEngine;
 public class UIVariantRule
 {
     public string variantId; // e.g. "Shop_Layout_B"
-    public int priority = 0; // Higher value = higher priority
+    public int priority;
 
     public VariantCondition condition;
 
-    // What this rule overrides
-    public GameObject overridePrefab;       // Replaces the screen prefab (only if specified)
-    public ThemeSpec overrideTheme;          // Overrides the theme
-    public LayoutPatchSpec overrideLayout;   // Overrides layout / locale-specific settings
+    public GameObject overridePrefab;      // Replaces the screen prefab
+    public ThemeSpec overrideTheme;        // Overrides the theme
+    public LayoutPatchSpec overrideLayout; // Overrides layout / locale-specific settings
 }
