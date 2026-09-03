@@ -1,33 +1,35 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public sealed class RectTransformPatch
 {
     [Header("Anchors")]
-    public bool   overrideAnchors;
+    public bool overrideAnchors;
     public Vector2 anchorMin;
     public Vector2 anchorMax;
 
     [Header("Pivot")]
-    public bool   overridePivot;
+    public bool overridePivot;
     public Vector2 pivot;
 
     [Header("Position")]
-    public bool   overrideAnchoredPosition;
+    public bool overrideAnchoredPosition;
     public Vector2 anchoredPosition;
 
     [Header("Size")]
-    public bool   overrideSizeDelta;
+    public bool overrideSizeDelta;
     public Vector2 sizeDelta;
 }
 
 [Serializable]
 public sealed class WidgetLayoutPatch
 {
-    [Tooltip("UIScreen.WidgetHandle.NameTag 와 일치해야 합니다.")]
-    public string nameTag;
+    [FormerlySerializedAs("nameTag")]
+    [Tooltip("Target ref id. Must match a Refs enum member exposed by the screen's IUIPresentationRefProvider.")]
+    public string refId;
 
     [Header("Active")]
     public bool overrideActive;
@@ -40,11 +42,10 @@ public sealed class WidgetLayoutPatch
 [CreateAssetMenu(menuName = "UI/LayoutPatchSpec")]
 public sealed class LayoutPatchSpec : ScriptableObject
 {
-    [Tooltip("이 레이아웃 패치가 적용할 위젯 목록 (nameTag 기준)")]
+    [Tooltip("Layout targets addressed by presentation ref id.")]
     public List<WidgetLayoutPatch> widgets = new();
 
-    // 나중에 SafeArea 같은 전역 옵션도 여기 추가 가능
-    // public bool useSafeArea;
+    //TODO: SafeArea/global layout policy may be added here
 
     public void BuildPatches(List<IUIPatch> patches)
     {
