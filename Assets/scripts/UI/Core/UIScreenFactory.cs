@@ -3,28 +3,19 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 // Materializes a ResolvedUIScreen into a live UIScreen:
-//   Instantiate -> bind slots -> (compose from SlotSpecs) -> register authored tags -> apply patches
+//   Instantiate -> register authored tags -> apply patches
 // Patches run last so every target exists when they look it up.
 public class UIScreenFactory
 {
     private readonly Transform      _uiRoot;
-    private readonly UISlotBinder   _binder;
     private readonly UIPatchApplier _patcher;
-    private readonly UIComposer     _composer;   // optional: null for authored-prefab screens
     private readonly bool           _strict;
 
-    public UIScreenFactory(
-        Transform uiRoot,
-        UISlotBinder binder,
-        UIPatchApplier patcher,
-        UIComposer composer = null,
-        bool strict = true)
+    public UIScreenFactory(Transform uiRoot, UIPatchApplier patcher, bool strict = true)
     {
-        _uiRoot   = uiRoot;
-        _binder   = binder;
-        _patcher  = patcher;
-        _composer = composer;
-        _strict   = strict;
+        _uiRoot  = uiRoot  ?? throw new ArgumentNullException(nameof(uiRoot));
+        _patcher = patcher ?? throw new ArgumentNullException(nameof(patcher));
+        _strict  = strict;
     }
 
     public UIScreen Create(UIResolveResult result)
@@ -34,9 +25,10 @@ public class UIScreenFactory
         GameObject prefab = resolved.Prefab;
         if (prefab == null)
         {
+            string message = $"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}";
             if (_strict)
-                throw new InvalidOperationException($"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}");
-            Debug.LogWarning($"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}");
+                throw new InvalidOperationException(message);
+            Debug.LogWarning(message);
             return null;
         }
 
@@ -52,8 +44,6 @@ public class UIScreenFactory
             return null;
         }
 
-        screen.BuildSlotMap(_binder, resolved.BaseSpec);
-        _composer?.Compose(screen, resolved.BaseSpec);
         screen.RegisterAuthoredWidgets();
         _patcher.Apply(screen, result.Patches);
 

@@ -175,7 +175,6 @@ public static class AdaptiveDemoAssetGenerator
             asset.spec.templatePrefab = prefab;
             asset.spec.baseTheme      = null;
             asset.spec.baseLayout     = null;   // base = prefab as authored (16:9)
-            asset.spec.slots.Clear();           // authored prefab: nothing to compose
             asset.spec.variants = new[]
             {
                 ClassRule("Wide",      DisplayLayoutClass.Wide,      wide),

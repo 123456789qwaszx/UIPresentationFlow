@@ -54,7 +54,7 @@ public sealed class UIPresentationInstaller : MonoBehaviour
         DisplayProvider = new UnityDisplayContextProvider();
 
         var resolver = new UIResolver(catalog, new UIContext(themeId, localeId, null, null));
-        var factory  = new UIScreenFactory(uiRoot, new UISlotBinder(), new UIPatchApplier(), composer: null, strict: true);
+        var factory  = new UIScreenFactory(uiRoot, new UIPatchApplier(), strict: true);
         Router = new UIRouter(resolver, factory, DisplayProvider);
     }
 

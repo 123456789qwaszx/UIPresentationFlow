@@ -3,10 +3,9 @@ using NUnit.Framework;
 using UnityEngine;
 using static ResolveTestKit;
 
-// M3 / D0-8: authored prefabs expose targets through UIWidgetTag, and the
-// factory materializes a screen with NO UIComposer. If these pass, the
-// adaptive pipeline does not depend on runtime widget composition.
-// Also the first RectTransform-level integration test M5 asks for.
+// M3 / D0-8: authored prefabs expose targets through UIWidgetTag; the factory
+// materializes a screen from the prefab alone. These are the RectTransform-
+// level integration tests M5 asks for.
 public class LayoutPatchIntegrationTests
 {
     private static GameObject BuildScreen(Assets assets, out RectTransform primary, out RectTransform side)
@@ -108,7 +107,7 @@ public class LayoutPatchIntegrationTests
     }
 
     [Test]
-    public void Factory_WithoutComposer_RegistersTagsAndAppliesResolvedLayout()
+    public void Factory_RegistersTagsAndAppliesResolvedLayout()
     {
         using var assets = new Assets();
         GameObject uiRoot = assets.NewGameObject("UIRoot", typeof(RectTransform));
@@ -128,7 +127,7 @@ public class LayoutPatchIntegrationTests
         wide.BuildPatches(patches);
         var result   = new UIResolveResult(resolved, patches, new UIResolveTrace());
 
-        var factory = new UIScreenFactory(uiRoot.transform, new UISlotBinder(), new UIPatchApplier(), composer: null);
+        var factory = new UIScreenFactory(uiRoot.transform, new UIPatchApplier());
         UIScreen screen = factory.Create(result);
         assets.Track(screen.gameObject);
 
