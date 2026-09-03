@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 445d4a8a31ecd6b4a99d518aa05ab8fe, type: 3}
+  m_Name: AdaptiveDemoScreen
+  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIScreenSpecAsset
+  spec:
+    screenKey:
+      value: adaptive_demo
+    slots: []
+    templatePrefab: {fileID: 3488272679308663824, guid: 5f3035383494bfa48bab1ecc14ed213d, type: 3}
+    baseTheme: {fileID: 0}
+    baseLayout: {fileID: 0}
+    variants:
+    - variantId: Wide
+      priority: 100
+      condition:
+        themeId: 
+        localeId: 
+        usePlatform: 0
+        platform: 1
+        useLayoutClass: 1
+        layoutClass: 2
+        useAspectRatio: 0
+        aspectRule: 0
+        aspectMin: 1.5
+        aspectMax: 2.5
+      overridePrefab: {fileID: 0}
+      overrideTheme: {fileID: 0}
+      overrideLayout: {fileID: 11400000, guid: 9132a9e963878bc4eb656ae0bf034f0a, type: 2}
+    - variantId: UltraWide
+      priority: 100
+      condition:
+        themeId: 
+        localeId: 
+        usePlatform: 0
+        platform: 1
+        useLayoutClass: 1
+        layoutClass: 3
+        useAspectRatio: 0
+        aspectRule: 0
+        aspectMin: 1.5
+        aspectMax: 2.5
+      overridePrefab: {fileID: 0}
+      overrideTheme: {fileID: 0}
+      overrideLayout: {fileID: 11400000, guid: 9132a9e963878bc4eb656ae0bf034f0a, type: 2}
+    - variantId: Compact
+      priority: 100
+      condition:
+        themeId: 
+        localeId: 
+        usePlatform: 0
+        platform: 1
+        useLayoutClass: 1
+        layoutClass: 0
+        useAspectRatio: 0
+        aspectRule: 0
+        aspectMin: 1.5
+        aspectMax: 2.5
+      overridePrefab: {fileID: 0}
+      overrideTheme: {fileID: 0}
+      overrideLayout: {fileID: 11400000, guid: a8052921a31c5c1419d83ce8da993a00, type: 2}

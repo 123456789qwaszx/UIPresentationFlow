@@ -110,4 +110,25 @@ public class UIScreen : MonoBehaviour
     {
         _widgetsByNameTag = map;
     }
+
+    // Authored-prefab path (M3): every UIWidgetTag under this screen becomes a
+    // WidgetHandle. Safe to call after Compose(); tags are added, not replaced.
+    public void RegisterAuthoredWidgets()
+    {
+        AddWidgets(UIWidgetTag.CollectHandles(transform));
+    }
+
+    internal void AddWidgets(IEnumerable<WidgetHandle> handles)
+    {
+        _widgetsByNameTag ??= new Dictionary<string, WidgetHandle>(StringComparer.Ordinal);
+
+        foreach (WidgetHandle handle in handles)
+        {
+            if (handle == null || string.IsNullOrEmpty(handle.NameTag))
+                continue;
+
+            if (!_widgetsByNameTag.TryAdd(handle.NameTag, handle))
+                Debug.LogWarning($"[UIScreen] Duplicate widget nameTag='{handle.NameTag}' — first one kept.", this);
+        }
+    }
 }

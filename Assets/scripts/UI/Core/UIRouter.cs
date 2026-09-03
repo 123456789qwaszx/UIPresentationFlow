@@ -13,9 +13,12 @@ public sealed class UIRouter
     private readonly UIScreenFactory         _factory;
     private readonly IDisplayContextProvider _display;
 
-    public UIScreen       CurrentScreen { get; private set; }
-    public ScreenKey      CurrentKey    { get; private set; }
-    public UIResolveTrace LastTrace     { get; private set; }
+    public UIScreen        CurrentScreen { get; private set; }
+    public ScreenKey       CurrentKey    { get; private set; }
+
+    // Inputs and outputs of the most recent Show(), for tracing and preview.
+    public DisplayContext  LastDisplay   { get; private set; }
+    public UIResolveResult LastResult    { get; private set; }
 
     public UIRouter(UIResolver resolver, UIScreenFactory factory, IDisplayContextProvider display)
     {
@@ -30,7 +33,8 @@ public sealed class UIRouter
     {
         DisplayContext  display = _display.GetCurrent();
         UIResolveResult result  = _resolver.Resolve(key, display);
-        LastTrace = result.Trace;
+        LastDisplay = display;
+        LastResult  = result;
 
         UIScreen screen = _factory.Create(result);
         if (screen == null)

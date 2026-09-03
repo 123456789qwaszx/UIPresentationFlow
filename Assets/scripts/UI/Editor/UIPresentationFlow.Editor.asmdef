@@ -2,7 +2,10 @@
     "name": "UIPresentationFlow.Editor",
     "rootNamespace": "",
     "references": [
-        "UIPresentationFlow.Runtime"
+        "UIPresentationFlow.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"

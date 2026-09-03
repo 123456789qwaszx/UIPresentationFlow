@@ -35,7 +35,15 @@ public sealed class VariantCondition
     public bool usePlatform;
     public DisplayPlatform platform = DisplayPlatform.Desktop;
 
-    [Header("Aspect Ratio (optional)")]
+    [Header("Layout Class (optional)")]
+    // Preferred way to target an aspect bucket: thresholds live in
+    // DisplayLayoutClassifier, not in every rule.
+    public bool useLayoutClass;
+    public DisplayLayoutClass layoutClass = DisplayLayoutClass.Standard;
+
+    [Header("Aspect Ratio (optional, advanced)")]
+    // Raw numeric rule for cases the class buckets cannot express.
+    // If both layout class and aspect are enabled they are AND-ed.
     public bool useAspectRatio;
     public AspectRule aspectRule = AspectRule.Landscape;
     public float aspectMin = 1.5f;   // Range only
@@ -62,6 +70,9 @@ public sealed class VariantCondition
         }
 
         if (usePlatform && display.Platform != platform)
+            return false;
+
+        if (useLayoutClass && DisplayLayoutClassifier.Classify(display) != layoutClass)
             return false;
 
         if (useAspectRatio && !MatchesAspect(display))

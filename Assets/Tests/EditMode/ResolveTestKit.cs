@@ -62,6 +62,15 @@ public static class ResolveTestKit
         public ThemeSpec       Theme(string name)  => Own(ScriptableObject.CreateInstance<ThemeSpec>(), name);
         public GameObject      Prefab(string name) => Own(new GameObject(name), name);
 
+        public GameObject NewGameObject(string name, params Type[] components)
+            => Own(new GameObject(name, components), name);
+
+        public T Track<T>(T obj) where T : UnityEngine.Object
+        {
+            _owned.Add(obj);
+            return obj;
+        }
+
         public UIScreenSpecAsset SpecAsset(UIScreenSpec spec)
         {
             var asset = Own(ScriptableObject.CreateInstance<UIScreenSpecAsset>(), spec.screenKey.Value ?? "spec");
