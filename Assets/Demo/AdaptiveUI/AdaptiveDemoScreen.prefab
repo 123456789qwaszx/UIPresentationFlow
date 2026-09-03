@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5943002128064843306}
   - component: {fileID: 2801235249199954497}
   - component: {fileID: 360252717670220315}
-  - component: {fileID: 8896986178658681686}
   m_Layer: 0
   m_Name: Header
   m_TagString: Untagged
@@ -77,20 +76,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8896986178658681686
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 176275885526859498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: Header
-  textRole: 0
 --- !u!1 &1955160457737502003
 GameObject:
   m_ObjectHideFlags: 0
@@ -239,7 +224,6 @@ GameObject:
   - component: {fileID: 5697013918770349882}
   - component: {fileID: 387133543166555569}
   - component: {fileID: 4068289201014640090}
-  - component: {fileID: 4708150487512459594}
   m_Layer: 0
   m_Name: LeftAction
   m_TagString: Untagged
@@ -349,20 +333,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &4708150487512459594
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1983371307568257592}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: LeftAction
-  textRole: 1
 --- !u!1 &2376782813847237911
 GameObject:
   m_ObjectHideFlags: 0
@@ -508,7 +478,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3483073174561384428}
-  - component: {fileID: 6223511351929034846}
   - component: {fileID: 4052064815695973827}
   m_Layer: 0
   m_Name: AdaptiveDemoScreen
@@ -543,18 +512,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6223511351929034846
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3488272679308663824}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9ece9f79b529aa4087433f346809542, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIScreen
 --- !u!114 &4052064815695973827
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -850,7 +807,6 @@ GameObject:
   - component: {fileID: 6412885787232972015}
   - component: {fileID: 7594465560021037079}
   - component: {fileID: 3030428594940752954}
-  - component: {fileID: 16499994720971760}
   m_Layer: 0
   m_Name: SideInfo
   m_TagString: Untagged
@@ -916,20 +872,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &16499994720971760
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5392161239822018683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: SideInfo
-  textRole: 2
 --- !u!1 &5749542847474036964
 GameObject:
   m_ObjectHideFlags: 0
@@ -942,7 +884,6 @@ GameObject:
   - component: {fileID: 5015350444943595055}
   - component: {fileID: 7716695679250129952}
   - component: {fileID: 8405104479295244776}
-  - component: {fileID: 3934792775774673977}
   m_Layer: 0
   m_Name: RightAction
   m_TagString: Untagged
@@ -1052,20 +993,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3934792775774673977
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5749542847474036964}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: RightAction
-  textRole: 1
 --- !u!1 &6393100846580863731
 GameObject:
   m_ObjectHideFlags: 0
@@ -1077,7 +1004,6 @@ GameObject:
   - component: {fileID: 219715383468673942}
   - component: {fileID: 4119313951150282730}
   - component: {fileID: 5754303204435172432}
-  - component: {fileID: 3672635609647883219}
   - component: {fileID: 8281717369388311168}
   m_Layer: 0
   m_Name: BottomControls
@@ -1144,20 +1070,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3672635609647883219
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6393100846580863731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: BottomControls
-  textRole: 2
 --- !u!114 &8281717369388311168
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1182,7 +1094,6 @@ GameObject:
   - component: {fileID: 4528687988937137046}
   - component: {fileID: 4396062887404281459}
   - component: {fileID: 7575513006753708008}
-  - component: {fileID: 7803516703755752420}
   m_Layer: 0
   m_Name: Background
   m_TagString: Untagged
@@ -1247,20 +1158,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &7803516703755752420
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6442229087908346622}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: Background
-  textRole: 1
 --- !u!1 &7262708354931131939
 GameObject:
   m_ObjectHideFlags: 0
@@ -1272,7 +1169,6 @@ GameObject:
   - component: {fileID: 2041764085758966094}
   - component: {fileID: 8122839112947552392}
   - component: {fileID: 4965301013947154797}
-  - component: {fileID: 2582336263279161028}
   m_Layer: 0
   m_Name: PrimaryContent
   m_TagString: Untagged
@@ -1321,7 +1217,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.23, g: 0.29, b: 0.39, a: 1}
+  m_Color: {r: 0.7686275, g: 0.7686275, b: 0.7686275, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1338,20 +1234,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2582336263279161028
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7262708354931131939}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d31c58f13e7b9448cf7e54165764a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIWidgetTag
-  nameTag: PrimaryContent
-  textRole: 1
 --- !u!1 &8219117162086058363
 GameObject:
   m_ObjectHideFlags: 0
