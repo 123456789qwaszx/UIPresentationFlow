@@ -1,4 +1,9 @@
-public class ThemeSpecPatch : IUIPatch
+using TMPro;
+using UnityEngine;
+
+// Theme now depends only on the presentation-ref capability.
+// Text membership comes from Ref metadata, not hierarchy/tag scanning.
+public sealed class ThemeSpecPatch : IUIPatch
 {
     private readonly ThemeSpec _theme;
 
@@ -7,42 +12,54 @@ public class ThemeSpecPatch : IUIPatch
         _theme = theme;
     }
 
-    public void Apply(UIScreen screen)
+    public void Apply(IUIPresentationRefProvider refs)
     {
-        if (_theme == null || screen == null)
+        if (_theme == null || refs == null)
             return;
 
-        // 텍스트 전용 패치
-        foreach (var widget in screen.GetAllWidgets())
+        string targetName = refs.GetType().Name;
+
+        foreach (string refId in refs.TextTargetIds)
         {
-            var text = widget.Text;
-            if (text == null)
-                continue;
-
-            // 1) 폰트: 지정되어 있으면 통일, 아니면 건드리지 않기
-            if (_theme.mainFont != null)
-                text.font = _theme.mainFont;
-
-            // 2) 역할별 크기 + 색
-            switch (widget.TextRole)
+            if (!refs.TryGetText(refId, out TMP_Text text) || text == null)
             {
-                case UITextRole.Title:
-                    text.fontSize = _theme.titleSize;
-                    text.color    = _theme.textMainColor;
-                    break;
-
-                case UITextRole.Body:
-                    text.fontSize = _theme.bodySize;
-                    text.color    = _theme.textMainColor;
-                    break;
-
-                case UITextRole.Caption:
-                    text.fontSize = _theme.captionSize;
-                    text.color    = _theme.textWeakColor;
-                    break;
+                Debug.LogWarning(
+                    $"[ThemeSpecPatch] TMP_Text not found for text refId='{refId}' on '{targetName}'.");
+                continue;
             }
 
-            // 3) Alignment / FontStyle 는 여기서 건드리지 않는다 (레이아웃/연출 영역)
+            if (!refs.TryGetTextRole(refId, out UITextRole role))
+            {
+                Debug.LogWarning(
+                    $"[ThemeSpecPatch] UITextRole not found for text refId='{refId}' on '{targetName}'.");
+                continue;
+            }
+
+            ApplyTextTheme(text, role);
+        }
+    }
+
+    private void ApplyTextTheme(TMP_Text text, UITextRole role)
+    {
+        if (_theme.mainFont != null)
+            text.font = _theme.mainFont;
+
+        switch (role)
+        {
+            case UITextRole.Title:
+                text.fontSize = _theme.titleSize;
+                text.color = _theme.textMainColor;
+                break;
+
+            case UITextRole.Body:
+                text.fontSize = _theme.bodySize;
+                text.color = _theme.textMainColor;
+                break;
+
+            case UITextRole.Caption:
+                text.fontSize = _theme.captionSize;
+                text.color = _theme.textWeakColor;
+                break;
         }
     }
 }

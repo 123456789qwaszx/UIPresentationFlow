@@ -9,21 +9,12 @@ public sealed class LayoutSpecPatch : IUIPatch
         _layout = layout;
     }
 
-    public void Apply(UIScreen screen)
+    public void Apply(IUIPresentationRefProvider refs)
     {
-        if (_layout == null || screen == null)
+        if (_layout == null || refs == null)
             return;
 
-        IUIPresentationRefProvider refs =
-            screen.GetComponent<IUIPresentationRefProvider>();
-
-        if (refs == null)
-        {
-            Debug.LogWarning(
-                $"[LayoutSpecPatch] No {nameof(IUIPresentationRefProvider)} found on screen '{screen.name}'.",
-                screen);
-            return;
-        }
+        string targetName = refs.GetType().Name;
 
         foreach (WidgetLayoutPatch widgetPatch in _layout.widgets)
         {
@@ -34,16 +25,14 @@ public sealed class LayoutSpecPatch : IUIPatch
             if (string.IsNullOrEmpty(refId))
             {
                 Debug.LogWarning(
-                    "[LayoutSpecPatch] Empty refId ignored.",
-                    screen);
+                    $"[LayoutSpecPatch] Empty refId ignored on '{targetName}'.");
                 continue;
             }
 
             if (!refs.TryGetRect(refId, out RectTransform rect) || rect == null)
             {
                 Debug.LogWarning(
-                    $"[LayoutSpecPatch] RectTransform not found for refId='{refId}' on screen '{screen.name}'.",
-                    screen);
+                    $"[LayoutSpecPatch] RectTransform not found for refId='{refId}' on '{targetName}'.");
                 continue;
             }
 

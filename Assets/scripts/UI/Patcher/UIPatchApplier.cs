@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 
-public class UIPatchApplier
+public sealed class UIPatchApplier
 {
-    public void Apply(UIScreen screen, List<IUIPatch> patches)
+    public void Apply(
+        IUIPresentationRefProvider refs, 
+        IReadOnlyList<IUIPatch> patches)
     {
-        foreach (IUIPatch uiPatch in patches)
-        {
-            uiPatch.Apply(screen);
-        }
+        foreach (IUIPatch patch in patches) 
+            patch?.Apply(refs);
     }
 }

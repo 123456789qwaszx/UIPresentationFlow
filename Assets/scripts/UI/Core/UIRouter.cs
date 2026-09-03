@@ -1,29 +1,32 @@
 public sealed class UIRouter
 {
-    private readonly UIResolver              _resolver;
-    private readonly UIScreenFactory         _factory;
+    private readonly UIResolver _resolver;
+    private readonly UIScreenFactory _factory;
 
-    public UIScreen        CurrentScreen { get; private set; }
-    public ScreenKey       CurrentKey    { get; private set; }
+    // "Screen" remains the domain term for now, but the runtime object is UIBase.
+    // Naming cleanup is intentionally deferred until the architecture settles.
+    public UIBase CurrentScreen { get; private set; }
+    public ScreenKey CurrentKey { get; private set; }
 
     // Inputs and outputs of the most recent Show(), for tracing and preview.
-    public DisplayContext  LastDisplay   { get; private set; }
-    public UIResolveResult LastResult    { get; private set; }
+    public DisplayContext LastDisplay { get; private set; }
+    public UIResolveResult LastResult { get; private set; }
 
     public UIRouter(UIResolver resolver, UIScreenFactory factory)
     {
         _resolver = resolver;
-        _factory  = factory;
+        _factory = factory;
     }
 
-    public UIScreen Show(ScreenKey key)
+    public UIBase Show(ScreenKey key)
     {
-        DisplayContext  display = UnityDisplayContextProvider.GetCurrent();
-        UIResolveResult result  = _resolver.Resolve(key, display);
-        LastDisplay = display;
-        LastResult  = result;
+        DisplayContext display = UnityDisplayContextProvider.GetCurrent();
+        UIResolveResult result = _resolver.Resolve(key, display);
 
-        UIScreen screen = _factory.Create(result);
+        LastDisplay = display;
+        LastResult = result;
+
+        UIBase screen = _factory.Create(result);
         if (screen == null)
             return null;
 
@@ -33,7 +36,7 @@ public sealed class UIRouter
             UnityEngine.Object.Destroy(CurrentScreen.gameObject);
 
         CurrentScreen = screen;
-        CurrentKey    = key;
+        CurrentKey = key;
         return screen;
     }
 }

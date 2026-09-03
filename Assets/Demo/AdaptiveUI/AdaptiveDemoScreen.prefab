@@ -509,6 +509,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3483073174561384428}
   - component: {fileID: 6223511351929034846}
+  - component: {fileID: 4052064815695973827}
   m_Layer: 0
   m_Name: AdaptiveDemoScreen
   m_TagString: Untagged
@@ -554,6 +555,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9ece9f79b529aa4087433f346809542, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIScreen
+--- !u!114 &4052064815695973827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3488272679308663824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56954708af9dde942864d71f1ae732a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveDemo
 --- !u!1 &4539735673888281268
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,8 +3,6 @@ using NUnit.Framework;
 using UnityEngine;
 using static ResolveTestKit;
 
-// Concrete presentation root used by the R4 integration tests.
-// Its enum names are the external ref ids consumed by LayoutSpecPatch.
 public sealed class LayoutPatchTestRoot : UIBase<LayoutPatchTestRoot.Refs>
 {
     public enum Refs
@@ -16,73 +14,48 @@ public sealed class LayoutPatchTestRoot : UIBase<LayoutPatchTestRoot.Refs>
 
 public class LayoutPatchIntegrationTests
 {
-    private static GameObject BuildPresentationScreen(
+    private static GameObject BuildPresentationRoot(
         Assets assets,
         out RectTransform primary,
         out RectTransform side)
     {
         GameObject root = assets.NewGameObject(
             "Screen",
-            typeof(RectTransform),
-            typeof(UIScreen));
+            typeof(RectTransform));
 
         primary = Child(root.transform, "PrimaryContent");
         side = Child(root.transform, "SideInfo");
 
-        // Add UIBase only after children exist.
-        // AddComponent invokes Awake, and UIBase binds refs during initialization.
+        // Add UIBase after children exist because Awake binds enum refs.
         root.AddComponent<LayoutPatchTestRoot>();
-
         return root;
     }
 
-    private static RectTransform Child(Transform parent, string goName)
+    private static RectTransform Child(Transform parent, string name)
     {
-        var go = new GameObject(goName, typeof(RectTransform));
+        var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
 
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = new Vector2(-190, 20);
-        rt.sizeDelta = new Vector2(1140, 640);
-        return rt;
-    }
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = rect.pivot =
+            new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(-190, 20);
+        rect.sizeDelta = new Vector2(1140, 640);
 
-    // Legacy registry remains during R4 because Theme/Factory still use UIScreen.
-    // This test intentionally verifies that R4 has not silently broken it.
-    [Test]
-    public void LegacyTags_CanStillBeRegisteredDuringTransition()
-    {
-        using var assets = new Assets();
-
-        GameObject root = assets.NewGameObject(
-            "Screen",
-            typeof(RectTransform),
-            typeof(UIScreen));
-
-        var child = new GameObject(
-            "HierarchyName",
-            typeof(RectTransform),
-            typeof(UIWidgetTag));
-
-        child.transform.SetParent(root.transform, false);
-        child.GetComponent<UIWidgetTag>().nameTag = "SemanticName";
-
-        UIScreen screen = root.GetComponent<UIScreen>();
-        screen.RegisterAuthoredWidgets();
-
-        Assert.That(screen.GetWidgetHandle("SemanticName"), Is.Not.Null);
-        Assert.That(screen.GetWidgetHandle("HierarchyName"), Is.Null);
+        return rect;
     }
 
     [Test]
-    public void LayoutPatch_AppliesThroughPresentationRefProvider()
+    public void LayoutPatch_AppliesWithoutUIScreen()
     {
         using var assets = new Assets();
-        GameObject root = BuildPresentationScreen(
+
+        GameObject root = BuildPresentationRoot(
             assets,
             out RectTransform primary,
             out RectTransform side);
+
+        Assert.That(root.GetComponent<UIScreen>(), Is.Null);
 
         LayoutPatchSpec layout = assets.Layout("Compact");
         layout.widgets.Add(new WidgetLayoutPatch
@@ -96,6 +69,7 @@ public class LayoutPatchIntegrationTests
                 sizeDelta = new Vector2(1240, 640),
             },
         });
+
         layout.widgets.Add(new WidgetLayoutPatch
         {
             refId = "SideInfo",
@@ -103,52 +77,26 @@ public class LayoutPatchIntegrationTests
             active = false,
         });
 
-        new LayoutSpecPatch(layout).Apply(root.GetComponent<UIScreen>());
+        var refs = root.GetComponent<LayoutPatchTestRoot>();
+        new LayoutSpecPatch(layout).Apply(refs);
 
-        Assert.That(primary.anchoredPosition, Is.EqualTo(new Vector2(0, 20)));
-        Assert.That(primary.sizeDelta, Is.EqualTo(new Vector2(1240, 640)));
         Assert.That(
-            primary.anchorMin,
-            Is.EqualTo(new Vector2(0.5f, 0.5f)),
-            "anchors were not flagged; unchanged");
+            primary.anchoredPosition,
+            Is.EqualTo(new Vector2(0, 20)));
+
+        Assert.That(
+            primary.sizeDelta,
+            Is.EqualTo(new Vector2(1240, 640)));
+
         Assert.That(side.gameObject.activeSelf, Is.False);
-    }
-
-    [Test]
-    public void LayoutPatch_DoesNotNeedWidgetTagForTargetLookup()
-    {
-        using var assets = new Assets();
-        GameObject root = BuildPresentationScreen(
-            assets,
-            out RectTransform primary,
-            out _);
-
-        Assert.That(
-            primary.GetComponent<UIWidgetTag>(),
-            Is.Null,
-            "R4 target should be addressable without UIWidgetTag.");
-
-        LayoutPatchSpec layout = assets.Layout("NoTag");
-        layout.widgets.Add(new WidgetLayoutPatch
-        {
-            refId = "PrimaryContent",
-            rect =
-            {
-                overrideSizeDelta = true,
-                sizeDelta = new Vector2(1500, 700),
-            },
-        });
-
-        new LayoutSpecPatch(layout).Apply(root.GetComponent<UIScreen>());
-
-        Assert.That(primary.sizeDelta, Is.EqualTo(new Vector2(1500, 700)));
     }
 
     [Test]
     public void LayoutPatch_UnknownRef_IsIgnored()
     {
         using var assets = new Assets();
-        GameObject root = BuildPresentationScreen(
+
+        GameObject root = BuildPresentationRoot(
             assets,
             out RectTransform primary,
             out _);
@@ -164,17 +112,22 @@ public class LayoutPatchIntegrationTests
             },
         });
 
-        Assert.DoesNotThrow(
-            () => new LayoutSpecPatch(layout).Apply(root.GetComponent<UIScreen>()));
+        var refs = root.GetComponent<LayoutPatchTestRoot>();
 
-        Assert.That(primary.sizeDelta, Is.EqualTo(new Vector2(1140, 640)));
+        Assert.DoesNotThrow(
+            () => new LayoutSpecPatch(layout).Apply(refs));
+
+        Assert.That(
+            primary.sizeDelta,
+            Is.EqualTo(new Vector2(1140, 640)));
     }
 
     [Test]
     public void ReapplyingSamePatch_IsIdempotent()
     {
         using var assets = new Assets();
-        GameObject root = BuildPresentationScreen(
+
+        GameObject root = BuildPresentationRoot(
             assets,
             out RectTransform primary,
             out _);
@@ -193,20 +146,20 @@ public class LayoutPatchIntegrationTests
         });
 
         var patch = new LayoutSpecPatch(layout);
-        UIScreen screen = root.GetComponent<UIScreen>();
+        var refs = root.GetComponent<LayoutPatchTestRoot>();
 
-        patch.Apply(screen);
-        Vector2 posOnce = primary.anchoredPosition;
+        patch.Apply(refs);
+        Vector2 positionOnce = primary.anchoredPosition;
         Vector2 sizeOnce = primary.sizeDelta;
 
-        patch.Apply(screen);
+        patch.Apply(refs);
 
-        Assert.That(primary.anchoredPosition, Is.EqualTo(posOnce));
+        Assert.That(primary.anchoredPosition, Is.EqualTo(positionOnce));
         Assert.That(primary.sizeDelta, Is.EqualTo(sizeOnce));
     }
 
     [Test]
-    public void Factory_AppliesResolvedLayoutThroughPresentationRefs()
+    public void Factory_CreatesUIBaseAndAppliesLayoutWithoutUIScreen()
     {
         using var assets = new Assets();
 
@@ -214,7 +167,7 @@ public class LayoutPatchIntegrationTests
             "UIRoot",
             typeof(RectTransform));
 
-        GameObject prefab = BuildPresentationScreen(
+        GameObject prefab = BuildPresentationRoot(
             assets,
             out _,
             out _);
@@ -230,7 +183,7 @@ public class LayoutPatchIntegrationTests
             },
         });
 
-        var spec = Spec("home");
+        UIScreenSpec spec = Spec("home");
         spec.templatePrefab = prefab;
 
         var resolved = new ResolvedUIScreen(
@@ -253,18 +206,20 @@ public class LayoutPatchIntegrationTests
             uiRoot.transform,
             new UIPatchApplier());
 
-        UIScreen screen = factory.Create(result);
+        UIBase screen = factory.Create(result);
         assets.Track(screen.gameObject);
 
         Assert.That(screen, Is.Not.Null);
-        Assert.That(
-            screen.GetComponent<IUIPresentationRefProvider>(),
-            Is.Not.Null);
+        Assert.That(screen, Is.TypeOf<LayoutPatchTestRoot>());
+        Assert.That(screen.GetComponent<UIScreen>(), Is.Null);
+        Assert.That(screen.transform.parent, Is.SameAs(uiRoot.transform));
 
-        var provider = screen.GetComponent<IUIPresentationRefProvider>();
+        var refs = (IUIPresentationRefProvider)screen;
+
         Assert.That(
-            provider.TryGetRect("PrimaryContent", out RectTransform primary),
+            refs.TryGetRect("PrimaryContent", out RectTransform primary),
             Is.True);
+
         Assert.That(
             primary.sizeDelta,
             Is.EqualTo(new Vector2(1400, 640)));

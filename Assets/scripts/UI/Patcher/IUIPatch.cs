@@ -1,4 +1,4 @@
 public interface IUIPatch
 {
-    void Apply(UIScreen screen);
+    void Apply(IUIPresentationRefProvider refs);
 }
