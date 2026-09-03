@@ -28,7 +28,6 @@ public sealed class WidgetSpec
     public WidgetType widgetType;
     public string nameTag;
     public string text;
-    public string onClickRoute;
     public GameObject prefabOverride;
     
     public WidgetRectMode rectMode = WidgetRectMode.UseSlotLayout;

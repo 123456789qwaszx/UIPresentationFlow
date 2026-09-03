@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Immutable output of UIVariantResolver: what to materialize, and which
+// rules participated. The explanation of *why* lives in UIResolveTrace,
+// which travels alongside this in UIResolveResult.
 public sealed class ResolvedUIScreen
 {
     public ScreenKey ScreenKey { get; }
@@ -10,8 +13,9 @@ public sealed class ResolvedUIScreen
     public ThemeSpec Theme { get; }
     public LayoutPatchSpec Layout { get; }
 
+    // Ids of the rules that matched, in evaluation (priority) order.
+    // A forced override yields exactly one entry.
     public IReadOnlyList<string> AppliedVariantIds { get; }
-    public string DecisionTrace { get; }
 
     public ResolvedUIScreen(
         ScreenKey screenKey,
@@ -19,15 +23,13 @@ public sealed class ResolvedUIScreen
         GameObject prefab,
         ThemeSpec theme,
         LayoutPatchSpec layout,
-        List<string> appliedVariantIds,
-        string decisionTrace)
+        List<string> appliedVariantIds)
     {
         ScreenKey         = screenKey;
-        BaseSpec         = baseSpec;
-        Prefab           = prefab;
-        Theme            = theme;
-        Layout           = layout;
-        AppliedVariantIds = appliedVariantIds.AsReadOnly();
-        DecisionTrace    = decisionTrace;
+        BaseSpec          = baseSpec;
+        Prefab            = prefab;
+        Theme             = theme;
+        Layout            = layout;
+        AppliedVariantIds = (appliedVariantIds ?? new List<string>()).AsReadOnly();
     }
 }

@@ -1,123 +1,170 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
+// The decision step: (spec, ui, display) -> ResolvedUIScreen.
+//
+// Contract
+//   - never mutates the spec (authored data) or either context
+//   - reads no global state; same inputs -> same output
+//   - explains itself through the optional UIResolveTrace
+//
+// Priority policy: highest priority wins, per field.
+//   Rules are visited in priority-descending order; ties keep authored
+//   (array) order. The first matching rule that overrides a field locks that
+//   field. A field no matching rule overrides keeps the base value. So
+//   `p100 {layout=Wide}` + `p50 {theme=Dark}` yields Wide AND Dark.
+//
+// Forced override (UIContext.ScreenOverrides[screenKey] = variantId):
+//   A debug/QA tool. The named rule is applied without evaluating its
+//   condition and no other rule is considered. If no rule has that id the
+//   override is traced and ignored, and normal evaluation runs. Duplicate
+//   ids are an authoring error (UIScreenSpecValidator); at runtime the first
+//   authored match wins so the outcome is still deterministic.
 public sealed class UIVariantResolver
 {
-    public ResolvedUIScreen Resolve(UIScreenSpec spec, in UIContext ctx)
+    public ResolvedUIScreen Resolve(
+        UIScreenSpec spec,
+        in UIContext ui,
+        in DisplayContext display,
+        UIResolveTrace trace = null)
     {
         if (spec == null)
             throw new ArgumentNullException(nameof(spec));
 
-        // 1) base
-        GameObject prefab = spec.templatePrefab;
-        ThemeSpec theme   = spec.baseTheme;
+        if (!display.IsValid)
+            throw new ArgumentException(
+                "DisplayContext is invalid (default). Capture one from an IDisplayContextProvider.",
+                nameof(display));
+
+        GameObject      prefab = spec.templatePrefab;
+        ThemeSpec       theme  = spec.baseTheme;
         LayoutPatchSpec layout = spec.baseLayout;
+        var applied = new List<string>(4);
 
-        List<string> applied = new List<string>(8);
-        StringBuilder trace  = new StringBuilder(256);
+        trace?.Add($"[Resolve] screen={spec.screenKey} base prefab={Name(prefab)} theme={Name(theme)} layout={Name(layout)}");
+        trace?.Add($"[Input] ui theme={ui.ThemeId} locale={ui.LocaleId} experiments={ui.Experiments?.Count ?? 0} overrides={ui.ScreenOverrides?.Count ?? 0}");
+        trace?.Add($"[Input] display {display}");
 
-        trace.AppendLine($"[UIResolve] screen={spec.screenKey} basePrefab={(prefab != null ? prefab.name : "null")}");
-        trace.AppendLine($"  ctx.theme={ctx.ThemeId}, ctx.locale={ctx.LocaleId}");
+        UIVariantRule[] rules = spec.variants;
 
-        // 2) debug override (screenId -> variantId)
-        if (ctx.ScreenOverrides != null &&
-            ctx.ScreenOverrides.TryGetValue(spec.screenKey, out var forcedVariantId) &&
-            !string.IsNullOrEmpty(forcedVariantId))
+        // 1) forced override
+        if (TryGetForcedVariantId(spec, ui, out string forcedId))
         {
-            ApplyByVariantId(
-                spec, forcedVariantId,
-                ref prefab, ref theme, ref layout,
-                applied, trace);
+            UIVariantRule forced = FindFirstById(rules, forcedId);
+            if (forced != null)
+            {
+                applied.Add(forced.variantId);
+                if (forced.overridePrefab != null) prefab = forced.overridePrefab;
+                if (forced.overrideTheme  != null) theme  = forced.overrideTheme;
+                if (forced.overrideLayout != null) layout = forced.overrideLayout;
 
-            return new ResolvedUIScreen(
-                spec.screenKey, spec, prefab, theme, layout, applied, trace.ToString());
+                trace?.Add($"[Forced] variantId={forcedId} applied; rule conditions skipped");
+                trace?.Add(ResultLine(prefab, theme, layout, applied));
+                return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, applied);
+            }
+
+            trace?.Add($"[Forced] variantId={forcedId} not found in spec; evaluating rules normally");
         }
 
-        // 3) normal rules (priority desc)
-        UIVariantRule[] rules = spec.variants;
+        // 2) normal evaluation
         if (rules != null && rules.Length > 0)
         {
-            Array.Sort(rules, (a, b) => b.priority.CompareTo(a.priority));
+            bool prefabLocked = false, themeLocked = false, layoutLocked = false;
 
-            bool prefabLocked = false;
-
-            foreach (UIVariantRule rule in rules)
+            foreach ((UIVariantRule rule, int index) in OrderByPriority(rules))
             {
-                if (rule == null || rule.condition == null)
+                if (rule.condition == null)
+                {
+                    trace?.Add($"[Rule] {rule.variantId} p{rule.priority} SKIP (null condition, index {index})");
+                    continue;
+                }
+
+                bool match = rule.condition.Matches(ui, display);
+                trace?.Add($"[Rule] {rule.variantId} p{rule.priority} {(match ? "MATCH" : "MISS")}");
+                if (!match)
                     continue;
 
-                if (!rule.condition.Matches(ctx))
-                    continue;
-
-                trace.AppendLine($"  +match variant={rule.variantId} (p={rule.priority})");
                 applied.Add(rule.variantId);
 
                 if (!prefabLocked && rule.overridePrefab != null)
                 {
-                    prefab       = rule.overridePrefab;
+                    prefab = rule.overridePrefab;
                     prefabLocked = true;
-                    trace.AppendLine($"    prefab -> {prefab.name} (locked)");
+                    trace?.Add($"[Winner] prefab <- {rule.variantId} ({Name(prefab)})");
                 }
 
-                if (rule.overrideTheme != null)
+                if (!themeLocked && rule.overrideTheme != null)
                 {
-                    theme = rule.overrideTheme; // 덮어쓰기 정책
-                    trace.AppendLine($"    theme  -> {theme.name}");
+                    theme = rule.overrideTheme;
+                    themeLocked = true;
+                    trace?.Add($"[Winner] theme <- {rule.variantId} ({Name(theme)})");
                 }
 
-                if (rule.overrideLayout != null)
+                if (!layoutLocked && rule.overrideLayout != null)
                 {
-                    layout = rule.overrideLayout; // 덮어쓰기 정책
-                    trace.AppendLine($"    layout -> {layout.name}");
+                    layout = rule.overrideLayout;
+                    layoutLocked = true;
+                    trace?.Add($"[Winner] layout <- {rule.variantId} ({Name(layout)})");
                 }
             }
         }
 
-        trace.AppendLine($"[UIResolve] result prefab={(prefab != null ? prefab.name : "null")}, theme={(theme ? theme.name : "null")}, layout={(layout ? layout.name : "null")}");
-
-        return new ResolvedUIScreen(
-            spec.screenKey, spec, prefab, theme, layout, applied, trace.ToString());
+        trace?.Add(ResultLine(prefab, theme, layout, applied));
+        return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, applied);
     }
 
-    private static void ApplyByVariantId(
-        UIScreenSpec spec,
-        string variantId,
-        ref GameObject prefab,
-        ref ThemeSpec theme,
-        ref LayoutPatchSpec layout,
-        List<string> applied,
-        StringBuilder trace)
+    // Priority descending, then authored index ascending. The comparison
+    // includes the index, so the result does not depend on List.Sort being
+    // stable. The source array is never touched.
+    private static List<(UIVariantRule rule, int index)> OrderByPriority(UIVariantRule[] rules)
     {
-        var rules = spec.variants;
-        if (rules == null)
-            return;
-
-        foreach (var r in rules)
+        var ordered = new List<(UIVariantRule rule, int index)>(rules.Length);
+        for (int i = 0; i < rules.Length; i++)
         {
-            if (r == null)
-                continue;
-
-            if (r.variantId != variantId)
-                continue;
-
-            trace.AppendLine($"  [override] forced variant={variantId}");
-            applied.Add(r.variantId);
-
-            if (r.overridePrefab != null)
-                prefab = r.overridePrefab;
-
-            if (r.overrideTheme != null)
-                theme = r.overrideTheme;
-
-            if (r.overrideLayout != null)
-                layout = r.overrideLayout;
-
-            trace.AppendLine($"    forced result prefab={(prefab != null ? prefab.name : "null")}, theme={(theme ? theme.name : "null")}, layout={(layout ? layout.name : "null")}");
-            return;
+            if (rules[i] != null)
+                ordered.Add((rules[i], i));
         }
 
-        trace.AppendLine($"  [override] variantId not found: {variantId}");
+        ordered.Sort((a, b) =>
+            a.rule.priority != b.rule.priority
+                ? b.rule.priority.CompareTo(a.rule.priority)
+                : a.index.CompareTo(b.index));
+
+        return ordered;
     }
+
+    private static bool TryGetForcedVariantId(UIScreenSpec spec, in UIContext ui, out string variantId)
+    {
+        variantId = null;
+
+        if (ui.ScreenOverrides == null)
+            return false;
+
+        if (!ui.ScreenOverrides.TryGetValue(spec.screenKey, out VariantId id) || !id.IsValid)
+            return false;
+
+        variantId = id.Value;
+        return true;
+    }
+
+    private static UIVariantRule FindFirstById(UIVariantRule[] rules, string variantId)
+    {
+        if (rules == null)
+            return null;
+
+        for (int i = 0; i < rules.Length; i++)
+        {
+            UIVariantRule r = rules[i];
+            if (r != null && r.variantId == variantId)
+                return r;
+        }
+
+        return null;
+    }
+
+    private static string ResultLine(GameObject prefab, ThemeSpec theme, LayoutPatchSpec layout, List<string> applied)
+        => $"[Result] prefab={Name(prefab)} theme={Name(theme)} layout={Name(layout)} applied=[{string.Join(", ", applied)}]";
+
+    private static string Name(UnityEngine.Object o) => o != null ? o.name : "null";
 }

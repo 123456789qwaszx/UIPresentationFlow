@@ -1,134 +1,90 @@
 using System;
 using UnityEngine;
 
-public enum VariantPlatform
-{
-    Any,
-    Desktop,
-    Mobile,
-    Console
-}
-
 public enum AspectRule
 {
-    Any,
-    Portrait,   // width/height <= 1
-    Landscape,  // width/height > 1
-    Range       // minAspect ~ maxAspect
+    Landscape = 0,  // display.Orientation == Landscape
+    Portrait,       // display.Orientation == Portrait  (Square matches neither)
+    Range,          // aspectMin <= display.AspectRatio <= aspectMax, inclusive
 }
 
-//defines the exact scope in which a theme or variant should be applied
+// Declarative condition attached to a UIVariantRule.
+//
+// Pure: every input is a parameter of Matches(). Nothing here reads Screen.*
+// or Application.platform — that is UnityDisplayContextProvider's job. The
+// same condition evaluated against the same (ui, display) pair always gives
+// the same answer, on any machine, without a running player.
+//
+// "Don't care" is expressed by leaving a field empty (theme/locale/experiment)
+// or by the use* toggle being off (platform/aspect). There is no separate
+// "Any" enum value on purpose: two ways to say the same thing is one too many.
 [Serializable]
 public sealed class VariantCondition
 {
     [Header("Theme / Locale")]
-    public string themeId;
-    public string localeId;
-    
+    public string themeId;    // empty = any
+    public string localeId;   // empty = any
+
     [Header("Experiment")]
-    // Experiment (A/B test) identifier.
-    // If set, this variant is applied only when the current UIContext
-    // contains the given experiment key in its Experiments map.
+    // If set, the variant applies only when the UIContext carries this experiment.
     public ExperimentKey experimentKey;
-    
-    // Specific experiment variant value (e.g. "A", "B", "NewUI").
-    // If set, this variant is applied only when the experiment's assigned
-    // variant ID exactly matches this value.
+    // If set (and experimentKey is set), the assigned variant must equal this value.
     public VariantId experimentVariantId;
-    
+
     [Header("Platform (optional)")]
-    public bool usePlatform;           // false이면 플랫폼 무시
-    public VariantPlatform platform = VariantPlatform.Any;
+    public bool usePlatform;
+    public DisplayPlatform platform = DisplayPlatform.Desktop;
 
     [Header("Aspect Ratio (optional)")]
-    public bool useAspectRatio;             // false이면 비율 무시
-    public AspectRule aspectRule = AspectRule.Any;
-    public float aspectMin = 1.5f;       // Range 모드에서만 사용
-    public float aspectMax = 2.5f;
+    public bool useAspectRatio;
+    public AspectRule aspectRule = AspectRule.Landscape;
+    public float aspectMin = 1.5f;   // Range only
+    public float aspectMax = 2.5f;   // Range only
 
-    public bool Matches(in UIContext ctx)
+    public bool Matches(in UIContext ui, in DisplayContext display)
     {
-        if (!string.IsNullOrEmpty(themeId) && ctx.ThemeId != themeId)
+        if (!string.IsNullOrEmpty(themeId) && ui.ThemeId != themeId)
             return false;
 
-        if (!string.IsNullOrEmpty(localeId) && ctx.LocaleId != localeId)
+        if (!string.IsNullOrEmpty(localeId) && ui.LocaleId != localeId)
             return false;
 
         if (experimentKey.IsValid)
         {
-            if (ctx.Experiments == null)
+            if (ui.Experiments == null)
                 return false;
 
-            if (!ctx.Experiments.TryGetValue(experimentKey, out VariantId variantId))
+            if (!ui.Experiments.TryGetValue(experimentKey, out VariantId assigned))
                 return false;
 
-            if (!string.IsNullOrEmpty(experimentVariantId.Value) && variantId != experimentVariantId)
+            if (experimentVariantId.IsValid && assigned != experimentVariantId)
                 return false;
         }
-        
-        if (usePlatform && !MatchesPlatform())
+
+        if (usePlatform && display.Platform != platform)
             return false;
-        
-        if (useAspectRatio && !MatchesAspectRatio())
+
+        if (useAspectRatio && !MatchesAspect(display))
             return false;
 
         return true;
     }
-    
-    private bool MatchesPlatform()
+
+    private bool MatchesAspect(in DisplayContext display)
     {
-        if (platform == VariantPlatform.Any)
-            return true;
-
-        VariantPlatform current = DetectCurrentPlatform();
-        return current == platform;
-    }
-
-    private static VariantPlatform DetectCurrentPlatform()
-    {
-        switch (Application.platform)
-        {
-            // Desktop
-            case RuntimePlatform.WindowsPlayer:
-            case RuntimePlatform.WindowsEditor:
-                return VariantPlatform.Desktop;
-
-            // Mobile
-            case RuntimePlatform.Android:
-            case RuntimePlatform.IPhonePlayer:
-                return VariantPlatform.Mobile;
-            
-            default:
-                return VariantPlatform.Desktop;
-        }
-    }
-
-    private bool MatchesAspectRatio()
-    {
-        if (aspectRule == AspectRule.Any)
-            return true;
-
-        float ratio = GetCurrentAspectRatio();
         switch (aspectRule)
         {
-            case AspectRule.Portrait:
-                return ratio <= 1.0f;
-
             case AspectRule.Landscape:
-                return ratio > 1.0f;
+                return display.Orientation == DisplayOrientation.Landscape;
+
+            case AspectRule.Portrait:
+                return display.Orientation == DisplayOrientation.Portrait;
 
             case AspectRule.Range:
-                return ratio >= aspectMin && ratio <= aspectMax;
+                return display.AspectRatio >= aspectMin && display.AspectRatio <= aspectMax;
 
             default:
-                return true;
+                return false;
         }
-    }
-
-    private static float GetCurrentAspectRatio()
-    {
-        if (Screen.height == 0)
-            return 1.0f;
-        return (float)Screen.width / Screen.height;
     }
 }

@@ -1,63 +1,48 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-public sealed class RouteKeyResolver
+// Demo-level navigation: one screen at a time.
+//
+// Captures the DisplayContext exactly once per Show() so that resolve and
+// materialize see the same input. Deliberately not a navigation framework —
+// no back stack, layers, transitions or lifecycle. If those are ever needed
+// they belong in a new type, not bolted onto this one.
+public sealed class UIRouter
 {
-    private readonly UIScreenCatalog _catalog;
+    private readonly UIResolver              _resolver;
+    private readonly UIScreenFactory         _factory;
+    private readonly IDisplayContextProvider _display;
 
-    public RouteKeyResolver(UIScreenCatalog catalog)
+    public UIScreen       CurrentScreen { get; private set; }
+    public ScreenKey      CurrentKey    { get; private set; }
+    public UIResolveTrace LastTrace     { get; private set; }
+
+    public UIRouter(UIResolver resolver, UIScreenFactory factory, IDisplayContextProvider display)
     {
-        _catalog = catalog;
+        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+        _factory  = factory  ?? throw new ArgumentNullException(nameof(factory));
+        _display  = display  ?? throw new ArgumentNullException(nameof(display));
     }
 
-    public bool TryGetRouteKey(UIActionKey routeActionKey, out ScreenKey key)
+    // Resolves and instantiates `key`, then destroys whatever was showing.
+    // Returns null only when the factory is in non-strict mode and could not build the screen.
+    public UIScreen Show(ScreenKey key)
     {
-        return _catalog.TryGetRouteScreenKey(routeActionKey.Value, out key);
-    }
-}
+        DisplayContext  display = _display.GetCurrent();
+        UIResolveResult result  = _resolver.Resolve(key, display);
+        LastTrace = result.Trace;
 
-public class UIRouter
-{
-    private readonly UIResolver _resolver;
-    private readonly UIScreenFactory _factory;
-    
-    private readonly RouteKeyResolver _routeKeyResolver;
-    
-    private readonly ScreenKey _defaultKey = new ("home");
-    
-    public UIRouter(UIResolver resolver, UIScreenFactory factory, RouteKeyResolver routeKeyResolver)
-    {
-        _resolver = resolver;
-        _factory  = factory;
-        _routeKeyResolver = routeKeyResolver;
-    }
-    
-    private readonly Dictionary<ScreenKey, UIScreen> _screens = new();
-    public UIScreen CurrentScreen { get; private set; }
-    
-    public bool TryGetScreen(ScreenKey key, out UIScreen screen)
-        => _screens.TryGetValue(key, out screen);
-    
-    public void Navigate(UIActionKey action)
-    {
-        if (!_routeKeyResolver.TryGetRouteKey(action, out ScreenKey key))
-        {
-            Debug.LogWarning($"[UIRouter] Unknown route='{action.Value}'. Fallback to {_defaultKey}.");
-            key = _defaultKey;
-        }
-
-        UIResolveResult result = _resolver.Resolve(key, action);
         UIScreen screen = _factory.Create(result);
+        if (screen == null)
+            return null;
 
         screen.gameObject.name = key.ToString();
 
-        Debug.Log(result.Trace.Dump());
+        if (CurrentScreen != null)
+            UnityEngine.Object.Destroy(CurrentScreen.gameObject);
 
-        if (_screens.TryGetValue(key, out UIScreen existing) && existing != null)
-            Object.Destroy(existing.gameObject);
-
-        _screens[key] = screen;
         CurrentScreen = screen;
+        CurrentKey    = key;
+        return screen;
     }
 }
-

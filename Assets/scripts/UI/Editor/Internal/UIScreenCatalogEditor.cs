@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,22 +8,26 @@ public class UIScreenCatalogEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        // 기본 Inspector
         DrawDefaultInspector();
 
         EditorGUILayout.Space(10);
-
-        // 강조 박스
         EditorGUILayout.BeginVertical("box");
         EditorGUILayout.LabelField("Validation", EditorStyles.boldLabel);
 
-        if (GUILayout.Button("Verify Route Mapping"))
+        if (GUILayout.Button("Validate Catalog"))
         {
             var catalog = (UIScreenCatalog)target;
-            catalog.ValidateAll();
+            List<string> problems = catalog.Validate();
 
-            // Inspector 갱신
-            EditorUtility.SetDirty(catalog);
+            if (problems.Count == 0)
+            {
+                Debug.Log($"[UIScreenCatalog] '{catalog.name}' OK — {catalog.entries.Count} entries, no problems.", catalog);
+            }
+            else
+            {
+                foreach (string p in problems)
+                    Debug.LogWarning($"[UIScreenCatalog] {p}", catalog);
+            }
         }
 
         EditorGUILayout.EndVertical();
