@@ -1,4 +1,4 @@
-public sealed class AdaptiveDemoUIRoot : UIBase<AdaptiveDemoUIRoot.Refs>
+public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
 {
     public enum Refs
     {

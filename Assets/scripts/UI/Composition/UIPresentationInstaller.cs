@@ -1,75 +1,109 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
-// Demo composition root.
-// R9 keeps this only until UIManager replaces the temporary Router/Factory path.
+// AdaptiveDemo composition root.
+//
+// View creation happens once here because the current demo scene does not yet
+// contain pre-registered UI instances. After registration, UIManager owns Root /
+// Panel lifecycle and all presentation refreshes reuse the same View instance.
 public sealed class UIPresentationInstaller : MonoBehaviour
 {
-    [Header("Temporary Route Catalog")]
-    [SerializeField] private UIScreenCatalog catalog;
-    [SerializeField] private string initialScreenKey = "adaptive_demo";
+    [Header("Adaptive Demo Root")]
+    [SerializeField] private GameObject initialRootPrefab;
+    [SerializeField] private UIPresentationSpec initialRootPresentation;
 
-    [Header("Scene")]
-    [SerializeField] private RectTransform uiRoot;
+    [Header("UI Layers")]
+    [FormerlySerializedAs("uiRoot")]
+    [SerializeField] private RectTransform rootLayer;
+    [Tooltip("Optional for the current demo. If omitted, panels mount under Root Layer.")]
+    [SerializeField] private RectTransform panelLayer;
 
     [Header("UI Context (session)")]
     [SerializeField] private string themeId = "Light";
     [SerializeField] private string localeId = "ko-KR";
 
     [Header("Behaviour")]
-    [Tooltip("Re-resolve and rebuild the current screen whenever the DisplayContext changes. UIManager migration will replace rebuild with repatch.")]
     [SerializeField] private bool reapplyOnDisplayChange = true;
     [SerializeField] private bool logTrace = true;
 
-    private UIRouter _router;
+    private UIManager _ui;
+    private AdaptiveDemoUIRoot _demoRoot;
     private DisplayContext _shownWith;
 
     private void Awake()
     {
-        catalog.Init();
+        if (rootLayer == null)
+            throw new System.InvalidOperationException("[UIPresentationInstaller] Root Layer is required.");
 
-        foreach (string problem in catalog.Validate())
-            Debug.LogWarning($"[UIPresentationInstaller] Catalog: {problem}", catalog);
+        if (initialRootPrefab == null)
+            throw new System.InvalidOperationException("[UIPresentationInstaller] Initial Root Prefab is required.");
+
+        if (initialRootPresentation == null)
+            throw new System.InvalidOperationException("[UIPresentationInstaller] Initial Root Presentation is required.");
 
         UIContext context = new(themeId, localeId);
-        UIResolver resolver = new(context);
-        UIScreenFactory factory = new(uiRoot, new UIPatchApplier());
+        _ui = new UIManager(
+            rootLayer,
+            panelLayer,
+            new UIResolver(context),
+            new UIPatchApplier());
 
-        _router = new UIRouter(catalog, resolver, factory);
+        GameObject instance = Instantiate(initialRootPrefab, rootLayer);
+        _demoRoot = instance.GetComponent<AdaptiveDemoUIRoot>();
+        if (_demoRoot == null)
+        {
+            Destroy(instance);
+            throw new System.InvalidOperationException(
+                $"[UIPresentationInstaller] Prefab '{initialRootPrefab.name}' must have " +
+                $"{nameof(AdaptiveDemoUIRoot)} on its root.");
+        }
+
+        _demoRoot.gameObject.SetActive(false);
+        _ui.Register(_demoRoot);
     }
 
     private void Start()
     {
-        Show(new ScreenKey(initialScreenKey));
+        ShowAdaptiveDemo();
     }
 
     private void Update()
     {
-        if (!reapplyOnDisplayChange
-            || _router == null
-            || _router.CurrentScreen == null)
-        {
+        if (!reapplyOnDisplayChange || _ui?.CurrentRoot == null)
             return;
-        }
 
         DisplayContext now = UnityDisplayContextProvider.GetCurrent();
         if (now == _shownWith)
             return;
 
-        Show(_router.CurrentKey);
+        _ui.ReapplyVisible(now);
+        _shownWith = now;
+        RefreshDebugLabel();
+        LogTrace();
     }
 
-    public void Show(ScreenKey key)
+    public void ShowAdaptiveDemo()
     {
-        UIBase screen = _router.Show(key);
-        _shownWith = _router.LastDisplay;
+        _ui.SwitchRoot<AdaptiveDemoUIRoot>(
+            initialRootPresentation,
+            _ => RefreshDebugLabel());
 
-        if (logTrace)
-            Debug.Log(_router.LastResult.Trace.Dump(), this);
+        _shownWith = _ui.LastDisplay;
+        LogTrace();
+    }
 
-        if (screen != null)
-        {
-            screen.GetComponentInChildren<DisplayInfoLabel>(includeInactive: true)?
-                .Set(_router.LastDisplay, _router.LastResult.Resolved);
-        }
+    private void RefreshDebugLabel()
+    {
+        if (_demoRoot == null || _ui?.LastResult?.Resolved == null)
+            return;
+
+        _demoRoot.GetComponentInChildren<DisplayInfoLabel>(includeInactive: true)?
+            .Set(_ui.LastDisplay, _ui.LastResult.Resolved);
+    }
+
+    private void LogTrace()
+    {
+        if (logTrace && _ui?.LastResult?.Trace != null)
+            Debug.Log(_ui.LastResult.Trace.Dump(), this);
     }
 }
