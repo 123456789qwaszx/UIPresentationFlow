@@ -11,15 +11,20 @@ public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
     public enum Refs
     {
         Background,
+        SafeAreaRoot,
+
         Header,
         PrimaryContent,
         SideInfo,
         BottomControls,
+
         LeftAction,
         RightAction,
     }
 
     private RectTransform _background;
+    private RectTransform _safeAreaRoot;
+
     private RectTransform _header;
     private RectTransform _primaryContent;
     private RectTransform _sideInfo;
@@ -31,6 +36,8 @@ public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
     protected override void OnInitialize()
     {
         _background = View.Rect(Refs.Background);
+        _safeAreaRoot = View.Rect(Refs.SafeAreaRoot);
+
         _header = View.Rect(Refs.Header);
         _primaryContent = View.Rect(Refs.PrimaryContent);
         _sideInfo = View.Rect(Refs.SideInfo);
@@ -61,13 +68,16 @@ public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
     {
         if (_background == null)
             Debug.LogWarning($"[AdaptiveDemoUIRoot] Missing ref: {Refs.Background}", this);
+        
+        if (_safeAreaRoot == null)
+            Debug.LogWarning($"[AdaptiveDemoUIRoot] Missing ref: {Refs.SafeAreaRoot}", this);
 
         if (_header == null)
             Debug.LogWarning($"[AdaptiveDemoUIRoot] Missing ref: {Refs.Header}", this);
-
+        
         if (_primaryContent == null)
             Debug.LogWarning($"[AdaptiveDemoUIRoot] Missing ref: {Refs.PrimaryContent}", this);
-
+        
         if (_sideInfo == null)
             Debug.LogWarning($"[AdaptiveDemoUIRoot] Missing ref: {Refs.SideInfo}", this);
 

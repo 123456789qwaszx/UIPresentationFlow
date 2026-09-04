@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Layout_Wide
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::LayoutPatchSpec
   widgets:
-  - nameTag: PrimaryContent
+  - refId: PrimaryContent
     overrideActive: 0
     active: 1
     rect:
@@ -26,7 +26,7 @@ MonoBehaviour:
       anchoredPosition: {x: -250, y: 20}
       overrideSizeDelta: 1
       sizeDelta: {x: 1400, y: 640}
-  - nameTag: SideInfo
+  - refId: SideInfo
     overrideActive: 0
     active: 1
     rect:
@@ -39,7 +39,7 @@ MonoBehaviour:
       anchoredPosition: {x: 700, y: 20}
       overrideSizeDelta: 0
       sizeDelta: {x: 0, y: 0}
-  - nameTag: LeftAction
+  - refId: LeftAction
     overrideActive: 0
     active: 1
     rect:
@@ -49,10 +49,10 @@ MonoBehaviour:
       overridePivot: 0
       pivot: {x: 0, y: 0}
       overrideAnchoredPosition: 1
-      anchoredPosition: {x: -1040, y: 130}
+      anchoredPosition: {x: -940, y: 130}
       overrideSizeDelta: 0
       sizeDelta: {x: 0, y: 0}
-  - nameTag: RightAction
+  - refId: RightAction
     overrideActive: 0
     active: 1
     rect:
@@ -62,6 +62,6 @@ MonoBehaviour:
       overridePivot: 0
       pivot: {x: 0, y: 0}
       overrideAnchoredPosition: 1
-      anchoredPosition: {x: 1040, y: 130}
+      anchoredPosition: {x: 940, y: 130}
       overrideSizeDelta: 0
       sizeDelta: {x: 0, y: 0}

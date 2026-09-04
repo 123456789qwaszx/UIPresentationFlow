@@ -7,7 +7,9 @@ public sealed partial class UIManager
     {
         view.EnsureInitialized();
 
-        UIResolveResult result = 
+        SafeAreaUtility.Apply(view, display);
+
+        UIResolveResult result =
             _resolver.Resolve(spec, display);
 
         _presentationApplier.Apply(view, result);
