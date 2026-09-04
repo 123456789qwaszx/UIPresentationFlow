@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class TitleUIRoot : UIBase<TitleUIRoot.Refs>
+public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
 {
     public enum Refs
     {
