@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public sealed class VNBootstrap : MonoBehaviour
+public sealed class AdaptiveUIBootstrap : MonoBehaviour
 {
     [Header("UI Layers")]
     [SerializeField] private RectTransform rootLayer;
