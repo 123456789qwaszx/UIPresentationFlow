@@ -2,13 +2,13 @@ public sealed partial class UIManager
 {
     private void ApplyPresentation(
         UIBase view,
-        UIPresentationSpec presentation,
+        UIPresentationSpec spec,
         in DisplayContext display)
     {
         view.EnsureInitialized();
 
         UIResolveResult result = 
-            _resolver.Resolve(presentation, display);
+            _resolver.Resolve(spec, display);
 
         _presentationApplier.Apply(view, result);
 

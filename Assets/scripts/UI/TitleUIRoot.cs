@@ -1,9 +1,13 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
 {
+    public event Action LobbyClicked;
+    public event Action StartClicked;
+    
     public enum Refs
     {
         TitleBG_Image,
@@ -20,13 +24,9 @@ public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
     }
 
     private Image _titleBgImage;
-    
     private Button _lobbyButton;
-    
     private TMP_Text _lobbyBtnText;
-    
     private Button _startButton;
-    
     private TMP_Text _startBtnText;
 
     protected override void OnInitialize()
@@ -34,15 +34,30 @@ public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
         _titleBgImage = View.Image(Refs.TitleBG_Image);
         
         _lobbyButton = View.Button(Refs.LobbyBtn_Button);
-        _lobbyBtnText =View.Text(Refs.LobbyBtn_Text);
+        _lobbyBtnText = View.Text(Refs.LobbyBtn_Text);
         
         _startButton = View.Button(Refs.StartBtn_Button);
-        _startBtnText =View.Text(Refs.StartBtn_Text);
+        _startBtnText = View.Text(Refs.StartBtn_Text);
         
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         ValidateRefs();
 #endif
+        
+        _lobbyButton.onClick.RemoveAllListeners();
+        _lobbyButton.onClick.AddListener(HandleLobbyClicked);
+        
+        _startButton.onClick.RemoveAllListeners();
+        _startButton.onClick.RemoveListener(HandleStartClicked);
+    }
+    
+    private void HandleLobbyClicked()
+    {
+        LobbyClicked?.Invoke();
+    }
+
+    private void HandleStartClicked()
+    {
+        StartClicked?.Invoke();
     }
 
     private void ValidateRefs()

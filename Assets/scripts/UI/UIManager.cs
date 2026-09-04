@@ -6,8 +6,6 @@ using UnityEngine;
 //
 // It owns execution order and lifecycle, not presentation policy:
 //   View lookup -> lifecycle -> resolve -> restore authored baseline -> patch.
-//
-// Supported lifecycle roles are intentionally limited to Root and Panel.
 public sealed partial class UIManager
 {
     private readonly Dictionary<Type, UIBase> _views = new();
@@ -60,27 +58,24 @@ public sealed partial class UIManager
             : null;
     }
 
-    private T Require<T>(string role) where T : UIBase
+    private T Require<T>() where T : UIBase
     {
         T view = GetUI<T>();
         if (view != null)
             return view;
 
         throw new InvalidOperationException(
-            $"[UIManager] {role} View '{typeof(T).Name}' is not registered.");
+            $"[UIManager] View '{typeof(T).Name}' is not registered.");
     }
 
     private static void SetVisible(UIBase view, bool visible)
     {
-        if (view != null && view.gameObject.activeSelf != visible)
+        if (view.gameObject.activeSelf != visible)
             view.gameObject.SetActive(visible);
     }
 
     private static void Mount(UIBase view, Transform layer)
     {
-        if (view == null || layer == null)
-            return;
-
         if (view.transform.parent != layer)
             view.transform.SetParent(layer, worldPositionStays: false);
 

@@ -1,19 +1,20 @@
 using System;
+using System.Collections.Generic;
 
 public sealed partial class UIManager
 {
-    private readonly System.Collections.Generic.Dictionary<UIBase, UIPresentationSpec>
+    private readonly Dictionary<UIBase, UIPresentationSpec>
         _panelPresentations = new();
 
     public T PushPanel<T>(
-        UIPresentationSpec presentation,
+        UIPresentationSpec presentation, 
         Action<T> afterPresented = null)
         where T : UIBase, IUIPanel
     {
         if (presentation == null)
             throw new ArgumentNullException(nameof(presentation));
 
-        T panel = Require<T>("Panel");
+        T panel = Require<T>();
 
         if (_panelStack.Count > 0 && _panelStack.Peek() != panel)
             SetVisible(_panelStack.Peek(), false);
@@ -22,7 +23,7 @@ public sealed partial class UIManager
         _panelStack.Push(panel);
         _panelPresentations[panel] = presentation;
 
-        Mount(panel, _panelLayer ?? _rootLayer);
+        Mount(panel, _panelLayer);
         ApplyPresentation(panel, presentation, UnityDisplayContextProvider.GetCurrent());
         SetVisible(panel, true);
 
@@ -75,8 +76,8 @@ public sealed partial class UIManager
     {
         if (!_panelStack.Contains(target))
             return;
-
-        var temp = new System.Collections.Generic.Stack<UIBase>();
+        
+        var temp = new Stack<UIBase>();
         while (_panelStack.Count > 0)
         {
             UIBase panel = _panelStack.Pop();

@@ -12,7 +12,7 @@ public sealed partial class UIManager
         if (presentation == null)
             throw new ArgumentNullException(nameof(presentation));
 
-        T root = Require<T>("Root");
+        T root = Require<T>();
         bool sameRoot = CurrentRoot == root;
 
         if (CurrentRoot != null && !sameRoot)
@@ -23,7 +23,6 @@ public sealed partial class UIManager
 
         Mount(root, _rootLayer);
 
-        // Presentation identity is independent from View identity.
         // Therefore same Root + different Presentation must still resolve/patch.
         ApplyPresentation(root, presentation, UnityDisplayContextProvider.GetCurrent());
         SetVisible(root, true);
