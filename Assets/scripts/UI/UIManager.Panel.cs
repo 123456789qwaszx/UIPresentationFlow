@@ -6,9 +6,14 @@ public sealed partial class UIManager
     private readonly Dictionary<UIBase, UIPresentationSpec>
         _panelPresentations = new();
 
+    // If the panel already exists in the stack, pop back to it.
+    // A -> B -> C, then Push(B) becomes A -> B.
+    //
+    // afterPopped handles cleanup for panels removed during the pop.
     public T PushPanel<T>(
-        UIPresentationSpec presentation, 
-        Action<T> afterPresented = null)
+        UIPresentationSpec presentation,
+        Action<T> afterPresented = null,
+        Action<UIBase> afterPopped = null)
         where T : UIBase, IUIPanel
     {
         if (presentation == null)
@@ -16,16 +21,23 @@ public sealed partial class UIManager
 
         T panel = Require<T>();
 
-        if (_panelStack.Count > 0 && _panelStack.Peek() != panel)
-            SetVisible(_panelStack.Peek(), false);
+        if (_panelStack.Contains(panel))
+        {
+            PopUntil(panel, afterPopped);
+        }
+        else
+        {
+            _panelStack.Push(panel);
+        }
 
-        RemovePanelIfPresent(panel);
-        _panelStack.Push(panel);
         _panelPresentations[panel] = presentation;
 
         Mount(panel, _panelLayer);
-        ApplyPresentation(panel, presentation, UnityDisplayContextProvider.GetCurrent());
-        SetVisible(panel, true);
+
+        DisplayContext display = UnityDisplayContextProvider.GetCurrent();
+        ApplyPresentation(panel, presentation, display);
+
+        ApplyPanelStackState();
 
         afterPresented?.Invoke(panel);
         return panel;
@@ -37,18 +49,23 @@ public sealed partial class UIManager
             return null;
 
         UIBase popped = _panelStack.Pop();
-        SetVisible(popped, false);
+
+        _panelPresentations.Remove(popped);
+        ApplyPanelState(
+            popped,
+            active: false,
+            interactable: false,
+            blocksRaycasts: false,
+            alpha: 0f);
+
         afterPopped?.Invoke(popped);
 
         if (_panelStack.Count > 0)
         {
-            UIBase previous = _panelStack.Peek();
-            if (_panelPresentations.TryGetValue(previous, out UIPresentationSpec presentation))
-            {
-                ApplyPresentation(previous, presentation, UnityDisplayContextProvider.GetCurrent());
-            }
+            DisplayContext display = UnityDisplayContextProvider.GetCurrent();
 
-            SetVisible(previous, true);
+            ReapplyPanelStack(display);
+            ApplyPanelStackState();
         }
 
         return popped;
@@ -67,25 +84,106 @@ public sealed partial class UIManager
         if (_panelStack.Count == 0)
             return;
 
-        UIBase panel = _panelStack.Peek();
-        if (_panelPresentations.TryGetValue(panel, out UIPresentationSpec presentation))
-            ApplyPresentation(panel, presentation, display);
+        ReapplyPanelStack(display);
+        ApplyPanelStackState();
     }
 
-    private void RemovePanelIfPresent(UIBase target)
+    private void PopUntil(
+        UIBase target,
+        Action<UIBase> afterPopped = null)
     {
-        if (!_panelStack.Contains(target))
-            return;
-        
-        var temp = new Stack<UIBase>();
-        while (_panelStack.Count > 0)
+        while (_panelStack.Count > 0 &&
+               _panelStack.Peek() != target)
         {
-            UIBase panel = _panelStack.Pop();
-            if (panel != target)
-                temp.Push(panel);
+            UIBase popped = _panelStack.Pop();
+
+            _panelPresentations.Remove(popped);
+            ApplyPanelState(
+                popped,
+                active: false,
+                interactable: false,
+                blocksRaycasts: false,
+                alpha: 0f);
+
+            afterPopped?.Invoke(popped);
+        }
+    }
+
+    // Keep live panels in sync with the current display.
+    private void ReapplyPanelStack(in DisplayContext display)
+    {
+        int keep = Math.Max(1, _panelKeepAliveDepth);
+        var livePanels = new List<UIBase>(keep);
+
+        foreach (UIBase panel in _panelStack)
+        {
+            if (livePanels.Count >= keep)
+                break;
+
+            livePanels.Add(panel);
         }
 
-        while (temp.Count > 0)
-            _panelStack.Push(temp.Pop());
+        // Apply bottom-up so the top panel remains the last resolved result.
+        for (int i = livePanels.Count - 1; i >= 0; i--)
+        {
+            UIBase panel = livePanels[i];
+
+            if (_panelPresentations.TryGetValue(
+                    panel,
+                    out UIPresentationSpec presentation))
+            {
+                ApplyPresentation(panel, presentation, display);
+            }
+        }
+    }
+
+    private void ApplyPanelStackState()
+    {
+        if (_panelStack.Count == 0)
+            return;
+
+        int keep = Math.Max(1, _panelKeepAliveDepth);
+        int index = 0;
+
+        foreach (UIBase panel in _panelStack)
+        {
+            bool keepAlive = index < keep;
+
+            if (!keepAlive)
+            {
+                ApplyPanelState(
+                    panel,
+                    active: false,
+                    interactable: false,
+                    blocksRaycasts: false,
+                    alpha: 0f);
+
+                index++;
+                continue;
+            }
+
+            if (index == 0)
+            {
+                panel.transform.SetAsLastSibling();
+
+                ApplyPanelState(
+                    panel,
+                    active: true,
+                    interactable: true,
+                    blocksRaycasts: true,
+                    alpha: 1f);
+            }
+            else
+            {
+                ApplyPanelState(
+                    panel,
+                    active: true,
+                    interactable: false,
+                    blocksRaycasts: false,
+                    alpha: _coveredPanelAlpha);
+            }
+
+            index++;
+        }
     }
 }

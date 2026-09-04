@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
@@ -25,6 +26,80 @@ public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
 
     protected virtual void PreInitialize() { }
     protected virtual void OnInitialize() { }
+
+    protected static void BindEvent(
+        Button button,
+        Action<PointerEventData> action,
+        ETouchEvent type = ETouchEvent.Click)
+    {
+        if (button == null || action == null)
+            return;
+
+        BindEvent(button.gameObject, action, type);
+    }
+
+    private static void BindEvent(
+        GameObject target,
+        Action<PointerEventData> action,
+        ETouchEvent type)
+    {
+        if (target == null || action == null)
+            return;
+
+        UI_EventHandler eventHandler =
+            GetOrAddComponent<UI_EventHandler>(target);
+
+        switch (type)
+        {
+            case ETouchEvent.Click:
+                eventHandler.OnClickHandler -= action;
+                eventHandler.OnClickHandler += action;
+                break;
+
+            case ETouchEvent.PointerDown:
+                eventHandler.OnPointerDownHandler -= action;
+                eventHandler.OnPointerDownHandler += action;
+                break;
+
+            case ETouchEvent.PointerUp:
+                eventHandler.OnPointerUpHandler -= action;
+                eventHandler.OnPointerUpHandler += action;
+                break;
+
+            case ETouchEvent.LongPressed:
+                eventHandler.OnLongPressHandler -= action;
+                eventHandler.OnLongPressHandler += action;
+                break;
+
+            case ETouchEvent.BeginDrag:
+                eventHandler.OnBeginDragHandler -= action;
+                eventHandler.OnBeginDragHandler += action;
+                break;
+
+            case ETouchEvent.Drag:
+                eventHandler.OnDragHandler -= action;
+                eventHandler.OnDragHandler += action;
+                break;
+
+            case ETouchEvent.EndDrag:
+                eventHandler.OnEndDragHandler -= action;
+                eventHandler.OnEndDragHandler += action;
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+        }
+    }
+
+    private static T GetOrAddComponent<T>(GameObject target)
+        where T : Component
+    {
+        T component = target.GetComponent<T>();
+        if (component == null)
+            component = target.AddComponent<T>();
+
+        return component;
+    }
 
     public abstract IReadOnlyList<string> TextTargetIds { get; }
 
@@ -70,7 +145,7 @@ public abstract class UIBase<TRefs> : UIBase
     protected RefView View { get; private set; }
 
     // Presentation sees semantic string ids.
-    // Ordinary screen code continues to use typed Refs through View.
+    // Ordinary View code continues to use typed Refs through View.
     public override IReadOnlyList<string> TextTargetIds
         => UIRefMetadataCache<TRefs>.TextTargetIds;
 
@@ -175,7 +250,9 @@ public abstract class UIBase<TRefs> : UIBase
         return rect;
     }
 
-    private static GameObject FindChildGameObjectRecursive(GameObject root, string name)
+    private static GameObject FindChildGameObjectRecursive(
+        GameObject root,
+        string name)
     {
         if (root == null || string.IsNullOrEmpty(name))
             return null;

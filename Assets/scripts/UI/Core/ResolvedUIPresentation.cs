@@ -8,8 +8,8 @@ public sealed class ResolvedUIPresentation
     public ThemeSpec Theme { get; }
     public LayoutPatchSpec Layout { get; }
 
-    // IDs of matching rules in evaluation (priority) order.
-    // A forced override yields exactly one entry.
+    // IDs of matched rules in priority order.
+    // Forced override produces a single entry.
     public IReadOnlyList<string> AppliedVariantIds { get; }
 
     public ResolvedUIPresentation(
@@ -19,9 +19,9 @@ public sealed class ResolvedUIPresentation
         List<string> appliedVariantIds)
     {
         BaseSpec          = baseSpec;
-        PresentationId    = baseSpec != null ? baseSpec.presentationId : null;
+        PresentationId    = baseSpec.presentationId;
         Theme             = theme;
         Layout            = layout;
-        AppliedVariantIds = (appliedVariantIds ?? new List<string>()).AsReadOnly();
+        AppliedVariantIds = appliedVariantIds.AsReadOnly();
     }
 }

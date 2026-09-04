@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// UI subsystem facade.
-//
-// It owns execution order and lifecycle, not presentation policy:
-//   View lookup -> lifecycle -> resolve -> restore authored baseline -> patch.
+// Coordinates UI lifecycle and presentation application.
+// Presentation decisions remain in the resolver.
 public sealed partial class UIManager
 {
     private readonly Dictionary<Type, UIBase> _views = new();
@@ -15,6 +13,9 @@ public sealed partial class UIManager
     private readonly Transform _panelLayer;
     private readonly UIResolver _resolver;
     private readonly UIPresentationApplier _presentationApplier;
+
+    private readonly int _panelKeepAliveDepth;
+    private readonly float _coveredPanelAlpha;
 
     public UIBase CurrentRoot { get; private set; }
     public bool HasPanel => _panelStack.Count > 0;
@@ -26,12 +27,17 @@ public sealed partial class UIManager
         Transform rootLayer,
         Transform panelLayer,
         UIResolver resolver,
-        UIPresentationApplier presentationApplier)
+        UIPresentationApplier presentationApplier,
+        int panelKeepAliveDepth = 1,
+        float coveredPanelAlpha = 0f)
     {
         _rootLayer = rootLayer;
         _panelLayer = panelLayer;
         _resolver = resolver;
         _presentationApplier = presentationApplier;
+
+        _panelKeepAliveDepth = Mathf.Max(1, panelKeepAliveDepth);
+        _coveredPanelAlpha = Mathf.Clamp01(coveredPanelAlpha);
     }
 
     public void Register(UIBase view)
@@ -80,5 +86,27 @@ public sealed partial class UIManager
             view.transform.SetParent(layer, worldPositionStays: false);
 
         view.transform.SetAsLastSibling();
+    }
+
+    private static void ApplyPanelState(
+        UIBase panel,
+        bool active,
+        bool interactable,
+        bool blocksRaycasts,
+        float alpha)
+    {
+        if (panel == null)
+            return;
+
+        if (panel.gameObject.activeSelf != active)
+            panel.gameObject.SetActive(active);
+
+        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = panel.gameObject.AddComponent<CanvasGroup>();
+
+        canvasGroup.alpha = active ? alpha : 0f;
+        canvasGroup.interactable = active && interactable;
+        canvasGroup.blocksRaycasts = active && blocksRaycasts;
     }
 }

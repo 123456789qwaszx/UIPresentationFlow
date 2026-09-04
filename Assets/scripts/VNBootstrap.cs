@@ -16,6 +16,13 @@ public sealed class VNBootstrap : MonoBehaviour
     [SerializeField] private string themeId = "Light";
     [SerializeField] private string localeId = "ko-KR";
 
+    [Header("Panel Stack Policy")]
+    [SerializeField, Min(1)]
+    private int panelKeepAliveDepth = 3;
+
+    [SerializeField, Range(0f, 1f)]
+    private float coveredPanelAlpha = 0.9f;
+
     [Header("Runtime")]
     [SerializeField] private UIDisplayRefreshDriver displayRefreshDriver;
     [SerializeField] private AdaptiveDemoDiagnostics adaptiveDemoDiagnostics;
@@ -33,16 +40,21 @@ public sealed class VNBootstrap : MonoBehaviour
             rootLayer,
             panelLayer,
             resolver,
-            presentationApplier);
+            presentationApplier,
+            panelKeepAliveDepth,
+            coveredPanelAlpha);
 
         foreach (UIBase view in views)
         {
+            if (view == null)
+                continue;
+
             view.gameObject.SetActive(false);
             _ui.Register(view);
         }
 
         _screens = new VNScreenBindings(_ui, titlePresentation);
-        
+
         displayRefreshDriver?.Initialize(_ui);
         adaptiveDemoDiagnostics?.Initialize(_ui);
     }

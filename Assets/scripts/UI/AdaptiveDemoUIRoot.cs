@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
@@ -42,23 +43,20 @@ public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
         ValidateRefs();
 #endif
 
-        _leftActionButton.onClick.RemoveAllListeners();
-        _leftActionButton.onClick.AddListener(HandleLeftActionClicked);
-        
-        _rightActionButton.onClick.RemoveAllListeners();
-        _rightActionButton.onClick.AddListener(HandleRightActionClicked);
+        BindEvent(_leftActionButton, HandleLeftActionClicked);
+        BindEvent(_rightActionButton, HandleRightActionClicked);
     }
 
-    private void HandleLeftActionClicked()
+    private void HandleLeftActionClicked(PointerEventData _)
     {
         LeftActionClicked?.Invoke();
     }
 
-    private void HandleRightActionClicked()
+    private void HandleRightActionClicked(PointerEventData _)
     {
         RightActionClicked?.Invoke();
     }
-    
+
     private void ValidateRefs()
     {
         if (_background == null)
