@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Registry: ScreenKey -> UIScreenSpec. Call Init() once before resolving.
+// Temporary R9 migration bridge.
+//
+// ScreenKey remains only as a route lookup key while UIManager migration is in
+// progress. Presentation data itself no longer owns a route or a prefab.
 [CreateAssetMenu(menuName = "UI/Screen Catalog", fileName = "UIScreenCatalog")]
 public class UIScreenCatalog : ScriptableObject
 {
@@ -10,41 +13,40 @@ public class UIScreenCatalog : ScriptableObject
     public class ScreenEntry
     {
         public ScreenKey screenKey;
-        public UIScreenSpecAsset specAsset;
+        public GameObject templatePrefab;
+        public UIPresentationSpec presentation;
     }
 
     public List<ScreenEntry> entries = new();
 
-    private Dictionary<ScreenKey, UIScreenSpec> _screenMap;
+    private Dictionary<ScreenKey, ScreenEntry> _screenMap;
 
     public bool IsInitialized => _screenMap != null;
 
     public void Init()
     {
-        _screenMap = new Dictionary<ScreenKey, UIScreenSpec>();
+        _screenMap = new Dictionary<ScreenKey, ScreenEntry>();
 
-        foreach (ScreenEntry e in entries)
+        foreach (ScreenEntry entry in entries)
         {
-            if (e?.specAsset == null)
+            if (entry == null)
                 continue;
 
-            _screenMap[e.screenKey] = e.specAsset.spec;   // last duplicate wins; Validate() reports duplicates
+            _screenMap[entry.screenKey] = entry;
         }
     }
 
-    public bool TryGetScreenSpec(ScreenKey key, out UIScreenSpec spec)
+    public bool TryGetScreenEntry(ScreenKey key, out ScreenEntry entry)
     {
         if (_screenMap == null)
         {
-            spec = null;
+            entry = null;
             return false;
         }
 
-        return _screenMap.TryGetValue(key, out spec);
+        return _screenMap.TryGetValue(key, out entry);
     }
 
-    // Authoring-time integrity check. Pure: returns messages, logs nothing,
-    // so the Editor button and tests share one implementation.
     public List<string> Validate()
     {
         var problems = new List<string>();
@@ -52,32 +54,62 @@ public class UIScreenCatalog : ScriptableObject
 
         for (int i = 0; i < entries.Count; i++)
         {
-            ScreenEntry e = entries[i];
+            ScreenEntry entry = entries[i];
             string at = $"entries[{i}]";
 
-            if (e == null)
+            if (entry == null)
             {
                 problems.Add($"{at}: null entry");
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(e.screenKey.Value))
+            if (string.IsNullOrWhiteSpace(entry.screenKey.Value))
                 problems.Add($"{at}: screenKey is empty");
-            else if (!seenKeys.Add(e.screenKey))
-                problems.Add($"{at}: duplicate screenKey '{e.screenKey}'");
+            else if (!seenKeys.Add(entry.screenKey))
+                problems.Add($"{at}: duplicate screenKey '{entry.screenKey}'");
 
-            if (e.specAsset == null)
+            ValidatePrefab(entry, at, problems);
+
+            if (entry.presentation == null)
             {
-                problems.Add($"{at} '{e.screenKey}': specAsset is null");
+                problems.Add($"{at} '{entry.screenKey}': presentation is null");
                 continue;
             }
 
-            if (!e.screenKey.Equals(e.specAsset.spec.screenKey))
-                problems.Add($"{at} '{e.screenKey}': specAsset.spec.screenKey is '{e.specAsset.spec.screenKey}' (mismatch)");
-
-            problems.AddRange(UIScreenSpecValidator.Validate(e.specAsset.spec, $"{at} '{e.screenKey}'"));
+            problems.AddRange(
+                UIPresentationSpecValidator.Validate(
+                    entry.presentation,
+                    $"{at} '{entry.screenKey}'"));
         }
 
         return problems;
+    }
+
+    private static void ValidatePrefab(
+        ScreenEntry entry,
+        string at,
+        List<string> problems)
+    {
+        if (entry.templatePrefab == null)
+        {
+            problems.Add($"{at} '{entry.screenKey}': templatePrefab is null");
+            return;
+        }
+
+        UIBase root = entry.templatePrefab.GetComponent<UIBase>();
+        if (root == null)
+        {
+            problems.Add(
+                $"{at} '{entry.screenKey}': templatePrefab '{entry.templatePrefab.name}' " +
+                "must have a concrete UIBase<TRefs> component on its root");
+            return;
+        }
+
+        if (root is not IUIPresentationRefProvider)
+        {
+            problems.Add(
+                $"{at} '{entry.screenKey}': templatePrefab root '{root.GetType().Name}' " +
+                "must expose presentation refs; use UIBase<TRefs>");
+        }
     }
 }

@@ -1,8 +1,10 @@
 using UnityEngine;
 
+// Demo composition root.
+// R9 keeps this only until UIManager replaces the temporary Router/Factory path.
 public sealed class UIPresentationInstaller : MonoBehaviour
 {
-    [Header("Catalog")]
+    [Header("Temporary Route Catalog")]
     [SerializeField] private UIScreenCatalog catalog;
     [SerializeField] private string initialScreenKey = "adaptive_demo";
 
@@ -14,7 +16,7 @@ public sealed class UIPresentationInstaller : MonoBehaviour
     [SerializeField] private string localeId = "ko-KR";
 
     [Header("Behaviour")]
-    [Tooltip("Re-resolve and rebuild the current screen whenever the DisplayContext changes.")]
+    [Tooltip("Re-resolve and rebuild the current screen whenever the DisplayContext changes. UIManager migration will replace rebuild with repatch.")]
     [SerializeField] private bool reapplyOnDisplayChange = true;
     [SerializeField] private bool logTrace = true;
 
@@ -26,15 +28,13 @@ public sealed class UIPresentationInstaller : MonoBehaviour
         catalog.Init();
 
         foreach (string problem in catalog.Validate())
-            Debug.LogWarning(
-                $"[UIPresentationInstaller] Catalog: {problem}",
-                catalog);
+            Debug.LogWarning($"[UIPresentationInstaller] Catalog: {problem}", catalog);
 
-        UIContext context = new(themeId, localeId, null, null);
-        UIResolver resolver = new(catalog, context);
+        UIContext context = new(themeId, localeId);
+        UIResolver resolver = new(context);
         UIScreenFactory factory = new(uiRoot, new UIPatchApplier());
 
-        _router = new UIRouter(resolver, factory);
+        _router = new UIRouter(catalog, resolver, factory);
     }
 
     private void Start()

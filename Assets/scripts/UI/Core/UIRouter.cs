@@ -1,32 +1,43 @@
+using System.Collections.Generic;
+
+// Temporary R9 migration bridge.
+// Application routing still enters through ScreenKey for the demo, but the
+// presentation decision itself is already independent from route/prefab data.
 public sealed class UIRouter
 {
+    private readonly UIScreenCatalog _catalog;
     private readonly UIResolver _resolver;
     private readonly UIScreenFactory _factory;
 
-    // "Screen" remains the domain term for now, but the runtime object is UIBase.
-    // Naming cleanup is intentionally deferred until the architecture settles.
     public UIBase CurrentScreen { get; private set; }
     public ScreenKey CurrentKey { get; private set; }
 
-    // Inputs and outputs of the most recent Show(), for tracing and preview.
     public DisplayContext LastDisplay { get; private set; }
     public UIResolveResult LastResult { get; private set; }
 
-    public UIRouter(UIResolver resolver, UIScreenFactory factory)
+    public UIRouter(
+        UIScreenCatalog catalog,
+        UIResolver resolver,
+        UIScreenFactory factory)
     {
+        _catalog = catalog;
         _resolver = resolver;
         _factory = factory;
     }
 
     public UIBase Show(ScreenKey key)
     {
+        if (!_catalog.TryGetScreenEntry(key, out UIScreenCatalog.ScreenEntry entry))
+            throw new KeyNotFoundException(
+                $"[UIRouter] No screen route registered for ScreenKey '{key}' in catalog '{_catalog.name}'");
+
         DisplayContext display = UnityDisplayContextProvider.GetCurrent();
-        UIResolveResult result = _resolver.Resolve(key, display);
+        UIResolveResult result = _resolver.Resolve(entry.presentation, display);
 
         LastDisplay = display;
         LastResult = result;
 
-        UIBase screen = _factory.Create(result);
+        UIBase screen = _factory.Create(entry.templatePrefab, result);
         if (screen == null)
             return null;
 

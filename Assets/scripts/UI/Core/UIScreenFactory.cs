@@ -1,11 +1,9 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-// Materializes resolved presentation data into a concrete UIBase root:
-//   Instantiate -> initialize typed refs -> apply presentation patches.
-//
-// UIScreen is no longer part of the runtime application boundary.
-// Every presentation prefab must expose a concrete UIBase<TRefs> on its root.
+// Temporary R9 migration bridge.
+// View creation still lives here until UIManager replaces Router/Factory.
+// Presentation resolution no longer selects the prefab.
 public sealed class UIScreenFactory
 {
     private readonly Transform _uiRoot;
@@ -17,20 +15,12 @@ public sealed class UIScreenFactory
         _patcher = patcher;
     }
 
-    public UIBase Create(UIResolveResult result)
+    public UIBase Create(GameObject prefab, UIResolveResult result)
     {
-        if (result == null)
+        if (prefab == null || result == null)
             return null;
 
-        ResolvedUIScreen resolved = result.Resolved;
-        GameObject prefab = resolved.Prefab;
-
-        if (prefab == null)
-        {
-            Debug.LogWarning(
-                $"[UIScreenFactory] Resolved prefab is null. screen={resolved.ScreenKey}");
-            return null;
-        }
+        string presentationId = result.Resolved?.PresentationId ?? "(unknown)";
 
         GameObject go = Object.Instantiate(prefab, _uiRoot);
 
@@ -38,7 +28,8 @@ public sealed class UIScreenFactory
         if (root == null)
         {
             Debug.LogError(
-                $"[UIScreenFactory] Prefab '{prefab.name}' must have a concrete UIBase<TRefs> component on its root. screen={resolved.ScreenKey}");
+                $"[UIScreenFactory] Prefab '{prefab.name}' must have a concrete " +
+                $"UIBase<TRefs> component on its root. presentation={presentationId}");
             Object.Destroy(go);
             return null;
         }
@@ -46,17 +37,15 @@ public sealed class UIScreenFactory
         if (root is not IUIPresentationRefProvider refs)
         {
             Debug.LogError(
-                $"[UIScreenFactory] UI root '{root.GetType().Name}' must implement {nameof(IUIPresentationRefProvider)}. Use UIBase<TRefs>. screen={resolved.ScreenKey}",
+                $"[UIScreenFactory] UI root '{root.GetType().Name}' must implement " +
+                $"{nameof(IUIPresentationRefProvider)}. Use UIBase<TRefs>. " +
+                $"presentation={presentationId}",
                 root);
             Object.Destroy(go);
             return null;
         }
 
-        // Awake normally initializes active prefab instances.
-        // Explicitly ensuring it also makes the factory contract deterministic
-        // for inactive prefabs and tests.
         root.EnsureInitialized();
-
         _patcher.Apply(refs, result.Patches);
         return root;
     }

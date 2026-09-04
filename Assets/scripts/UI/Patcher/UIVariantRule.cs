@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 [Serializable]
 public class UIVariantRule
@@ -9,7 +8,7 @@ public class UIVariantRule
 
     public VariantCondition condition;
 
-    public GameObject overridePrefab;      // Replaces the screen prefab
-    public ThemeSpec overrideTheme;        // Overrides the theme
-    public LayoutPatchSpec overrideLayout; // Overrides layout / locale-specific settings
+    // A variant changes presentation fields only.
+    public ThemeSpec overrideTheme;
+    public LayoutPatchSpec overrideLayout;
 }

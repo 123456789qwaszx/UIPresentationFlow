@@ -13,28 +13,39 @@ public sealed class UIResolveTrace
         => _lines.Count == 0 ? "[Trace] (empty)" : "[Trace]\n- " + string.Join("\n- ", _lines);
 }
 
+// Presentation orchestration boundary.
+//
+// Responsibilities:
+//   pure variant decision -> patch recipe creation.
+//
+// It deliberately does NOT perform route lookup, prefab selection, Unity global
+// reads, or Unity object mutation.
 public sealed class UIResolver
 {
-    private readonly UIScreenCatalog   _catalog;
     private readonly UIVariantResolver _variantResolver = new();
-    private readonly UIContext         _context;
+    private readonly UIContext _context;
 
     public UIContext Context => _context;
 
-    public UIResolver(UIScreenCatalog catalog, UIContext context)
+    public UIResolver(UIContext context)
     {
-        _catalog = catalog;
         _context = context;
     }
 
-    public UIResolveResult Resolve(ScreenKey screenKey, in DisplayContext display)
+    public UIResolveResult Resolve(
+        UIPresentationSpec spec,
+        in DisplayContext display)
     {
-        if (!_catalog.TryGetScreenSpec(screenKey, out UIScreenSpec spec))
-            throw new KeyNotFoundException(
-                $"[UIResolver] No UIScreenSpec registered for ScreenKey '{screenKey}' in catalog '{_catalog.name}'");
+        if (spec == null)
+            throw new ArgumentNullException(nameof(spec));
+
+        if (!display.IsValid)
+            throw new ArgumentException(
+                "DisplayContext must be valid. Capture or construct an explicit display snapshot before resolving.",
+                nameof(display));
 
         var trace = new UIResolveTrace();
-        ResolvedUIScreen resolved = _variantResolver.Resolve(spec, _context, display, trace);
+        ResolvedUIPresentation resolved = _variantResolver.Resolve(spec, _context, display, trace);
 
         var patches = new List<IUIPatch>(2);
         resolved.Theme?.BuildPatches(patches);

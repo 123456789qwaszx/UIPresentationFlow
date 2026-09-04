@@ -2,34 +2,48 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// The pure decision step:
+//   (presentation, ui, display) -> ResolvedUIPresentation
+//
 // Contract
-//  - never mutates the spec (authored data) or either context
-//  - reads no global state; same inputs -> same output
-//  - explains itself through the optional UIResolveTrace
+//   - never mutates authored data or either context
+//   - reads no Unity global state; same inputs -> same output
+//   - requires an explicit, valid DisplayContext
+//   - explains itself through the optional UIResolveTrace
 //
-// Priority policy: highest priority wins, per field.
-//  Rules are visited in priority-descending order; ties keep authored (array) order.
-//  The first matching rule that overrides a field locks that field.
-//  A field no matching rule overrides keeps the base value.
+// Priority policy: highest priority wins, per presentation field.
+// Rules are visited in priority-descending order; ties keep authored order.
 //
-// Forced override (UIContext.ScreenOverrides[screenKey] = variantId):
-//  A debug/QA tool.
-//  The named rule is applied without evaluating its condition and no other rule is considered.
+// Forced override:
+//   UIContext.PresentationOverrides[presentationId] = variantId
+// Debug/QA may force one authored variant without evaluating its condition.
 public sealed class UIVariantResolver
 {
-    public ResolvedUIScreen Resolve(
-        UIScreenSpec spec,
+    public ResolvedUIPresentation Resolve(
+        UIPresentationSpec spec,
         in UIContext ui,
         in DisplayContext display,
         UIResolveTrace trace = null)
     {
-        GameObject      prefab    = spec.templatePrefab;
+        if (spec == null)
+            throw new ArgumentNullException(nameof(spec));
+
+        if (!display.IsValid)
+            throw new ArgumentException(
+                "DisplayContext must be valid before variant evaluation.",
+                nameof(display));
+
         ThemeSpec       theme     = spec.baseTheme;
         LayoutPatchSpec layout    = spec.baseLayout;
         List<string> matchedRules = new(4);
 
-        trace?.Add($"[Resolve] screen={spec.screenKey} base prefab={Name(prefab)} theme={Name(theme)} layout={Name(layout)}");
-        trace?.Add($"[Input] ui theme={ui.ThemeId} locale={ui.LocaleId} experiments={ui.Experiments?.Count ?? 0} overrides={ui.ScreenOverrides?.Count ?? 0}");
+        trace?.Add(
+            $"[Resolve] presentation={spec.presentationId} " +
+            $"base theme={Name(theme)} layout={Name(layout)}");
+        trace?.Add(
+            $"[Input] ui theme={ui.ThemeId} locale={ui.LocaleId} " +
+            $"experiments={ui.Experiments?.Count ?? 0} " +
+            $"overrides={ui.PresentationOverrides?.Count ?? 0}");
         trace?.Add($"[Input] display {display}");
 
         UIVariantRule[] rules = spec.variants;
@@ -41,22 +55,22 @@ public sealed class UIVariantResolver
             if (forced != null)
             {
                 matchedRules.Add(forced.variantId);
-                if (forced.overridePrefab != null) prefab = forced.overridePrefab;
                 if (forced.overrideTheme  != null) theme  = forced.overrideTheme;
                 if (forced.overrideLayout != null) layout = forced.overrideLayout;
 
                 trace?.Add($"[Forced] variantId={forcedId} applied; rule conditions skipped");
-                trace?.Add(ResultLine(prefab, theme, layout, matchedRules));
-                return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, matchedRules);
+                trace?.Add(ResultLine(theme, layout, matchedRules));
+                return new ResolvedUIPresentation(spec, theme, layout, matchedRules);
             }
 
-            trace?.Add($"[Forced] variantId={forcedId} not found in spec; evaluating rules normally");
+            trace?.Add($"[Forced] variantId={forcedId} not found in presentation; evaluating rules normally");
         }
 
         // 2) normal evaluation
         if (rules != null && rules.Length > 0)
         {
-            bool prefabLocked = false, themeLocked = false, layoutLocked = false;
+            bool themeLocked = false;
+            bool layoutLocked = false;
 
             foreach ((UIVariantRule rule, int index) in OrderByPriority(rules))
             {
@@ -72,13 +86,6 @@ public sealed class UIVariantResolver
                     continue;
 
                 matchedRules.Add(rule.variantId);
-
-                if (!prefabLocked && rule.overridePrefab != null)
-                {
-                    prefab = rule.overridePrefab;
-                    prefabLocked = true;
-                    trace?.Add($"[Winner] prefab <- {rule.variantId} ({Name(prefab)})");
-                }
 
                 if (!themeLocked && rule.overrideTheme != null)
                 {
@@ -96,13 +103,10 @@ public sealed class UIVariantResolver
             }
         }
 
-        trace?.Add(ResultLine(prefab, theme, layout, matchedRules));
-        return new ResolvedUIScreen(spec.screenKey, spec, prefab, theme, layout, matchedRules);
+        trace?.Add(ResultLine(theme, layout, matchedRules));
+        return new ResolvedUIPresentation(spec, theme, layout, matchedRules);
     }
 
-    // Priority descending, then authored index ascending. The comparison
-    // includes the index, so the result does not depend on List.Sort being
-    // stable. The source array is never touched.
     private static List<(UIVariantRule rule, int index)> OrderByPriority(UIVariantRule[] rules)
     {
         var ordered = new List<(UIVariantRule rule, int index)>(rules.Length);
@@ -120,14 +124,17 @@ public sealed class UIVariantResolver
         return ordered;
     }
 
-    private static bool TryGetForcedVariantId(UIScreenSpec spec, in UIContext ui, out string variantId)
+    private static bool TryGetForcedVariantId(
+        UIPresentationSpec spec,
+        in UIContext ui,
+        out string variantId)
     {
         variantId = null;
 
-        if (ui.ScreenOverrides == null)
+        if (ui.PresentationOverrides == null || string.IsNullOrWhiteSpace(spec.presentationId))
             return false;
 
-        if (!ui.ScreenOverrides.TryGetValue(spec.screenKey, out VariantId id) || !id.IsValid)
+        if (!ui.PresentationOverrides.TryGetValue(spec.presentationId, out VariantId id) || !id.IsValid)
             return false;
 
         variantId = id.Value;
@@ -141,16 +148,20 @@ public sealed class UIVariantResolver
 
         for (int i = 0; i < rules.Length; i++)
         {
-            UIVariantRule r = rules[i];
-            if (r != null && r.variantId == variantId)
-                return r;
+            UIVariantRule rule = rules[i];
+            if (rule != null && rule.variantId == variantId)
+                return rule;
         }
 
         return null;
     }
 
-    private static string ResultLine(GameObject prefab, ThemeSpec theme, LayoutPatchSpec layout, List<string> applied)
-        => $"[Result] prefab={Name(prefab)} theme={Name(theme)} layout={Name(layout)} applied=[{string.Join(", ", applied)}]";
+    private static string ResultLine(
+        ThemeSpec theme,
+        LayoutPatchSpec layout,
+        List<string> applied)
+        => $"[Result] theme={Name(theme)} layout={Name(layout)} applied=[{string.Join(", ", applied)}]";
 
-    private static string Name(UnityEngine.Object o) => o != null ? o.name : "null";
+    private static string Name(UnityEngine.Object value)
+        => value != null ? value.name : "null";
 }
