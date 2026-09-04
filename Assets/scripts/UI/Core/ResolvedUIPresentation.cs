@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-// Pure decision output. It contains presentation choices only; View selection
-// and Unity object lifetime are intentionally outside this model.
 public sealed class ResolvedUIPresentation
 {
     public string PresentationId { get; }

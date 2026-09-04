@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class UIBase : MonoBehaviour
+public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
 {
     private bool _initialized;
 
@@ -25,9 +25,23 @@ public abstract class UIBase : MonoBehaviour
 
     protected virtual void PreInitialize() { }
     protected virtual void OnInitialize() { }
+
+    public abstract IReadOnlyList<string> TextTargetIds { get; }
+
+    public abstract bool TryGetRect(
+        string refId,
+        out RectTransform rect);
+
+    public abstract bool TryGetText(
+        string refId,
+        out TMP_Text text);
+
+    public abstract bool TryGetTextRole(
+        string refId,
+        out UITextRole role);
 }
 
-public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
+public abstract class UIBase<TRefs> : UIBase
     where TRefs : struct, Enum
 {
     protected sealed class RefView
@@ -57,7 +71,7 @@ public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
 
     // Presentation sees semantic string ids.
     // Ordinary screen code continues to use typed Refs through View.
-    public IReadOnlyList<string> TextTargetIds
+    public override IReadOnlyList<string> TextTargetIds
         => UIRefMetadataCache<TRefs>.TextTargetIds;
 
     protected override void PreInitialize()
@@ -75,7 +89,7 @@ public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
         _componentCache.Clear();
     }
 
-    public bool TryGetRect(string refId, out RectTransform rect)
+    public override bool TryGetRect(string refId, out RectTransform rect)
     {
         rect = null;
 
@@ -87,7 +101,7 @@ public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
         return rect != null;
     }
 
-    public bool TryGetText(string refId, out TMP_Text text)
+    public override bool TryGetText(string refId, out TMP_Text text)
     {
         text = null;
 
@@ -99,7 +113,7 @@ public abstract class UIBase<TRefs> : UIBase, IUIPresentationRefProvider
         return text != null;
     }
 
-    public bool TryGetTextRole(string refId, out UITextRole role)
+    public override bool TryGetTextRole(string refId, out UITextRole role)
         => UIRefMetadataCache<TRefs>.TryGetTextRole(refId, out role);
 
     private void BindObjects()

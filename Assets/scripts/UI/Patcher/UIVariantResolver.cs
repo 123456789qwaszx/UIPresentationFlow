@@ -25,14 +25,6 @@ public sealed class UIVariantResolver
         in DisplayContext display,
         UIResolveTrace trace = null)
     {
-        if (spec == null)
-            throw new ArgumentNullException(nameof(spec));
-
-        if (!display.IsValid)
-            throw new ArgumentException(
-                "DisplayContext must be valid before variant evaluation.",
-                nameof(display));
-
         ThemeSpec       theme     = spec.baseTheme;
         LayoutPatchSpec layout    = spec.baseLayout;
         List<string> matchedRules = new(4);

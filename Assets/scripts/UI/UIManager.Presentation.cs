@@ -11,16 +11,6 @@ public sealed partial class UIManager
         UIPresentationSpec presentation,
         in DisplayContext display)
     {
-        if (view is not IUIPresentationRefProvider refs)
-        {
-            throw new System.InvalidOperationException(
-                $"[UIManager] View '{view.GetType().Name}' must expose presentation refs. " +
-                $"Use UIBase<TRefs>.");
-        }
-
-        if (!display.IsValid)
-            throw new System.ArgumentException("DisplayContext must be valid.", nameof(display));
-
         view.EnsureInitialized();
 
         if (!_baselines.TryGetValue(view, out UIPresentationBaseline baseline))
@@ -32,11 +22,12 @@ public sealed partial class UIManager
         // Restore everything previously touched before resolving a new visual state.
         // This replaces the implicit reset we previously got by destroying and
         // re-instantiating the prefab on every display change.
-        baseline.Restore(refs);
+        baseline.Restore(view);
 
         UIResolveResult result = _resolver.Resolve(presentation, display);
-        baseline.CaptureMissing(refs, result.Resolved);
-        _patcher.Apply(refs, result.Patches);
+
+        baseline.CaptureMissing(view, result.Resolved);
+        _patcher.Apply(view, result.Patches);
 
         LastDisplay = display;
         LastResult = result;

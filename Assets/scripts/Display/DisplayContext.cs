@@ -32,7 +32,7 @@ public readonly struct DisplayContext : IEquatable<DisplayContext>
     public static DisplayContext FullScreen(int width, int height, DisplayPlatform platform = DisplayPlatform.Unknown)
         => new DisplayContext(new Vector2Int(width, height), new Rect(0, 0, width, height), platform);
 
-    public bool IsValid => Resolution.x > 0 && Resolution.y > 0;
+    private bool IsValid => Resolution.x > 0 && Resolution.y > 0;
 
     public float AspectRatio => IsValid ? (float)Resolution.x / Resolution.y : 0f;
 
