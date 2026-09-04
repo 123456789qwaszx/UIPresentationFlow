@@ -16,7 +16,7 @@ public sealed partial class UIManager
     private readonly Transform _rootLayer;
     private readonly Transform _panelLayer;
     private readonly UIResolver _resolver;
-    private readonly UIPatchApplier _patcher;
+    private readonly UIPresentationApplier _presentationApplier;
 
     public UIBase CurrentRoot { get; private set; }
     public bool HasPanel => _panelStack.Count > 0;
@@ -28,12 +28,12 @@ public sealed partial class UIManager
         Transform rootLayer,
         Transform panelLayer,
         UIResolver resolver,
-        UIPatchApplier patcher)
+        UIPresentationApplier presentationApplier)
     {
-        _rootLayer = rootLayer ?? throw new ArgumentNullException(nameof(rootLayer));
+        _rootLayer = rootLayer;
         _panelLayer = panelLayer;
-        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-        _patcher = patcher ?? throw new ArgumentNullException(nameof(patcher));
+        _resolver = resolver;
+        _presentationApplier = presentationApplier;
     }
 
     public void Register(UIBase view)

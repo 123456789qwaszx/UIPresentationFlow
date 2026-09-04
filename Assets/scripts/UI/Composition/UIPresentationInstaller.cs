@@ -46,7 +46,7 @@ public sealed class UIPresentationInstaller : MonoBehaviour
             rootLayer,
             panelLayer,
             new UIResolver(context),
-            new UIPatchApplier());
+            new UIPresentationApplier());
 
         GameObject instance = Instantiate(initialRootPrefab, rootLayer);
         _demoRoot = instance.GetComponent<AdaptiveDemoUIRoot>();
