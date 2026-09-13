@@ -63,6 +63,25 @@ public sealed partial class UIManager
         return page;
     }
     
+    public UIBase ClosePage(
+        UIBase owner,
+        Action<UIBase> afterClosed = null)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+
+        if (!_pagesByOwner.TryGetValue(owner, out PageState state))
+            return null;
+
+        _pagesByOwner.Remove(owner);
+
+        SetVisible(state.Page, false);
+
+        afterClosed?.Invoke(state.Page);
+
+        return state.Page;
+    }
+    
     private bool IsLivePageOwner(UIBase owner)
     {
         return CurrentRoot == owner ||
