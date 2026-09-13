@@ -13,7 +13,7 @@ public sealed partial class UIManager
     public T PushPanel<T>(
         UIPresentationSpec presentation,
         Action<T> afterPresented = null,
-        Action<UIBase> afterPopped = null)
+        Action<UIBase> afterClosed = null)
         where T : UIBase, IUIPanel
     {
         if (presentation == null)
@@ -23,7 +23,7 @@ public sealed partial class UIManager
 
         if (_panelStack.Contains(panel))
         {
-            PopUntil(panel, afterPopped);
+            PopUntil(panel, afterClosed);
         }
         else
         {
@@ -43,12 +43,13 @@ public sealed partial class UIManager
         return panel;
     }
 
-    public UIBase PopPanel(Action<UIBase> afterPopped = null)
+    public UIBase PopPanel(Action<UIBase> afterClosed = null)
     {
         if (_panelStack.Count == 0)
             return null;
 
         UIBase popped = _panelStack.Pop();
+        ClosePage(popped, afterClosed);
 
         _panelPresentations.Remove(popped);
         ApplyPanelState(
@@ -58,7 +59,7 @@ public sealed partial class UIManager
             blocksRaycasts: false,
             alpha: 0f);
 
-        afterPopped?.Invoke(popped);
+        afterClosed?.Invoke(popped);
 
         if (_panelStack.Count > 0)
         {
@@ -71,10 +72,10 @@ public sealed partial class UIManager
         return popped;
     }
 
-    public void PopAllPanels(Action<UIBase> afterPopped = null)
+    public void PopAllPanels(Action<UIBase> afterClosed = null)
     {
         while (_panelStack.Count > 0)
-            PopPanel(afterPopped);
+            PopPanel(afterClosed);
     }
 
     public void ReapplyVisible(in DisplayContext display)
@@ -90,12 +91,14 @@ public sealed partial class UIManager
 
     private void PopUntil(
         UIBase target,
-        Action<UIBase> afterPopped = null)
+        Action<UIBase> afterClosed = null)
     {
         while (_panelStack.Count > 0 &&
                _panelStack.Peek() != target)
         {
             UIBase popped = _panelStack.Pop();
+
+            ClosePage(popped, afterClosed);
 
             _panelPresentations.Remove(popped);
             ApplyPanelState(
@@ -105,7 +108,7 @@ public sealed partial class UIManager
                 blocksRaycasts: false,
                 alpha: 0f);
 
-            afterPopped?.Invoke(popped);
+            afterClosed?.Invoke(popped);
         }
     }
 
