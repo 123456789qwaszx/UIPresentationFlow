@@ -13,7 +13,8 @@ public sealed partial class UIManager
 
     public TPage SwitchPage<TPage>(
         UIBase owner,
-        UIPresentationSpec presentation)
+        UIPresentationSpec presentation,
+        Action<TPage> afterPresented = null)
         where TPage : UIBase, IUIPage
     {
         if (owner == null)
@@ -28,11 +29,44 @@ public sealed partial class UIManager
                 $"[UIManager] View '{owner.GetType().Name}' does not support Pages.");
         }
 
+        if (!IsLivePageOwner(owner))
+        {
+            throw new InvalidOperationException(
+                $"[UIManager] View '{owner.GetType().Name}' is not a live Page Owner.");
+        }
+
         TPage page = Require<TPage>();
 
         ValidatePageOwner(page, pageOwner);
 
+        if (_pagesByOwner.TryGetValue(owner, out PageState current) &&
+            current.Page != page)
+        {
+            SetVisible(current.Page, false);
+        }
+
+        _pagesByOwner[owner] = new PageState
+        {
+            Page = page,
+            Presentation = presentation
+        };
+
+        ApplyPresentation(
+            page,
+            presentation,
+            UnityDisplayContextProvider.GetCurrent());
+
+        SetVisible(page, true);
+
+        afterPresented?.Invoke(page);
+
         return page;
+    }
+    
+    private bool IsLivePageOwner(UIBase owner)
+    {
+        return CurrentRoot == owner ||
+               _panelStack.Contains(owner);
     }
 
     private static void ValidatePageOwner(
