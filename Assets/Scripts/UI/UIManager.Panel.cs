@@ -136,6 +136,7 @@ public sealed partial class UIManager
                     out UIPresentationSpec presentation))
             {
                 ApplyPresentation(panel, presentation, display);
+                ReapplyCurrentPage(panel, display);
             }
         }
     }

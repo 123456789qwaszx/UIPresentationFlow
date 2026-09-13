@@ -82,6 +82,21 @@ public sealed partial class UIManager
         return state.Page;
     }
     
+    private bool ReapplyCurrentPage(
+        UIBase owner,
+        in DisplayContext display)
+    {
+        if (!_pagesByOwner.TryGetValue(owner, out PageState state))
+            return false;
+
+        ApplyPresentation(
+            state.Page,
+            state.Presentation,
+            display);
+
+        return true;
+    }
+    
     private bool IsLivePageOwner(UIBase owner)
     {
         return CurrentRoot == owner ||

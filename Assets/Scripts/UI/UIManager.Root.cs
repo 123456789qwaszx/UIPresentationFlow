@@ -47,7 +47,13 @@ public sealed partial class UIManager
         if (CurrentRoot == null || _currentRootPresentation == null)
             return false;
 
-        ApplyPresentation(CurrentRoot, _currentRootPresentation, display);
+        ApplyPresentation(
+            CurrentRoot,
+            _currentRootPresentation,
+            display);
+
+        ReapplyCurrentPage(CurrentRoot, display);
+
         return true;
     }
 }
