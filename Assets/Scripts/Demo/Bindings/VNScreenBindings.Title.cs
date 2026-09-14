@@ -14,20 +14,30 @@ public sealed partial class VNScreenBindings
     private void ApplyBindings(TitleUIRoot root)
     {
         AddBinding(root,
-            r => r.LobbyClicked += HandleLobbyClicked,
-            r => r.LobbyClicked -= HandleLobbyClicked);
-
-        AddBinding(root,
             r => r.StartClicked += HandleStartClicked,
             r => r.StartClicked -= HandleStartClicked);
-    }
-    
-    private void HandleLobbyClicked()
-    {
-        GoToAdaptiveDemoUIRoot();
+
+        AddBinding(root,
+            r => r.LoadClicked += HandleLoadClicked,
+            r => r.LoadClicked -= HandleLoadClicked);
+
+        AddBinding(root,
+            r => r.AlbumClicked += HandleAlbumClicked,
+            r => r.AlbumClicked -= HandleAlbumClicked);
     }
 
     private void HandleStartClicked()
     {
+        GoToGameplay();
+    }
+
+    private void HandleLoadClicked()
+    {
+        OpenLoadMenu();
+    }
+
+    private void HandleAlbumClicked()
+    {
+        GoToAlbum();
     }
 }
