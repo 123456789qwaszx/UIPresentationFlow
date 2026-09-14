@@ -15,6 +15,7 @@ MonoBehaviour:
   presentationId: adaptive_demo
   baseTheme: {fileID: 0}
   baseLayout: {fileID: 0}
+  baseImageTheme: {fileID: 11400000, guid: 442cce8aac301644b90c68a09a6b3df4, type: 2}
   variants:
   - variantId: Wide
     priority: 100
@@ -31,6 +32,7 @@ MonoBehaviour:
       aspectMax: 2.5
     overrideTheme: {fileID: 0}
     overrideLayout: {fileID: 11400000, guid: 9132a9e963878bc4eb656ae0bf034f0a, type: 2}
+    overrideImageTheme: {fileID: 0}
   - variantId: UltraWide
     priority: 100
     condition:
@@ -46,6 +48,7 @@ MonoBehaviour:
       aspectMax: 2.5
     overrideTheme: {fileID: 0}
     overrideLayout: {fileID: 11400000, guid: 9132a9e963878bc4eb656ae0bf034f0a, type: 2}
+    overrideImageTheme: {fileID: 0}
   - variantId: Compact
     priority: 100
     condition:
@@ -61,3 +64,4 @@ MonoBehaviour:
       aspectMax: 2.5
     overrideTheme: {fileID: 0}
     overrideLayout: {fileID: 11400000, guid: a8052921a31c5c1419d83ce8da993a00, type: 2}
+    overrideImageTheme: {fileID: 0}

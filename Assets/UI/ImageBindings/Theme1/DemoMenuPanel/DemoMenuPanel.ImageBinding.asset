@@ -10,11 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 02fc928af00d48d4c948e4a48a8e7afc, type: 3}
-  m_Name: TitleUIRoot.ImageBinding
+  m_Name: DemoMenuPanel.ImageBinding
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIImageBindingSet
-  viewId: TitleUIRoot
-  images:
-  - refId: TitleBG_Image
-    baseSprite: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
-    sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-    stale: 0
+  viewId: DemoMenuPanel
+  images: []
