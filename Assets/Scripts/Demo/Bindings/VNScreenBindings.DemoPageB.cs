@@ -2,7 +2,7 @@ public sealed partial class VNScreenBindings
 {
     private void OpenDemoPageB()
     {
-        AdaptiveDemoUIRoot owner = UI.GetUI<AdaptiveDemoUIRoot>();
+        DemoMenuPanel owner = UI.GetUI<DemoMenuPanel>();
 
         UI.SwitchPage<DemoPageB>(
             owner,

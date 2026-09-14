@@ -13,6 +13,7 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
     [SerializeField] private UIPresentationSpec titlePresentation;
     [SerializeField] private UIPresentationSpec demoPageAPresentation;
     [SerializeField] private UIPresentationSpec demoPageBPresentation;
+    [SerializeField] private UIPresentationSpec demoMenuPresentation;
     [SerializeField] private UIPresentationSpec demoConfirmPresentation;
 
     [Header("UI Context")]
@@ -61,6 +62,7 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
             titlePresentation,
             demoPageAPresentation,
             demoPageBPresentation,
+            demoMenuPresentation,
             demoConfirmPresentation);
 
         displayRefreshDriver?.Initialize(_ui);

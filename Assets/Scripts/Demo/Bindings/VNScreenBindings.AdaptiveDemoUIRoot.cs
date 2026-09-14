@@ -31,6 +31,6 @@ public partial class VNScreenBindings
 
     private void HandleRightActionClicked()
     {
-        OpenDemoPageA();
+        OpenDemoMenuPanel();
     }
 }

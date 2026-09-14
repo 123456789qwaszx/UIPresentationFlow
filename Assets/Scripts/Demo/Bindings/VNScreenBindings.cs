@@ -7,6 +7,7 @@ public sealed partial class VNScreenBindings : IDisposable
     private readonly UIPresentationSpec _titlePresentation;
     private readonly UIPresentationSpec _demoPageAPresentation;
     private readonly UIPresentationSpec _demoPageBPresentation;
+    private readonly UIPresentationSpec _demoMenuPresentation;
     private readonly UIPresentationSpec _demoConfirmPresentation;
 
     private UIManager UI => _ui;
@@ -16,12 +17,14 @@ public sealed partial class VNScreenBindings : IDisposable
         UIPresentationSpec titlePresentation,
         UIPresentationSpec demoPageAPresentation, 
         UIPresentationSpec demoPageBPresentation,
+        UIPresentationSpec demoMenuPresentation,
         UIPresentationSpec demoConfirmPresentation)
     {
         _ui = uiManager;
         _titlePresentation = titlePresentation;
         _demoPageAPresentation = demoPageAPresentation;
         _demoPageBPresentation = demoPageBPresentation;
+        _demoMenuPresentation = demoMenuPresentation;
         _demoConfirmPresentation = demoConfirmPresentation;
     }
     

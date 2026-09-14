@@ -1,10 +1,8 @@
-using UnityEngine;
-
 public sealed partial class VNScreenBindings
 {
     private void OpenDemoPageA()
     {
-        AdaptiveDemoUIRoot owner = UI.GetUI<AdaptiveDemoUIRoot>();
+        DemoMenuPanel owner = UI.GetUI<DemoMenuPanel>();
 
         UI.SwitchPage<DemoPageA>(
             owner,
