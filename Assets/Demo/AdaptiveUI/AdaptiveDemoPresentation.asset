@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: AdaptiveDemoPresentation
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIPresentationSpec
   presentationId: adaptive_demo
-  baseTheme: {fileID: 0}
+  baseTheme: {fileID: 11400000, guid: a028888725efda04b9806e2aec456eba, type: 2}
   baseLayout: {fileID: 0}
   baseImageTheme: {fileID: 11400000, guid: 442cce8aac301644b90c68a09a6b3df4, type: 2}
+  textBindings: {fileID: 11400000, guid: e63ffa74fd5789345aa90bde9fb16d7f, type: 2}
   variants:
   - variantId: Wide
     priority: 100
