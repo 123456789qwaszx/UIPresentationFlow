@@ -1,26 +1,51 @@
 using TMPro;
 using UnityEngine;
 
-// Theme now depends only on the presentation-ref capability.
-// Text membership comes from Ref metadata, not hierarchy/tag scanning.
 public sealed class ThemeSpecPatch : IUIPatch
 {
     private readonly ThemeSpec _theme;
+    private readonly UITextBindingCatalog _textBindings;
 
-    public ThemeSpecPatch(ThemeSpec theme)
+    public ThemeSpecPatch(
+        ThemeSpec theme,
+        UITextBindingCatalog textBindings)
     {
         _theme = theme;
+        _textBindings = textBindings;
     }
 
     public void Apply(IUIPresentationRefProvider refs)
     {
-        if (_theme == null || refs == null)
+        if (_theme == null
+            || _textBindings == null
+            || refs == null)
+        {
             return;
+        }
+
+        if (!_textBindings.TryGetBinding(
+                refs.GetType(),
+                out UITextBindingSet binding)
+            || binding?.texts == null)
+        {
+            return;
+        }
 
         string targetName = refs.GetType().Name;
 
-        foreach (string refId in refs.TextTargetIds)
+        foreach (UITextBindingEntry entry in binding.texts)
         {
+            if (entry == null
+                || entry.stale
+                || entry.role == UITextRole.Unassigned)
+            {
+                continue;
+            }
+
+            string refId = (entry.refId ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(refId))
+                continue;
+
             if (!refs.TryGetText(refId, out TMP_Text text) || text == null)
             {
                 Debug.LogWarning(
@@ -28,14 +53,7 @@ public sealed class ThemeSpecPatch : IUIPatch
                 continue;
             }
 
-            if (!refs.TryGetTextRole(refId, out UITextRole role))
-            {
-                Debug.LogWarning(
-                    $"[ThemeSpecPatch] UITextRole not found for text refId='{refId}' on '{targetName}'.");
-                continue;
-            }
-
-            ApplyTextTheme(text, role);
+            ApplyTextTheme(text, entry.role);
         }
     }
 

@@ -9,14 +9,9 @@ public sealed class UIPresentationApplier
 
     public void Apply(UIBase view, UIResolveResult result)
     {
-        UIPresentationBaseline baseline = 
-            GetBaseline(view);
+        UIPresentationBaseline baseline = GetBaseline(view);
 
-        // Remove only the visual properties owned by the previously applied Presentation.
         baseline.RestoreOwned(view);
-
-        // Capture the authored value the first time a property enters Presentation ownership,
-        // then mark the properties owned by this Presentation.
         baseline.CaptureAndOwn(view, result.Resolved);
 
         foreach (IUIPatch patch in result.Patches)
@@ -27,11 +22,9 @@ public sealed class UIPresentationApplier
     {
         if (_baselines.TryGetValue(view, out UIPresentationBaseline baseline))
             return baseline;
-        
+
         baseline = new UIPresentationBaseline();
-
         _baselines.Add(view, baseline);
-
         return baseline;
     }
 
@@ -68,14 +61,21 @@ public sealed class UIPresentationApplier
             }
         }
 
-        public void CaptureAndOwn(IUIPresentationRefProvider refs, ResolvedUIPresentation resolved)
+        public void CaptureAndOwn(
+            IUIPresentationRefProvider refs,
+            ResolvedUIPresentation resolved)
         {
             CaptureLayout(refs, resolved?.Layout);
-            CaptureTheme(refs, resolved?.Theme);
+            CaptureTheme(
+                refs,
+                resolved?.Theme,
+                resolved?.TextBindings);
             CaptureImageTheme(refs, resolved?.ImageTheme);
         }
 
-        private void CaptureLayout(IUIPresentationRefProvider refs, LayoutPatchSpec layout)
+        private void CaptureLayout(
+            IUIPresentationRefProvider refs,
+            LayoutPatchSpec layout)
         {
             if (layout?.widgets == null)
                 return;
@@ -86,7 +86,6 @@ public sealed class UIPresentationApplier
                     continue;
 
                 string refId = (widget.refId ?? string.Empty).Trim();
-
                 if (string.IsNullOrEmpty(refId))
                     continue;
 
@@ -103,19 +102,37 @@ public sealed class UIPresentationApplier
             }
         }
 
-        private void CaptureTheme(IUIPresentationRefProvider refs, ThemeSpec theme)
+        private void CaptureTheme(
+            IUIPresentationRefProvider refs,
+            ThemeSpec theme,
+            UITextBindingCatalog textBindings)
         {
-            if (theme == null)
-                return;
-
-            foreach (string refId in refs.TextTargetIds)
+            if (theme == null
+                || textBindings == null
+                || !textBindings.TryGetBinding(
+                    refs.GetType(),
+                    out UITextBindingSet binding)
+                || binding?.texts == null)
             {
-                if (!refs.TryGetTextRole(refId, out _))
+                return;
+            }
+
+            foreach (UITextBindingEntry entry in binding.texts)
+            {
+                if (entry == null
+                    || entry.stale
+                    || entry.role == UITextRole.Unassigned)
+                {
                     continue;
-                
+                }
+
+                string refId = (entry.refId ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(refId))
+                    continue;
+
                 if (!refs.TryGetText(refId, out TMP_Text text) || text == null)
                     continue;
-                
+
                 if (!_texts.TryGetValue(refId, out TextBaseline baseline))
                 {
                     baseline = new TextBaseline();
@@ -131,7 +148,9 @@ public sealed class UIPresentationApplier
             UIImageThemeSpec imageTheme)
         {
             if (imageTheme == null
-                || !imageTheme.TryGetBinding(refs.GetType(), out UIImageBindingSet binding)
+                || !imageTheme.TryGetBinding(
+                    refs.GetType(),
+                    out UIImageBindingSet binding)
                 || binding?.images == null)
             {
                 return;
@@ -197,7 +216,6 @@ public sealed class UIPresentationApplier
             }
 
             RectTransformPatch rectPatch = patch.rect;
-            
             if (rectPatch == null)
                 return;
 
@@ -207,7 +225,6 @@ public sealed class UIPresentationApplier
                 {
                     _anchorMin = rect.anchorMin;
                     _anchorMax = rect.anchorMax;
-
                     _hasAnchors = true;
                 }
 
@@ -248,8 +265,7 @@ public sealed class UIPresentationApplier
             }
         }
 
-        public void RestoreOwned(
-            RectTransform rect)
+        public void RestoreOwned(RectTransform rect)
         {
             if (_ownsAnchors && _hasAnchors)
             {
@@ -265,10 +281,10 @@ public sealed class UIPresentationApplier
 
             if (_ownsSizeDelta && _hasSizeDelta)
                 rect.sizeDelta = _sizeDelta;
-            
+
             if (_ownsActive && _hasActive)
                 rect.gameObject.SetActive(_active);
-            
+
             ReleaseOwnership();
         }
 
@@ -298,8 +314,6 @@ public sealed class UIPresentationApplier
 
         public void CaptureAndOwn(TMP_Text text, ThemeSpec theme)
         {
-            // ThemeSpecPatch only changes font when
-            // mainFont has explicitly been authored.
             if (theme.mainFont != null)
             {
                 if (!_hasFont)

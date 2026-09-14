@@ -28,7 +28,9 @@ public sealed class UIResolver
             _variantResolver.Resolve(spec, _context, display, trace);
 
         var patches = new List<IUIPatch>(3);
-        resolved.Theme?.BuildPatches(patches);
+        resolved.Theme?.BuildPatches(
+            patches,
+            resolved.TextBindings);
         resolved.Layout?.BuildPatches(patches);
         resolved.ImageTheme?.BuildPatches(patches);
         trace.Add($"[Patches] {patches.Count}");

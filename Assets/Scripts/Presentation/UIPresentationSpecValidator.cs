@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 
-// Authoring-time checks for presentation data only.
-//
-// View/prefab validation intentionally lives outside this validator because a
-// Presentation no longer owns or selects a View.
 public static class UIPresentationSpecValidator
 {
-    public static List<string> Validate(UIPresentationSpec spec, string context = null)
+    public static List<string> Validate(
+        UIPresentationSpec spec,
+        string context = null)
     {
         var problems = new List<string>();
-        string prefix = string.IsNullOrEmpty(context) ? string.Empty : context + ": ";
+        string prefix = string.IsNullOrEmpty(context)
+            ? string.Empty
+            : context + ": ";
 
         if (spec == null)
         {
@@ -25,6 +25,11 @@ public static class UIPresentationSpecValidator
             problems,
             spec.baseImageTheme,
             prefix + "baseImageTheme");
+
+        AppendTextBindingProblems(
+            problems,
+            spec.textBindings,
+            prefix + "textBindings");
 
         if (spec.variants == null)
             return problems;
@@ -59,8 +64,13 @@ public static class UIPresentationSpecValidator
             }
 
             VariantCondition c = rule.condition;
-            if (c.useAspectRatio && c.aspectRule == AspectRule.Range && c.aspectMin > c.aspectMax)
-                problems.Add($"{at} '{rule.variantId}': aspectMin {c.aspectMin} > aspectMax {c.aspectMax}");
+            if (c.useAspectRatio
+                && c.aspectRule == AspectRule.Range
+                && c.aspectMin > c.aspectMax)
+            {
+                problems.Add(
+                    $"{at} '{rule.variantId}': aspectMin {c.aspectMin} > aspectMax {c.aspectMax}");
+            }
         }
 
         return problems;
@@ -76,5 +86,17 @@ public static class UIPresentationSpecValidator
 
         problems.AddRange(
             UIImageThemeSpecValidator.Validate(theme, context));
+    }
+
+    private static void AppendTextBindingProblems(
+        List<string> problems,
+        UITextBindingCatalog catalog,
+        string context)
+    {
+        if (catalog == null)
+            return;
+
+        problems.AddRange(
+            UITextBindingCatalogValidator.Validate(catalog, context));
     }
 }

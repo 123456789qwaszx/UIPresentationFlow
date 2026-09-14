@@ -15,18 +15,12 @@ public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
         TitleBG_Image,
 
         StartBtn_Button,
-
-        [UIRefTextRole(UITextRole.Body)]
         StartBtn_Text,
 
         LoadBtn_Button,
-
-        [UIRefTextRole(UITextRole.Body)]
         LoadBtn_Text,
 
         AlbumBtn_Button,
-
-        [UIRefTextRole(UITextRole.Body)]
         AlbumBtn_Text,
     }
 

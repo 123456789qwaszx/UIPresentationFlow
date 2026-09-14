@@ -101,8 +101,6 @@ public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
         return component;
     }
 
-    public abstract IReadOnlyList<string> TextTargetIds { get; }
-
     public abstract bool TryGetRect(
         string refId,
         out RectTransform rect);
@@ -114,10 +112,6 @@ public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
     public abstract bool TryGetImage(
         string refId,
         out Image image);
-
-    public abstract bool TryGetTextRole(
-        string refId,
-        out UITextRole role);
 }
 
 public abstract class UIBase<TRefs> : UIBase
@@ -148,11 +142,6 @@ public abstract class UIBase<TRefs> : UIBase
 
     protected RefView View { get; private set; }
 
-    // Presentation sees semantic string ids.
-    // Ordinary View code continues to use typed Refs through View.
-    public override IReadOnlyList<string> TextTargetIds
-        => UIRefMetadataCache<TRefs>.TextTargetIds;
-
     protected override void PreInitialize()
     {
         if (_refsBuilt)
@@ -172,7 +161,7 @@ public abstract class UIBase<TRefs> : UIBase
     {
         rect = null;
 
-        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+        if (!UIRefKeyCache<TRefs>.TryGetKey(refId, out TRefs key))
             return false;
 
         EnsureInitialized();
@@ -184,7 +173,7 @@ public abstract class UIBase<TRefs> : UIBase
     {
         text = null;
 
-        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+        if (!UIRefKeyCache<TRefs>.TryGetKey(refId, out TRefs key))
             return false;
 
         EnsureInitialized();
@@ -196,16 +185,13 @@ public abstract class UIBase<TRefs> : UIBase
     {
         image = null;
 
-        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+        if (!UIRefKeyCache<TRefs>.TryGetKey(refId, out TRefs key))
             return false;
 
         EnsureInitialized();
         image = GetCached<Image>(key);
         return image != null;
     }
-
-    public override bool TryGetTextRole(string refId, out UITextRole role)
-        => UIRefMetadataCache<TRefs>.TryGetTextRole(refId, out role);
 
     private void BindObjects()
     {
