@@ -3,11 +3,12 @@ public partial class VNScreenBindings
     private void GoToAdaptiveDemoUIRoot()
     {
         UI.SwitchRoot<AdaptiveDemoUIRoot>(
-            _titlePresentation, 
-            root => 
-            { 
-                BindMain(root, ApplyBindings); 
-            });
+            _titlePresentation,
+            afterPresented: root =>
+            {
+                BindView(root, ApplyBindings);
+            },
+            afterClosed: Unbind);
     }
 
     private void ApplyBindings(AdaptiveDemoUIRoot root)

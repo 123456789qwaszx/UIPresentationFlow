@@ -14,7 +14,8 @@ public sealed partial class UIManager
     public TPage SwitchPage<TPage>(
         UIBase owner,
         UIPresentationSpec presentation,
-        Action<TPage> afterPresented = null)
+        Action<TPage> afterPresented = null,
+        Action<UIBase> afterClosed = null)
         where TPage : UIBase, IUIPage
     {
         if (owner == null)
@@ -43,6 +44,7 @@ public sealed partial class UIManager
             current.Page != page)
         {
             SetVisible(current.Page, false);
+            afterClosed?.Invoke(current.Page);
         }
 
         _pagesByOwner[owner] = new PageState
