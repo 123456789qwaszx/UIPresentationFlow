@@ -13,7 +13,8 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
     [SerializeField] private UIPresentationSpec titlePresentation;
     [SerializeField] private UIPresentationSpec demoPageAPresentation;
     [SerializeField] private UIPresentationSpec demoPageBPresentation;
-    
+    [SerializeField] private UIPresentationSpec demoConfirmPresentation;
+
     [Header("UI Context")]
     [SerializeField] private string themeId = "Light";
     [SerializeField] private string localeId = "ko-KR";
@@ -59,7 +60,8 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
             _ui,
             titlePresentation,
             demoPageAPresentation,
-            demoPageBPresentation);
+            demoPageBPresentation,
+            demoConfirmPresentation);
 
         displayRefreshDriver?.Initialize(_ui);
         adaptiveDemoDiagnostics?.Initialize(_ui);
