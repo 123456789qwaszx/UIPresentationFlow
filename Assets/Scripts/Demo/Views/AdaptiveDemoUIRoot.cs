@@ -3,8 +3,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class AdaptiveDemoUIRoot : UIRoot<AdaptiveDemoUIRoot.Refs>
+public sealed class AdaptiveDemoUIRoot 
+    : UIRoot<AdaptiveDemoUIRoot.Refs>, IUIPageOwner
 {
+    public RectTransform PageRoot => _primaryContent;
+    
     public event Action LeftActionClicked;
     public event Action RightActionClicked;
 
