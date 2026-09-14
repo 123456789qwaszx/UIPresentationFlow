@@ -48,6 +48,13 @@ public static class UIImageBindingScanner
             if (!refId.EndsWith("_Image", StringComparison.Ordinal))
                 continue;
 
+            FieldInfo field = refsType.GetField(
+                refId,
+                BindingFlags.Public | BindingFlags.Static);
+
+            if (field?.GetCustomAttribute<UIIgnoreImageBindingAttribute>(inherit: false) != null)
+                continue;
+
             List<GameObject> matches = FindByName(view.transform, refId);
 
             if (matches.Count == 0)
@@ -81,6 +88,7 @@ public static class UIImageBindingScanner
                 refId = refId,
                 baseSprite = image.sprite,
                 sprite = image.sprite,
+                stale = false,
             });
         }
 

@@ -111,6 +111,10 @@ public abstract class UIBase : MonoBehaviour, IUIPresentationRefProvider
         string refId,
         out TMP_Text text);
 
+    public abstract bool TryGetImage(
+        string refId,
+        out Image image);
+
     public abstract bool TryGetTextRole(
         string refId,
         out UITextRole role);
@@ -186,6 +190,18 @@ public abstract class UIBase<TRefs> : UIBase
         EnsureInitialized();
         text = GetCached<TMP_Text>(key);
         return text != null;
+    }
+
+    public override bool TryGetImage(string refId, out Image image)
+    {
+        image = null;
+
+        if (!UIRefMetadataCache<TRefs>.TryGetKey(refId, out TRefs key))
+            return false;
+
+        EnsureInitialized();
+        image = GetCached<Image>(key);
+        return image != null;
     }
 
     public override bool TryGetTextRole(string refId, out UITextRole role)

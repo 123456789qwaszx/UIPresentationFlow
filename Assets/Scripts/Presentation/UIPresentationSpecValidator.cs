@@ -21,6 +21,11 @@ public static class UIPresentationSpecValidator
         if (string.IsNullOrWhiteSpace(spec.presentationId))
             problems.Add(prefix + "presentationId is empty");
 
+        AppendImageThemeProblems(
+            problems,
+            spec.baseImageTheme,
+            prefix + "baseImageTheme");
+
         if (spec.variants == null)
             return problems;
 
@@ -42,6 +47,11 @@ public static class UIPresentationSpecValidator
             else if (!seenIds.Add(rule.variantId))
                 problems.Add($"{at}: duplicate variantId '{rule.variantId}' (forced override would be ambiguous)");
 
+            AppendImageThemeProblems(
+                problems,
+                rule.overrideImageTheme,
+                $"{at}.overrideImageTheme");
+
             if (rule.condition == null)
             {
                 problems.Add($"{at} '{rule.variantId}': condition is null (rule can never match)");
@@ -54,5 +64,17 @@ public static class UIPresentationSpecValidator
         }
 
         return problems;
+    }
+
+    private static void AppendImageThemeProblems(
+        List<string> problems,
+        UIImageThemeSpec theme,
+        string context)
+    {
+        if (theme == null)
+            return;
+
+        problems.AddRange(
+            UIImageThemeSpecValidator.Validate(theme, context));
     }
 }

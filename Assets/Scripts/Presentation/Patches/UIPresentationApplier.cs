@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class UIPresentationApplier
 {
@@ -38,6 +39,7 @@ public sealed class UIPresentationApplier
     {
         private readonly Dictionary<string, RectBaseline> _rects = new();
         private readonly Dictionary<string, TextBaseline> _texts = new();
+        private readonly Dictionary<string, ImageBaseline> _images = new();
 
         public void RestoreOwned(IUIPresentationRefProvider refs)
         {
@@ -56,12 +58,21 @@ public sealed class UIPresentationApplier
                 else
                     pair.Value.ReleaseOwnership();
             }
+
+            foreach (KeyValuePair<string, ImageBaseline> pair in _images)
+            {
+                if (refs.TryGetImage(pair.Key, out Image image) && image != null)
+                    pair.Value.RestoreOwned(image);
+                else
+                    pair.Value.ReleaseOwnership();
+            }
         }
 
         public void CaptureAndOwn(IUIPresentationRefProvider refs, ResolvedUIPresentation resolved)
         {
             CaptureLayout(refs, resolved?.Layout);
             CaptureTheme(refs, resolved?.Theme);
+            CaptureImageTheme(refs, resolved?.ImageTheme);
         }
 
         private void CaptureLayout(IUIPresentationRefProvider refs, LayoutPatchSpec layout)
@@ -112,6 +123,39 @@ public sealed class UIPresentationApplier
                 }
 
                 baseline.CaptureAndOwn(text, theme);
+            }
+        }
+
+        private void CaptureImageTheme(
+            IUIPresentationRefProvider refs,
+            UIImageThemeSpec imageTheme)
+        {
+            if (imageTheme == null
+                || !imageTheme.TryGetBinding(refs.GetType(), out UIImageBindingSet binding)
+                || binding?.images == null)
+            {
+                return;
+            }
+
+            foreach (UIImageBindingEntry entry in binding.images)
+            {
+                if (entry == null || entry.stale)
+                    continue;
+
+                string refId = (entry.refId ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(refId))
+                    continue;
+
+                if (!refs.TryGetImage(refId, out Image image) || image == null)
+                    continue;
+
+                if (!_images.TryGetValue(refId, out ImageBaseline baseline))
+                {
+                    baseline = new ImageBaseline();
+                    _images.Add(refId, baseline);
+                }
+
+                baseline.CaptureAndOwn(image);
             }
         }
     }
@@ -303,6 +347,37 @@ public sealed class UIPresentationApplier
             _ownsFont = false;
             _ownsFontSize = false;
             _ownsColor = false;
+        }
+    }
+
+    private sealed class ImageBaseline
+    {
+        private bool _hasSprite;
+        private Sprite _sprite;
+        private bool _ownsSprite;
+
+        public void CaptureAndOwn(Image image)
+        {
+            if (!_hasSprite)
+            {
+                _sprite = image.sprite;
+                _hasSprite = true;
+            }
+
+            _ownsSprite = true;
+        }
+
+        public void RestoreOwned(Image image)
+        {
+            if (_ownsSprite && _hasSprite)
+                image.sprite = _sprite;
+
+            ReleaseOwnership();
+        }
+
+        public void ReleaseOwnership()
+        {
+            _ownsSprite = false;
         }
     }
 }

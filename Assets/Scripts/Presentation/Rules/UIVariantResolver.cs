@@ -25,13 +25,14 @@ public sealed class UIVariantResolver
         in DisplayContext display,
         UIResolveTrace trace = null)
     {
-        ThemeSpec       theme     = spec.baseTheme;
-        LayoutPatchSpec layout    = spec.baseLayout;
+        ThemeSpec theme = spec.baseTheme;
+        LayoutPatchSpec layout = spec.baseLayout;
+        UIImageThemeSpec imageTheme = spec.baseImageTheme;
         List<string> matchedRules = new(4);
 
         trace?.Add(
             $"[Resolve] presentation={spec.presentationId} " +
-            $"base theme={Name(theme)} layout={Name(layout)}");
+            $"base theme={Name(theme)} layout={Name(layout)} imageTheme={Name(imageTheme)}");
         trace?.Add(
             $"[Input] ui theme={ui.ThemeId} locale={ui.LocaleId} " +
             $"experiments={ui.Experiments?.Count ?? 0} " +
@@ -47,12 +48,25 @@ public sealed class UIVariantResolver
             if (forced != null)
             {
                 matchedRules.Add(forced.variantId);
-                if (forced.overrideTheme  != null) theme  = forced.overrideTheme;
-                if (forced.overrideLayout != null) layout = forced.overrideLayout;
+
+                if (forced.overrideTheme != null)
+                    theme = forced.overrideTheme;
+
+                if (forced.overrideLayout != null)
+                    layout = forced.overrideLayout;
+
+                if (forced.overrideImageTheme != null)
+                    imageTheme = forced.overrideImageTheme;
 
                 trace?.Add($"[Forced] variantId={forcedId} applied; rule conditions skipped");
-                trace?.Add(ResultLine(theme, layout, matchedRules));
-                return new ResolvedUIPresentation(spec, theme, layout, matchedRules);
+                trace?.Add(ResultLine(theme, layout, imageTheme, matchedRules));
+
+                return new ResolvedUIPresentation(
+                    spec,
+                    theme,
+                    layout,
+                    imageTheme,
+                    matchedRules);
             }
 
             trace?.Add($"[Forced] variantId={forcedId} not found in presentation; evaluating rules normally");
@@ -63,6 +77,7 @@ public sealed class UIVariantResolver
         {
             bool themeLocked = false;
             bool layoutLocked = false;
+            bool imageThemeLocked = false;
 
             foreach ((UIVariantRule rule, int index) in OrderByPriority(rules))
             {
@@ -92,11 +107,24 @@ public sealed class UIVariantResolver
                     layoutLocked = true;
                     trace?.Add($"[Winner] layout <- {rule.variantId} ({Name(layout)})");
                 }
+
+                if (!imageThemeLocked && rule.overrideImageTheme != null)
+                {
+                    imageTheme = rule.overrideImageTheme;
+                    imageThemeLocked = true;
+                    trace?.Add($"[Winner] imageTheme <- {rule.variantId} ({Name(imageTheme)})");
+                }
             }
         }
 
-        trace?.Add(ResultLine(theme, layout, matchedRules));
-        return new ResolvedUIPresentation(spec, theme, layout, matchedRules);
+        trace?.Add(ResultLine(theme, layout, imageTheme, matchedRules));
+
+        return new ResolvedUIPresentation(
+            spec,
+            theme,
+            layout,
+            imageTheme,
+            matchedRules);
     }
 
     private static List<(UIVariantRule rule, int index)> OrderByPriority(UIVariantRule[] rules)
@@ -151,8 +179,12 @@ public sealed class UIVariantResolver
     private static string ResultLine(
         ThemeSpec theme,
         LayoutPatchSpec layout,
+        UIImageThemeSpec imageTheme,
         List<string> applied)
-        => $"[Result] theme={Name(theme)} layout={Name(layout)} applied=[{string.Join(", ", applied)}]";
+    {
+        return $"[Result] theme={Name(theme)} layout={Name(layout)} " +
+               $"imageTheme={Name(imageTheme)} applied=[{string.Join(", ", applied)}]";
+    }
 
     private static string Name(UnityEngine.Object value)
         => value != null ? value.name : "null";

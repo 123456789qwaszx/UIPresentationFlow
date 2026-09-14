@@ -24,11 +24,13 @@ public sealed class UIResolver
         in DisplayContext display)
     {
         var trace = new UIResolveTrace();
-        ResolvedUIPresentation resolved = _variantResolver.Resolve(spec, _context, display, trace);
+        ResolvedUIPresentation resolved =
+            _variantResolver.Resolve(spec, _context, display, trace);
 
-        var patches = new List<IUIPatch>(2);
+        var patches = new List<IUIPatch>(3);
         resolved.Theme?.BuildPatches(patches);
         resolved.Layout?.BuildPatches(patches);
+        resolved.ImageTheme?.BuildPatches(patches);
         trace.Add($"[Patches] {patches.Count}");
 
         return new UIResolveResult(resolved, patches, trace);

@@ -10,7 +10,8 @@ public sealed class UIPresentationSpec : ScriptableObject
     [Tooltip("Stable data/debug identity. This is not a runtime routing key.")]
     public string presentationId;
 
-    public ThemeSpec baseTheme;       // nullable
-    public LayoutPatchSpec baseLayout; // nullable: base = View as authored
-    public UIVariantRule[] variants;   // nullable
+    public ThemeSpec baseTheme;             // nullable
+    public LayoutPatchSpec baseLayout;      // nullable: base = View as authored
+    public UIImageThemeSpec baseImageTheme; // nullable: base = authored Sprite
+    public UIVariantRule[] variants;         // nullable
 }

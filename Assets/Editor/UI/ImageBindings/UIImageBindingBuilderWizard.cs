@@ -7,12 +7,12 @@ public sealed class UIImageBindingBuilderWizard
     public string themeId = "Theme1";
 
     [MenuItem(
-        "Tools/UI Presentation/Image Bindings/Create Binding")]
+        "Tools/UI Presentation/Image Bindings/Create or Sync Binding")]
     private static void Open()
     {
         DisplayWizard<UIImageBindingBuilderWizard>(
-            "Create Image Binding",
-            "Create");
+            "Create or Sync Image Binding",
+            "Create / Sync");
     }
 
     private void OnWizardCreate()

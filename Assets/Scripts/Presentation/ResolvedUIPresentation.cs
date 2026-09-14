@@ -7,6 +7,7 @@ public sealed class ResolvedUIPresentation
 
     public ThemeSpec Theme { get; }
     public LayoutPatchSpec Layout { get; }
+    public UIImageThemeSpec ImageTheme { get; }
 
     // IDs of matched rules in priority order.
     // Forced override produces a single entry.
@@ -16,12 +17,14 @@ public sealed class ResolvedUIPresentation
         UIPresentationSpec baseSpec,
         ThemeSpec theme,
         LayoutPatchSpec layout,
+        UIImageThemeSpec imageTheme,
         List<string> appliedVariantIds)
     {
         BaseSpec          = baseSpec;
         PresentationId    = baseSpec.presentationId;
         Theme             = theme;
         Layout            = layout;
+        ImageTheme        = imageTheme;
         AppliedVariantIds = appliedVariantIds.AsReadOnly();
     }
 }
