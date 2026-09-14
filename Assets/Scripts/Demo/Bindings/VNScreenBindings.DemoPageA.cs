@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public partial class VNScreenBindings
+public sealed partial class VNScreenBindings
 {
     private void OpenDemoPageA()
     {
@@ -25,6 +25,6 @@ public partial class VNScreenBindings
 
     private void HandleDemoPageAConfirmClicked()
     {
-        Debug.Log("[Demo] DemoPageA Confirm");
+        OpenDemoPageB();
     }
 }

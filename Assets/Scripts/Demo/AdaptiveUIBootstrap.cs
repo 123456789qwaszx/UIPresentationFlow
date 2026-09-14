@@ -12,6 +12,7 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
     [Header("Presentations")]
     [SerializeField] private UIPresentationSpec titlePresentation;
     [SerializeField] private UIPresentationSpec demoPageAPresentation;
+    [SerializeField] private UIPresentationSpec demoPageBPresentation;
     
     [Header("UI Context")]
     [SerializeField] private string themeId = "Light";
@@ -57,7 +58,8 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
         _screens = new VNScreenBindings(
             _ui,
             titlePresentation,
-            demoPageAPresentation);
+            demoPageAPresentation,
+            demoPageBPresentation);
 
         displayRefreshDriver?.Initialize(_ui);
         adaptiveDemoDiagnostics?.Initialize(_ui);

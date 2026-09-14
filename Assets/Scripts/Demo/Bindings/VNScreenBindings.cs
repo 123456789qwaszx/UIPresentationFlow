@@ -6,17 +6,20 @@ public sealed partial class VNScreenBindings : IDisposable
     private readonly UIManager _ui;
     private readonly UIPresentationSpec _titlePresentation;
     private readonly UIPresentationSpec _demoPageAPresentation;
+    private readonly UIPresentationSpec _demoPageBPresentation;
     
     private UIManager UI => _ui;
 
     public VNScreenBindings(
         UIManager uiManager,
         UIPresentationSpec titlePresentation,
-        UIPresentationSpec demoPageAPresentation)
+        UIPresentationSpec demoPageAPresentation, 
+        UIPresentationSpec demoPageBPresentation)
     {
         _ui = uiManager;
         _titlePresentation = titlePresentation;
         _demoPageAPresentation = demoPageAPresentation;
+        _demoPageBPresentation = demoPageBPresentation;
     }
     
     public void OpenTitleMenu() => GoToTitle();
