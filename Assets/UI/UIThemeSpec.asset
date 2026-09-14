@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d44d6a720befb38479b06611a8157ad4, type: 3}
   m_Name: UIThemeSpec
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::ThemeSpec
-  textMainColor: {r: 1, g: 1, b: 1, a: 1}
+  textMainColor: {r: 0.3490566, g: 0, b: 0, a: 1}
   textWeakColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   mainFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   titleSize: 60
