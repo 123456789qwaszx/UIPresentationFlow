@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public partial class VNScreenBindings
 {
     private void GoToAdaptiveDemoUIRoot()
@@ -29,5 +31,6 @@ public partial class VNScreenBindings
 
     private void HandleRightActionClicked()
     {
+        OpenDemoPageA();
     }
 }

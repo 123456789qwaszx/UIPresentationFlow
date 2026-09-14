@@ -849,6 +849,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1244004424}
+  - component: {fileID: 1244004425}
   m_Layer: 0
   m_Name: DemoPageA
   m_TagString: Untagged
@@ -876,6 +877,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1244004425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1244004423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 911465a3ce44dcd4dbe67dd1c766fd42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UIPresentationFlow.Runtime::DemoPageA
 --- !u!1 &1267977659
 GameObject:
   m_ObjectHideFlags: 0
@@ -1222,7 +1235,9 @@ MonoBehaviour:
   views:
   - {fileID: 7727476595524943241}
   - {fileID: 4052064815904351389}
+  - {fileID: 1244004425}
   titlePresentation: {fileID: 11400000, guid: 14cf3defe6a8e184f8feef7b5ffc1cad, type: 2}
+  demoPageAPresentation: {fileID: 11400000, guid: d790d51dce16b244cb2a853cf485a370, type: 2}
   themeId: Light
   localeId: ko-KR
   panelKeepAliveDepth: 3

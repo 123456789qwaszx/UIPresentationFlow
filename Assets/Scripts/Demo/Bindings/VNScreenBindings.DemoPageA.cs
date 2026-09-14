@@ -1,0 +1,30 @@
+using UnityEngine;
+
+public partial class VNScreenBindings
+{
+    private void OpenDemoPageA()
+    {
+        AdaptiveDemoUIRoot owner = UI.GetUI<AdaptiveDemoUIRoot>();
+
+        UI.SwitchPage<DemoPageA>(
+            owner,
+            _demoPageAPresentation,
+            afterPresented: page =>
+            {
+                BindView(page, ApplyBindings);
+            },
+            afterClosed: Unbind);
+    }
+
+    private void ApplyBindings(DemoPageA page)
+    {
+        AddBinding(page,
+            p => p.ConfirmClicked += HandleDemoPageAConfirmClicked,
+            p => p.ConfirmClicked -= HandleDemoPageAConfirmClicked);
+    }
+
+    private void HandleDemoPageAConfirmClicked()
+    {
+        Debug.Log("[Demo] DemoPageA Confirm");
+    }
+}

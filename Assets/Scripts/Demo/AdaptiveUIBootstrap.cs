@@ -11,7 +11,8 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
 
     [Header("Presentations")]
     [SerializeField] private UIPresentationSpec titlePresentation;
-
+    [SerializeField] private UIPresentationSpec demoPageAPresentation;
+    
     [Header("UI Context")]
     [SerializeField] private string themeId = "Light";
     [SerializeField] private string localeId = "ko-KR";
@@ -53,7 +54,10 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
             _ui.Register(view);
         }
 
-        _screens = new VNScreenBindings(_ui, titlePresentation);
+        _screens = new VNScreenBindings(
+            _ui,
+            titlePresentation,
+            demoPageAPresentation);
 
         displayRefreshDriver?.Initialize(_ui);
         adaptiveDemoDiagnostics?.Initialize(_ui);
