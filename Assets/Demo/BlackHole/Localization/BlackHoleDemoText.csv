@@ -1,0 +1,60 @@
+key,en-US,ko-KR
+# 일시정지 창
+PausePanel.Title_Text,PAUSED,일시 정지
+PausePanel.ResumeBtn_Text,RESUME,계속하기
+PausePanel.SettingsBtn_Text,SETTINGS,설정
+PausePanel.MainMenuBtn_Text,MAIN MENU,메인 메뉴
+PausePanel.QuitBtn_Text,QUIT,게임 종료
+# 설정 창
+SettingsPanel.Title_Text,SETTINGS,설정
+# 설정 이름 (setting.{설정 ID})
+setting.DarkMode,Dark Mode,다크 모드
+setting.MasterVolume,Master Volume,전체 음량
+setting.EffectsVolume,Effects Volume,효과음 음량
+setting.Language,Language,언어
+setting.TextSize,Text Size,글자 크기
+# 타이틀 화면 (Title_Text는 게임 이름이라 넣지 않는다)
+TitleScreen.StartBtn_Text,START,시작
+TitleScreen.SettingsBtn_Text,SETTINGS,설정
+TitleScreen.QuitBtn_Text,QUIT,게임 종료
+# 모드 선택 창
+ModeSelectPanel.Title_Text,SELECT MODE,모드 선택
+ModeSelectPanel.ContinueBtn_Text,CONTINUE,이어하기
+ModeSelectPanel.NewGameBtn_Text,NEW GAME,새 게임
+mode.normal.title,Normal Mode,일반 모드
+mode.normal.description,"The main mode. Break asteroids, planets and stars and feed their matter to the black hole.",기본 모드입니다. \n 소행성·행성·별을 부수고 \n 그 물질을 블랙홀에 먹이세요.
+# 확인 창
+confirm.newGame.title,NEW GAME,새 게임
+confirm.newGame.body,"Start over from the beginning?
+Your saved progress will be lost.","처음부터 다시 시작할까요?
+저장된 진행 상황이 사라집니다."
+confirm.newGame.confirm,START,시작
+confirm.cancel,CANCEL,취소
+# 엔딩·크레딧 [임시 문구] (마지막 이정표 = 보라 은하 격파 뒤 EndingScreen). 줄·크레딧 묶음은 1부터 번호가 끊길 때까지 읽는다. 이름 칸은 | 로 사람을 나눈다(한 줄에 한 사람).
+ending.line.1,The last galaxy has fallen.,마지막 은하가 무너졌습니다.
+ending.line.2,"Stars, planets and every drifting speck of dust have become one.","별도, 행성도, 떠돌던 먼지까지도 모두 하나로 모였습니다."
+ending.line.3,Nothing remains outside the black hole now.,이제 블랙홀 바깥에는 아무것도 남지 않았습니다.
+ending.line.4,"The universe is once again a single, silent point.",우주는 다시 고요한 한 점이 되었습니다.
+ending.credits.title,Feed-A-Blackhole,Feed-A-Blackhole
+ending.credits.1.role,Team,팀
+ending.credits.1.names,"Anyway, We Made It","Anyway, We Made It"
+ending.credits.2.role,Made by,만든 사람들
+ending.credits.2.names,Hicanos|RCO8|healthcabbage|123456789qwaszx|gwangmin-kim|JKH201020,Hicanos|RCO8|healthcabbage|123456789qwaszx|gwangmin-kim|JKH201020
+ending.credits.3.role,And,그리고
+ending.credits.3.names,"You, for feeding the black hole to the very end",끝까지 블랙홀을 먹여 준 당신
+ending.thanks,Thank you for playing,플레이해 주셔서 감사합니다
+ending.prompt,Click or tap to return to the title,화면을 누르면 타이틀로 돌아갑니다
+# 데모 흐름 (BlackHoleDemoFlow) — 게임에는 없는 글자
+demo.hint,"Press Esc for the pause menu. Try Dark Mode, Language and Text Size in Settings.",Esc로 일시 정지 창을 엽니다. 설정에서 다크 모드·언어·글자 크기를 바꿔 보세요.
+demo.newGame.title,DEMO,데모
+demo.newGame.body,"This demo has no gameplay.
+It plays the ending sequence instead.","이 데모에는 게임 플레이가 없습니다.
+대신 엔딩 연출을 보여 줍니다."
+demo.newGame.confirm,PLAY ENDING,엔딩 보기
+demo.continue.notice,This demo has no saved progress to continue.,이 데모에는 이어 할 진행이 없습니다.
+demo.mainMenu.title,MAIN MENU,메인 메뉴
+demo.mainMenu.body,Return to the title screen?,타이틀 화면으로 돌아갈까요?
+demo.mainMenu.confirm,RETURN,돌아가기
+demo.quit.title,QUIT,종료
+demo.quit.body,Quit the demo?,데모를 종료할까요?
+demo.quit.confirm,QUIT,종료
