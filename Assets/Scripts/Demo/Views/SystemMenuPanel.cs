@@ -32,7 +32,7 @@ public sealed class SystemMenuPanel
         _loadButton = View.Button(Refs.LoadButton_Button);
         _closeButton = View.Button(Refs.CloseButton_Button);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 

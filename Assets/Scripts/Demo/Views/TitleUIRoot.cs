@@ -48,7 +48,7 @@ public sealed class TitleUIRoot : UIRoot<TitleUIRoot.Refs>
         _albumButton = View.Button(Refs.AlbumBtn_Button);
         _albumBtnText = View.Text(Refs.AlbumBtn_Text);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 
