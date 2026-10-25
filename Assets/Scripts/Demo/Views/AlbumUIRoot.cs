@@ -31,7 +31,7 @@ public sealed class AlbumUIRoot : UIRoot<AlbumUIRoot.Refs>
         _entry3Text = View.Text(Refs.AlbumEntry3_Text);
         _backButton = View.Button(Refs.BackButton_Button);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 

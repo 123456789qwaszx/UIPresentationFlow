@@ -1,0 +1,21 @@
+이 폴더의 글꼴과 그 조건
+==========================
+
+데모가 쓰는 글꼴 파일은 수정하지 않은 원본이다. TMP Font Asset은 메뉴 UI Demo > Build BlackHole Demo Scene이
+이 파일에서 데모 글자만 정적 아틀라스로 굽는다. 글꼴 파일을 고치거나 따로 팔지 않는다.
+
+1. NEXONLv1GothicRegular.ttf — 본문 글꼴(ko-KR body·caption)
+   - Copyright (c) 2017 NEXON. All rights reserved. Font designed by FONTRIX Inc.
+   - 넥슨 서체의 지적 재산권을 포함한 모든 권리는 (주)넥슨코리아에 있다.
+   - 사용 조건(배포처 안내 기준): 개인·상업적 용도로 자유롭게 사용·배포할 수 있다. 다른 소프트웨어와 번들하거나
+     임베디드 글꼴로 쓸 때는 이 저작권 안내를 함께 넣는다. 글꼴 파일을 임의로 수정·편집해 재배포하거나 유료로 판매할 수 없다.
+     OFL이 아니다.
+   - 안내: https://www.sandollcloud.com/free-font/16183/NEXON-Lv1-Gothic-OTF (최신 조건은 넥슨 브랜드 사이트에서 확인)
+
+2. NanumHumanBold.ttf — 제목 글꼴(ko-KR title)
+   - Copyright © 2019 NAVER Corporation. All rights reserved. Font Designed by Sandoll Inc.
+   - SIL Open Font License 1.1. 전문은 같은 폴더의 NanumHuman-OFL.txt.
+   - 안내: https://www.sandollcloud.com/free-font/22149/NanumHuman
+
+게임(블랙홀 키우기)의 제목 글꼴 ONE Mobile Title은 재배포 제한이 있어 이 레포에 넣지 않았다. 데모는 나눔휴먼으로 대신한다.
+영문(en-US)은 TextMesh Pro에 들어 있는 LiberationSans(SIL OFL 1.1)를 쓴다.

@@ -26,7 +26,7 @@ public sealed class DemoGameplayRoot : UIRoot<DemoGameplayRoot.Refs>
         _loadButton = View.Button(Refs.LoadButton_Button);
         _titleButton = View.Button(Refs.TitleButton_Button);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 

@@ -49,7 +49,7 @@ public sealed class AdaptiveDemoUIRoot
         _leftActionButton = View.Button(Refs.LeftAction);
         _rightActionButton = View.Button(Refs.RightAction);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 

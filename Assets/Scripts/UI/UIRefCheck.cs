@@ -3,12 +3,13 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
 // Checks the promise a View prefab makes: for every value of its TRefs enum there is a child with that name,
-// because UIBase<TRefs> finds children by name. Editor and development builds only; compiled out otherwise.
+// because UIBase<TRefs> finds children by name. Editor and builds with checks only (Managed Code Variant Debug or Checked,
+// which define UNITY_ENABLE_CHECKS); compiled out otherwise.
 // UIManager.Register runs the full check for every registered View. A widget that is not registered and uses
 // only some of its refs (one prefab, several layouts) calls WarnMissing with the refs it needs.
 public static class UIRefCheck
 {
-    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+    [Conditional("UNITY_EDITOR"), Conditional("UNITY_ENABLE_CHECKS")]
     public static void WarnMissing(UIBase view)
     {
         if (view == null)
@@ -25,7 +26,7 @@ public static class UIRefCheck
         }
     }
 
-    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+    [Conditional("UNITY_EDITOR"), Conditional("UNITY_ENABLE_CHECKS")]
     public static void WarnMissing<TRefs>(UIBase<TRefs> view, params TRefs[] refs) where TRefs : struct, Enum
     {
         if (view == null)

@@ -48,7 +48,7 @@ public abstract class SaveSlotPage : UIPage<SaveSlotPage.Refs>
         _slot3Button = View.Button(Refs.Slot3_Button);
         _slot3Text = View.Text(Refs.Slot3_Text);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
         ValidateRefs();
 #endif
 
