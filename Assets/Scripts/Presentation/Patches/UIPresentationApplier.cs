@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class UIPresentationApplier
 {
@@ -8,29 +9,26 @@ public sealed class UIPresentationApplier
 
     public void Apply(UIBase view, UIResolveResult result)
     {
-        UIPresentationBaseline baseline = 
-            GetBaseline(view);
+        UIPresentationBaseline baseline = GetBaseline(view);
 
-        // Remove only the visual properties owned by the previously applied Presentation.
         baseline.RestoreOwned(view);
-
-        // Capture the authored value the first time a property enters Presentation ownership,
-        // then mark the properties owned by this Presentation.
-        baseline.CaptureAndOwn(view, result.Resolved);
+        // Code-registered elements keep their own baselines; put them back before the patches run.
+        view.Styled.RestoreAll();
+        baseline.CaptureAndOwn(view, result.Resolved, result.Assets);
 
         foreach (IUIPatch patch in result.Patches)
             patch?.Apply(view);
+
+        view.NotifyPresented(result.Theme);
     }
 
     private UIPresentationBaseline GetBaseline(UIBase view)
     {
         if (_baselines.TryGetValue(view, out UIPresentationBaseline baseline))
             return baseline;
-        
+
         baseline = new UIPresentationBaseline();
-
         _baselines.Add(view, baseline);
-
         return baseline;
     }
 
@@ -38,6 +36,7 @@ public sealed class UIPresentationApplier
     {
         private readonly Dictionary<string, RectBaseline> _rects = new();
         private readonly Dictionary<string, TextBaseline> _texts = new();
+        private readonly Dictionary<string, ImageBaseline> _images = new();
 
         public void RestoreOwned(IUIPresentationRefProvider refs)
         {
@@ -56,15 +55,33 @@ public sealed class UIPresentationApplier
                 else
                     pair.Value.ReleaseOwnership();
             }
+
+            foreach (KeyValuePair<string, ImageBaseline> pair in _images)
+            {
+                if (refs.TryGetImage(pair.Key, out Image image) && image != null)
+                    pair.Value.RestoreOwned(image);
+                else
+                    pair.Value.ReleaseOwnership();
+            }
         }
 
-        public void CaptureAndOwn(IUIPresentationRefProvider refs, ResolvedUIPresentation resolved)
+        public void CaptureAndOwn(
+            IUIPresentationRefProvider refs,
+            ResolvedUIPresentation resolved,
+            UIThemeAssets assets)
         {
             CaptureLayout(refs, resolved?.Layout);
-            CaptureTheme(refs, resolved?.Theme);
+            CaptureTheme(
+                refs,
+                resolved?.Theme,
+                resolved?.TextBindings,
+                assets);
+            CaptureImageTheme(refs, resolved?.ImageTheme);
         }
 
-        private void CaptureLayout(IUIPresentationRefProvider refs, LayoutPatchSpec layout)
+        private void CaptureLayout(
+            IUIPresentationRefProvider refs,
+            LayoutPatchSpec layout)
         {
             if (layout?.widgets == null)
                 return;
@@ -75,7 +92,6 @@ public sealed class UIPresentationApplier
                     continue;
 
                 string refId = (widget.refId ?? string.Empty).Trim();
-
                 if (string.IsNullOrEmpty(refId))
                     continue;
 
@@ -92,26 +108,80 @@ public sealed class UIPresentationApplier
             }
         }
 
-        private void CaptureTheme(IUIPresentationRefProvider refs, ThemeSpec theme)
+        private void CaptureTheme(
+            IUIPresentationRefProvider refs,
+            ThemeSpec theme,
+            UITextBindingCatalog textBindings,
+            UIThemeAssets assets)
         {
-            if (theme == null)
-                return;
-
-            foreach (string refId in refs.TextTargetIds)
+            if (theme == null
+                || textBindings == null
+                || !textBindings.TryGetBinding(
+                    refs.GetType(),
+                    out UITextBindingSet binding)
+                || binding?.texts == null)
             {
-                if (!refs.TryGetTextRole(refId, out _))
+                return;
+            }
+
+            foreach (UITextBindingEntry entry in binding.texts)
+            {
+                if (entry == null
+                    || entry.stale
+                    || entry.role == UITextRole.Unassigned)
+                {
                     continue;
-                
+                }
+
+                string refId = (entry.refId ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(refId))
+                    continue;
+
                 if (!refs.TryGetText(refId, out TMP_Text text) || text == null)
                     continue;
-                
+
                 if (!_texts.TryGetValue(refId, out TextBaseline baseline))
                 {
                     baseline = new TextBaseline();
                     _texts.Add(refId, baseline);
                 }
 
-                baseline.CaptureAndOwn(text, theme);
+                baseline.CaptureAndOwn(text, assets?.Fonts != null && !entry.fixedFont);
+            }
+        }
+
+        private void CaptureImageTheme(
+            IUIPresentationRefProvider refs,
+            UIImageThemeSpec imageTheme)
+        {
+            if (imageTheme == null
+                || !imageTheme.TryGetBinding(
+                    refs.GetType(),
+                    out UIImageBindingSet binding)
+                || binding?.images == null)
+            {
+                return;
+            }
+
+            foreach (UIImageBindingEntry entry in binding.images)
+            {
+                if (entry == null || entry.stale)
+                    continue;
+
+                string refId = (entry.refId ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(refId))
+                    continue;
+
+                if (!refs.TryGetImage(refId, out Image image) || image == null)
+                    continue;
+
+                if (!_images.TryGetValue(refId, out ImageBaseline baseline))
+                {
+                    baseline = new ImageBaseline();
+                    _images.Add(refId, baseline);
+                }
+
+                baseline.CaptureAndOwn(image);
             }
         }
     }
@@ -153,7 +223,6 @@ public sealed class UIPresentationApplier
             }
 
             RectTransformPatch rectPatch = patch.rect;
-            
             if (rectPatch == null)
                 return;
 
@@ -163,7 +232,6 @@ public sealed class UIPresentationApplier
                 {
                     _anchorMin = rect.anchorMin;
                     _anchorMax = rect.anchorMax;
-
                     _hasAnchors = true;
                 }
 
@@ -204,8 +272,7 @@ public sealed class UIPresentationApplier
             }
         }
 
-        public void RestoreOwned(
-            RectTransform rect)
+        public void RestoreOwned(RectTransform rect)
         {
             if (_ownsAnchors && _hasAnchors)
             {
@@ -221,10 +288,10 @@ public sealed class UIPresentationApplier
 
             if (_ownsSizeDelta && _hasSizeDelta)
                 rect.sizeDelta = _sizeDelta;
-            
+
             if (_ownsActive && _hasActive)
                 rect.gameObject.SetActive(_active);
-            
+
             ReleaseOwnership();
         }
 
@@ -246,17 +313,17 @@ public sealed class UIPresentationApplier
 
         private bool _hasFontSize;
         private float _fontSize;
+        private float _fontSizeMax;
         private bool _ownsFontSize;
 
         private bool _hasColor;
         private Color _color;
         private bool _ownsColor;
 
-        public void CaptureAndOwn(TMP_Text text, ThemeSpec theme)
+        // ownsFont: the theme sets this text's font (it has a font set and the entry is not fixedFont).
+        public void CaptureAndOwn(TMP_Text text, bool ownsFont)
         {
-            // ThemeSpecPatch only changes font when
-            // mainFont has explicitly been authored.
-            if (theme.mainFont != null)
+            if (ownsFont)
             {
                 if (!_hasFont)
                 {
@@ -270,6 +337,7 @@ public sealed class UIPresentationApplier
             if (!_hasFontSize)
             {
                 _fontSize = text.fontSize;
+                _fontSizeMax = text.fontSizeMax;
                 _hasFontSize = true;
             }
 
@@ -290,7 +358,10 @@ public sealed class UIPresentationApplier
                 text.font = _font;
 
             if (_ownsFontSize && _hasFontSize)
+            {
                 text.fontSize = _fontSize;
+                text.fontSizeMax = _fontSizeMax;
+            }
 
             if (_ownsColor && _hasColor)
                 text.color = _color;
@@ -303,6 +374,57 @@ public sealed class UIPresentationApplier
             _ownsFont = false;
             _ownsFontSize = false;
             _ownsColor = false;
+        }
+    }
+
+    private sealed class ImageBaseline
+    {
+        private bool _hasSprite;
+        private Sprite _sprite;
+        private bool _ownsSprite;
+
+        // Sprite Swap states of a Selectable on the same object (a theme may replace them with the sprite).
+        private bool _hasSpriteState;
+        private SpriteState _spriteState;
+
+        public void CaptureAndOwn(Image image)
+        {
+            if (!_hasSprite)
+            {
+                _sprite = image.sprite;
+                _hasSprite = true;
+
+                Selectable selectable = UIImageThemePatch.SelectableOf(image);
+                if (selectable != null)
+                {
+                    _spriteState = selectable.spriteState;
+                    _hasSpriteState = true;
+                }
+            }
+
+            _ownsSprite = true;
+        }
+
+        public void RestoreOwned(Image image)
+        {
+            if (_ownsSprite && _hasSprite)
+            {
+                image.sprite = _sprite;
+
+                if (_hasSpriteState)
+                {
+                    Selectable selectable = UIImageThemePatch.SelectableOf(image);
+                    if (selectable != null)
+                        selectable.spriteState = _spriteState;
+                }
+            }
+
+            ReleaseOwnership();
+        }
+
+        public void ReleaseOwnership()
+        {
+            _ownsSprite = false;
         }
     }
 }

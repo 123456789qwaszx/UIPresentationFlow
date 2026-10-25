@@ -11,4 +11,5 @@ public class UIVariantRule
     // A variant changes presentation fields only.
     public ThemeSpec overrideTheme;
     public LayoutPatchSpec overrideLayout;
+    public UIImageThemeSpec overrideImageTheme;
 }

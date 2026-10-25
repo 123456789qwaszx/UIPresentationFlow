@@ -4,28 +4,42 @@ using UnityEngine;
 public sealed class PresentationMetadataVisualTest : MonoBehaviour
 {
     [SerializeField] private TitleUIRoot titleRoot;
+    [SerializeField] private UITextBindingCatalog textBindings;
 
     private void Start()
     {
+        if (titleRoot == null || textBindings == null)
+            return;
+
         IUIPresentationRefProvider provider = titleRoot;
 
-        foreach (string refId in provider.TextTargetIds)
+        if (!textBindings.TryGetBinding(
+                titleRoot.GetType(),
+                out UITextBindingSet binding)
+            || binding?.texts == null)
         {
-            if (!provider.TryGetText(refId, out TMP_Text text))
+            Debug.LogWarning("TextBinding not found for TitleUIRoot.", titleRoot);
+            return;
+        }
+
+        foreach (UITextBindingEntry entry in binding.texts)
+        {
+            if (entry == null
+                || entry.stale
+                || entry.role == UITextRole.Unassigned)
             {
-                Debug.LogWarning($"Text not found: {refId}");
                 continue;
             }
 
-            if (!provider.TryGetTextRole(refId, out UITextRole role))
+            if (!provider.TryGetText(entry.refId, out TMP_Text text))
             {
-                Debug.LogWarning($"TextRole not found: {refId}");
+                Debug.LogWarning($"Text not found: {entry.refId}");
                 continue;
             }
 
-            Debug.Log($"{refId} -> {role}");
+            Debug.Log($"{entry.refId} -> {entry.role}");
 
-            switch (role)
+            switch (entry.role)
             {
                 case UITextRole.Title:
                     text.fontSize = 60;
