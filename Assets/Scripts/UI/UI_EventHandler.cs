@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public enum ETouchEvent
 {
@@ -12,19 +13,29 @@ public enum ETouchEvent
     BeginDrag,
     Drag,
     EndDrag,
+    PointerEnter,
+    PointerExit,
 }
 
 // Adapts Unity EventSystem callbacks into consistent UI interactions.
 // Drag and long press suppress click, and starting a drag cancels long press.
 //
 // Drag confirmation follows EventSystem.pixelDragThreshold.
+//
+// Pointer enter and exit are always paired: exit is sent at most once per enter,
+// and a pointer that is still inside when this object is disabled receives exit then.
+//
+// Click is not sent while a Selectable on the same object is not interactable
+// (Selectable.IsInteractable, which also honors parent CanvasGroups). Other events still arrive.
 public sealed class UI_EventHandler : MonoBehaviour,
     IPointerClickHandler,
     IPointerDownHandler,
     IPointerUpHandler,
     IDragHandler,
     IBeginDragHandler,
-    IEndDragHandler
+    IEndDragHandler,
+    IPointerEnterHandler,
+    IPointerExitHandler
 {
     public Action<PointerEventData> OnClickHandler;
     public Action<PointerEventData> OnPointerDownHandler;
@@ -33,6 +44,8 @@ public sealed class UI_EventHandler : MonoBehaviour,
     public Action<PointerEventData> OnBeginDragHandler;
     public Action<PointerEventData> OnEndDragHandler;
     public Action<PointerEventData> OnLongPressHandler;
+    public Action<PointerEventData> OnPointerEnterHandler;
+    public Action<PointerEventData> OnPointerExitHandler;
 
     [Header("Long Press")]
     [SerializeField, Min(0f)]
@@ -41,13 +54,29 @@ public sealed class UI_EventHandler : MonoBehaviour,
     private bool _isDragging;
     private bool _isDragConfirmed;
     private bool _isLongPressTriggered;
+    private bool _isPointerInside;
 
     private PointerEventData _cachedEventData;
+    private PointerEventData _enterEventData;
     private Coroutine _longPressCoroutine;
+    // Selectable on this object, if any. Looked up once.
+    private Selectable _selectable;
+    private bool _selectableLookedUp;
+
+    private bool IsClickable()
+    {
+        if (!_selectableLookedUp)
+        {
+            _selectableLookedUp = true;
+            TryGetComponent(out _selectable);
+        }
+
+        return _selectable == null || _selectable.IsInteractable();
+    }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (_isDragConfirmed || _isLongPressTriggered)
+        if (_isDragConfirmed || _isLongPressTriggered || !IsClickable())
             return;
 
         OnClickHandler?.Invoke(eventData);
@@ -110,6 +139,34 @@ public sealed class UI_EventHandler : MonoBehaviour,
         _cachedEventData = null;
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (_isPointerInside)
+            return;
+
+        _isPointerInside = true;
+        _enterEventData = eventData;
+
+        OnPointerEnterHandler?.Invoke(eventData);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        ExitIfInside(eventData);
+    }
+
+    // A disabled object receives no exit from the EventSystem, so disabling sends it here.
+    private void ExitIfInside(PointerEventData eventData)
+    {
+        if (!_isPointerInside)
+            return;
+
+        _isPointerInside = false;
+        _enterEventData = null;
+
+        OnPointerExitHandler?.Invoke(eventData);
+    }
+
     private IEnumerator CheckLongPress()
     {
         yield return new WaitForSecondsRealtime(_longPressDuration);
@@ -136,6 +193,7 @@ public sealed class UI_EventHandler : MonoBehaviour,
 
     private void OnDisable()
     {
+        ExitIfInside(_enterEventData);
         StopLongPressCheck();
 
         _isDragging = false;

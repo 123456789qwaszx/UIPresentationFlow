@@ -12,10 +12,14 @@ public sealed class UIPresentationApplier
         UIPresentationBaseline baseline = GetBaseline(view);
 
         baseline.RestoreOwned(view);
-        baseline.CaptureAndOwn(view, result.Resolved);
+        // Code-registered elements keep their own baselines; put them back before the patches run.
+        view.Styled.RestoreAll();
+        baseline.CaptureAndOwn(view, result.Resolved, result.Assets);
 
         foreach (IUIPatch patch in result.Patches)
             patch?.Apply(view);
+
+        view.NotifyPresented(result.Theme);
     }
 
     private UIPresentationBaseline GetBaseline(UIBase view)
@@ -63,13 +67,15 @@ public sealed class UIPresentationApplier
 
         public void CaptureAndOwn(
             IUIPresentationRefProvider refs,
-            ResolvedUIPresentation resolved)
+            ResolvedUIPresentation resolved,
+            UIThemeAssets assets)
         {
             CaptureLayout(refs, resolved?.Layout);
             CaptureTheme(
                 refs,
                 resolved?.Theme,
-                resolved?.TextBindings);
+                resolved?.TextBindings,
+                assets);
             CaptureImageTheme(refs, resolved?.ImageTheme);
         }
 
@@ -105,7 +111,8 @@ public sealed class UIPresentationApplier
         private void CaptureTheme(
             IUIPresentationRefProvider refs,
             ThemeSpec theme,
-            UITextBindingCatalog textBindings)
+            UITextBindingCatalog textBindings,
+            UIThemeAssets assets)
         {
             if (theme == null
                 || textBindings == null
@@ -139,7 +146,7 @@ public sealed class UIPresentationApplier
                     _texts.Add(refId, baseline);
                 }
 
-                baseline.CaptureAndOwn(text, theme);
+                baseline.CaptureAndOwn(text, assets?.Fonts != null && !entry.fixedFont);
             }
         }
 
@@ -306,15 +313,17 @@ public sealed class UIPresentationApplier
 
         private bool _hasFontSize;
         private float _fontSize;
+        private float _fontSizeMax;
         private bool _ownsFontSize;
 
         private bool _hasColor;
         private Color _color;
         private bool _ownsColor;
 
-        public void CaptureAndOwn(TMP_Text text, ThemeSpec theme)
+        // ownsFont: the theme sets this text's font (it has a font set and the entry is not fixedFont).
+        public void CaptureAndOwn(TMP_Text text, bool ownsFont)
         {
-            if (theme.mainFont != null)
+            if (ownsFont)
             {
                 if (!_hasFont)
                 {
@@ -328,6 +337,7 @@ public sealed class UIPresentationApplier
             if (!_hasFontSize)
             {
                 _fontSize = text.fontSize;
+                _fontSizeMax = text.fontSizeMax;
                 _hasFontSize = true;
             }
 
@@ -348,7 +358,10 @@ public sealed class UIPresentationApplier
                 text.font = _font;
 
             if (_ownsFontSize && _hasFontSize)
+            {
                 text.fontSize = _fontSize;
+                text.fontSizeMax = _fontSizeMax;
+            }
 
             if (_ownsColor && _hasColor)
                 text.color = _color;
@@ -370,12 +383,23 @@ public sealed class UIPresentationApplier
         private Sprite _sprite;
         private bool _ownsSprite;
 
+        // Sprite Swap states of a Selectable on the same object (a theme may replace them with the sprite).
+        private bool _hasSpriteState;
+        private SpriteState _spriteState;
+
         public void CaptureAndOwn(Image image)
         {
             if (!_hasSprite)
             {
                 _sprite = image.sprite;
                 _hasSprite = true;
+
+                Selectable selectable = UIImageThemePatch.SelectableOf(image);
+                if (selectable != null)
+                {
+                    _spriteState = selectable.spriteState;
+                    _hasSpriteState = true;
+                }
             }
 
             _ownsSprite = true;
@@ -384,7 +408,16 @@ public sealed class UIPresentationApplier
         public void RestoreOwned(Image image)
         {
             if (_ownsSprite && _hasSprite)
+            {
                 image.sprite = _sprite;
+
+                if (_hasSpriteState)
+                {
+                    Selectable selectable = UIImageThemePatch.SelectableOf(image);
+                    if (selectable != null)
+                        selectable.spriteState = _spriteState;
+                }
+            }
 
             ReleaseOwnership();
         }
