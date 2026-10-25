@@ -1,13 +1,13 @@
 using UnityEngine;
 
 // 현재 아래 값은 모두 [임시].
-// 화면 전환 연출(블랙홀 아이리스)의 외형 설정 에셋. 화면 전환(ScreenTransition)만 읽는다.
+// 화면 전환 연출(아이리스)의 외형 설정 에셋. 화면 전환(ScreenTransition)만 읽는다.
 // 길이 값은 캔버스 단위다(기준 해상도 1920×1080에서 1 = 1픽셀).
 [CreateAssetMenu(fileName = "ScreenTransitionLook", menuName = "UI/Screen Transition Look")]
 public sealed class ScreenTransitionLook : ScriptableObject
 {
     [Header("외형")]
-    [Tooltip("BlackHole/UI Screen Iris 셰이더의 머티리얼. 실행 중에는 복제해 쓴다.")]
+    [Tooltip("UI/Screen Iris 셰이더의 머티리얼. 실행 중에는 복제해 쓴다.")]
     [SerializeField] private Material _material;
     [Tooltip("덮개의 색.")]
     [SerializeField] private Color _color = Color.black;

@@ -1,4 +1,4 @@
-// 화면 전환 덮개(블랙홀 아이리스): 화면 가운데 반지름 _Radius의 원 바깥을 _Color로 덮고, 원 둘레에 빛을 더한다.
+// 화면 전환 덮개(아이리스): 화면 가운데 반지름 _Radius의 원 바깥을 _Color로 덮고, 원 둘레에 빛을 더한다.
 // 전체 화면 UI Image에 쓴다. UI(Screen Space - Overlay)는 URP 경로가 아니라 UGUI가 그리므로 UI/Default와 같은 틀(CG, UnityCG)을 쓴다.
 // 길이 파라미터는 캔버스 단위다(CanvasScaler가 맞춘 단위라 해상도가 달라도 모양이 같다). 원의 중심은 캔버스 가운데 + _Center.
 // 미리 곱한 알파로 섞는다(Blend One OneMinusSrcAlpha): 덮개는 뒤를 가리고, 둘레 빛은 그 위에 더해진다.

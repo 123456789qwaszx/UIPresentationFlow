@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 프리팹 없이 코드로 UI 부품을 만들 때 쓰는 도우미(은하 체력바, 엔딩 화면, 업그레이드 트리의 노드·선·툴팁 부품). 새 오브젝트는 부모의 레이어를 따르고 레이캐스트를 받지 않는다.
+// 프리팹 없이 코드로 UI 부품을 만들 때 쓰는 도우미(줄 수가 정해지지 않은 목록, 그래프의 노드·선, 코드로 그리는 막대 등). 새 오브젝트는 부모의 레이어를 따르고 레이캐스트를 받지 않는다.
 public static class UIParts
 {
     public static RectTransform NewRect(string name, Transform parent)

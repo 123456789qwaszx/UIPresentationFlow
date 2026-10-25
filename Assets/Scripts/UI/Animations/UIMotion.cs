@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// UI 연출이 함께 쓰는 곡선. 화면·부속이 식을 각자 쓰지 않고 여기 것을 부른다. 게임을 모른다.
+// UI 연출이 함께 쓰는 곡선. 화면·부속이 식을 각자 쓰지 않고 여기 것을 부른다.
 public static class UIMotion
 {
     // 0 → 1을 양 끝에서 느리게(SmoothStep). t는 0 ~ 1로 자른다.

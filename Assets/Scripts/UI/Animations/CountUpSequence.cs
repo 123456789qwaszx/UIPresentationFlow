@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-// 글자 여러 개의 숫자를 차례로 시작값에서 목표까지 올리는 연출(결산 화면의 처치 수·Gold). 순수 C#: 화면이 Tick으로 시간을 넘긴다.
+// 글자 여러 개의 숫자를 차례로 시작값에서 목표까지 올리는 연출(결과 화면의 점수·보상 등). 순수 C#: 화면이 Tick으로 시간을 넘긴다.
 // - 단계는 Add한 순서로 하나씩 돈다. 단계마다 StepSeconds 동안 SmoothStep으로 오른다. 연출 중에도 뒤에 단계를 더 붙일 수 있다.
 // - 글자가 바뀔 때마다 ValueChanged(강조 효과용), 마지막 단계가 끝나면 Completed를 알린다.
 // - Finish는 남은 단계를 모두 최종값으로 쓰고 끝낸다(Completed는 알리지 않는다 — 건너뛴 쪽이 마무리를 정한다).

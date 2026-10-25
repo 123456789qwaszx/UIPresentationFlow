@@ -8,7 +8,7 @@ using UnityEngine.UI;
 //
 // 움직이는 동안만 코루틴이 돈다. Update가 없어서 가만히 있는 버튼에는 매 프레임 비용이 없다.
 // 꺼지면(화면이 닫히면) ResetAll로 크기·색을 되돌리고 상태를 비운다 — 다시 켜질 때 이전 상태가 남지 않는다.
-// localScale을 쓰므로 다른 코드가 크기를 움직이는 버튼(모드 선택 카드 루트 등)에는 붙이지 않는다.
+// localScale을 쓰므로 다른 코드가 크기를 움직이는 버튼(카드를 넘기는 목록의 카드 등)에는 붙이지 않는다.
 // 레이아웃 그룹과 Presentation은 크기를 건드리지 않는다.
 [DisallowMultipleComponent]
 public sealed class ButtonAnimation : MonoBehaviour

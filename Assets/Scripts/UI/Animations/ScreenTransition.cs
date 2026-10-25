@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 화면 전환 연출(블랙홀 아이리스): 화면이 가운데 원으로 빨려 들어가 덮였다가, 새 화면에서 원이 커지며 열린다.
+// 화면 전환 연출(아이리스): 화면이 가운데 원으로 빨려 들어가 덮였다가, 새 화면에서 원이 커지며 열린다.
 // 다 덮인 순간에 부르는 쪽의 일(루트 바꾸기, 판 시작·정리)을 한다. 그래서 화면이 바뀌는 순간과 그때의 끊김이 보이지 않는다.
 // - Play: 덮기 → 일 → 잠깐 머묾 → 열기. 일이 비동기(Task)면 끝날 때까지 덮인 채 기다린다.
 //   아직 일을 하기 전에 다시 불리면 마지막 요청의 일만 한다(두 번 누름). 열리는 중에 불리면 그 자리에서 다시 덮는다.
 // - 전환하는 동안에는 화면 전체의 입력을 막는다. 다 열리면 덮개를 꺼서, 가만히 있는 동안 그리는 비용도 입력 막기도 없다.
 // - 처음에는 덮여 있다. 첫 Play(앱 시작의 타이틀)가 덮인 채 일을 하고 열리므로, 앱이 원이 열리며 시작한다.
-// 외형은 ScreenTransitionLook, 셰이더는 BlackHole/UI Screen Iris. 머티리얼은 복제해 쓴다(공유 에셋을 바꾸지 않도록).
+// 외형은 ScreenTransitionLook, 셰이더는 UI/Screen Iris(Shaders/ScreenIris). 머티리얼은 복제해 쓴다(공유 에셋을 바꾸지 않도록).
 // timeScale과 관계없이 움직인다.
 [DisallowMultipleComponent]
 public sealed class ScreenTransition : MonoBehaviour

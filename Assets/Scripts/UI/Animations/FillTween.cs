@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-// 가로 막대 채움 연출: RectTransform의 anchorMax.x를 0에서 목표까지 SmoothStep으로 올린다(결산 화면의 이정표 막대). 순수 C#.
+// 가로 막대 채움 연출: RectTransform의 anchorMax.x를 0에서 목표까지 SmoothStep으로 올린다(결과 화면의 진행 막대 등). 순수 C#.
 public sealed class FillTween
 {
     private RectTransform _rect;

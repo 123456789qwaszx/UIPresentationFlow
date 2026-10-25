@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// 창(이 RectTransform) 안에서 내용(Content)을 끌어 옮기고 확대·축소하는 뷰포트. 게임을 모른다 — 내용이 무엇인지는 붙이는 쪽이 정한다.
+// 창(이 RectTransform) 안에서 내용(Content)을 끌어 옮기고 확대·축소하는 뷰포트. 내용이 무엇인지는 붙이는 쪽이 정한다.
 // - 한 손가락(마우스)은 이동, 두 손가락은 핀치, 휠은 커서 아래 점을 둔 채 확대.
 // - 축소 하한: 내용 전체가 창에 들어가는 배율(FitZoom)과 MinZoomDefault 중 작은 쪽. MinZoomFloor 아래로는 안 간다.
 //   FitZoom은 SetContentBounds와 창 크기 변화 때 다시 잰다.
