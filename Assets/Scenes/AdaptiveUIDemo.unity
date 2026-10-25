@@ -4219,6 +4219,8 @@ MonoBehaviour:
   demoPageBPresentation: {fileID: 11400000, guid: cd32674f8b647d04a8de71fa72f8e892, type: 2}
   demoMenuPresentation: {fileID: 11400000, guid: ced7572792551b84ca6d26539d96060f, type: 2}
   demoConfirmPresentation: {fileID: 11400000, guid: 8224806894582e54cb07a42ec810f932, type: 2}
+  fonts: {fileID: 11400000, guid: 927003a87f4a40f4b9e480ea24795400, type: 2}
+  palette: {fileID: 11400000, guid: ac0163ff474441f28e36b2c29e240aa3, type: 2}
   themeId: Light
   localeId: ko-KR
   panelKeepAliveDepth: 3

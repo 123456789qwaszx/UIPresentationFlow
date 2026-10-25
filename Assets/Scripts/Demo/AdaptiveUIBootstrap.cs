@@ -16,6 +16,10 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
     [SerializeField] private UIPresentationSpec demoMenuPresentation;
     [SerializeField] private UIPresentationSpec demoConfirmPresentation;
 
+    [Header("Shared Theme Assets")]
+    [SerializeField] private UIFontSet fonts;
+    [SerializeField] private UIPalette palette;
+
     [Header("UI Context")]
     [SerializeField] private string themeId = "Light";
     [SerializeField] private string localeId = "ko-KR";
@@ -37,7 +41,7 @@ public sealed class AdaptiveUIBootstrap : MonoBehaviour
     private void Awake()
     {
         UIContext context = new(themeId, localeId);
-        UIResolver resolver = new(context);
+        UIResolver resolver = new(context, new UIThemeAssets(fonts, palette, null));
         UIPresentationApplier presentationApplier = new();
 
         _ui = new UIManager(
