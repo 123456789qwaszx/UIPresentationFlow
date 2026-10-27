@@ -27,7 +27,7 @@ namespace VisualNovelDemo
         [Tooltip("글자 표의 언어 열(ko-KR · en-US).")]
         [SerializeField] private string localeId = "ko-KR";
         [SerializeField] private TextAsset texts;
-        [Tooltip("화면별 Presentation. presentationId = 화면 타입 이름.")]
+        [Tooltip("화면별 Presentation. presentationId = 화면 키(UIViewKey — 묶음은 Ked.{타입}).")]
         [SerializeField] private UIPresentationSpec[] presentations = Array.Empty<UIPresentationSpec>();
 
         [Header("데모")]

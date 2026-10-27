@@ -9,6 +9,7 @@ namespace Ked.Samples.UI
     /// 배속 보기는 본체가 허용하는 값만 낸다 — 시안의 1.5×는 본체 하한(2배) 아래라 넣지 않는다.
     /// 시안의 "읽은 대사만 넘기기"는 본체에 읽음 기록이 없어 만들지 않는다(안내 글만).
     /// </summary>
+    [UIViewKey("Ked.PlaybackSettingsPage")]
     public sealed class PlaybackSettingsPage : UIPage<PlaybackSettingsPage.Refs>
     {
         public const int SpeedChoiceCount = 3;

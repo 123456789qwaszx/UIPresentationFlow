@@ -6,6 +6,7 @@ namespace Ked.Samples.UI
     /// 백로그 한 줄(시안 08). BacklogPanel이 숨겨 둔 견본(LogRowTemplate)을 복제해 쓴다. UIPF 위젯 — 등록하지 않는다.
     /// 이동 버튼은 그 줄로 실제로 갈 수 있을 때만 보인다(현재 장면 되감기 또는 과거 장면 갈라지기).
     /// </summary>
+    [UIViewKey("Ked.BacklogRow")]
     public sealed class BacklogRow : UIBase<BacklogRow.Refs>
     {
         public enum Refs

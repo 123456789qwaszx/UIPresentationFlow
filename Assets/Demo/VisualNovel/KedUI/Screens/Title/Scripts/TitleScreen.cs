@@ -10,6 +10,7 @@ namespace Ked.Samples.UI
     /// 처음부터 · 이어하기 · 불러오기(저장 슬롯이 있는 예제) · 다른 예제로 · 설정 · 종료.
     /// 예제 이름·소개는 호스트가 준 키로 표에서 읽는다. 이어할 기록이 없으면 이어하기를 막는다.
     /// </summary>
+    [UIViewKey("Ked.TitleScreen")]
     public sealed class TitleScreen : UIRoot<TitleScreen.Refs>, ILocalizedView
     {
         public enum Refs

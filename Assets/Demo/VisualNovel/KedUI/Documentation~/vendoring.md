@@ -15,7 +15,7 @@ ked-presentation-runtime의 **VN UI 묶음**이 원본이다. 원본 `Assets/Sam
 
 | | |
 |---|---|
-| 원본 | ked `feat/uipf-ui` @ `82ac9340` (2026-10-27) |
+| 원본 | ked `feat/uipf-ui` @ `e340d72a` (2026-10-27). 처음은 `82ac9340`, 같은 날 화면 키를 `Ked.`로 고정한 `e340d72a`로 다시 |
 | 반입 | 2026-10-27 · 원본 커밋의 blob을 `git archive`로 풀어 복사(`.meta`째) |
 | 원본 Unity | 6000.3.16f1. 이 저장소는 6000.6.2f1이다 — 높은 버전으로 여는 것이라 에셋도 들인다 |
 | GUID | 원본 `.meta` 160개 그대로. 이 저장소의 `.meta`와 겹침 0. 이 폴더 자신의 `KedUI.meta`만 이 저장소에서 만든 것 |

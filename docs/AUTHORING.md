@@ -55,7 +55,7 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 ├─ Screens/<묶음>/
 │   ├─ Scripts/                 화면 · 위젯 스크립트(UIBase<TRefs>)
 │   ├─ Prefabs/                 산출물
-│   ├─ Presentation/            <화면>Presentation.asset
+│   ├─ Presentation/            <화면 키>Presentation.asset
 │   ├─ Sprites/                 그 화면만 쓰는 그림(없으면 폴더도 없다)
 │   └─ Editor/                  빌드 명세 + 에디터 asmdef를 가리키는 .asmref
 └─ App/                         화면을 쓰는 앱 — 제 asmdef 한 쌍(런타임 · 에디터)
@@ -67,6 +67,7 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 - 화면 흐름, 앱 설정 값, 화면을 모은 캔버스, 글자 표(CSV 하나)는 묶음에 넣지 않는다. 화면을 쓰는 앱의 몫이다.
 - **게임 런타임에 매인 것은 앱에만 둔다.** 런타임 형식을 받는 항목 프리팹, 런타임 계약을 구현하는 어댑터, 런타임 형식의 데이터 — 묶음의 화면은 UI 부품(대사창 · 선택지 상자의 그리기)만 내놓고, 앱이 그 위에 계약을 잇는다. 코드는 묶음 asmdef가 이 프레임워크와 Unity 패키지만 참조해서, 에셋은 묶음 감사(`UIScreenUnits.Audit`)가 바깥을 가리키는 GUID를 찾아서 막는다.
 - **묶음은 옮겨도 돈다.** 뿌리를 고정 경로로 쓰지 않고 런타임 asmdef가 있는 폴더로 찾는다(이 프레임워크 코드의 자리도 asmdef로). 그래서 `Common` · `Screens`만 다른 저장소로 복사하면, 그 저장소의 앱이 같은 명세로 그 저장소의 Unity에서 다시 짓는다 — 이 저장소의 비주얼 노벨 샘플이 그렇게 들였다(아래 "참고 구현").
+- **옮겨 다니는 묶음은 화면 키를 고정한다.** 화면 키(`UIViewKey`, 기본은 타입 짧은 이름)는 프로젝트에서 하나여야 한다. `TitleScreen` · `SettingsPanel` 같은 이름은 들이는 프로젝트에도 흔하다 — ked 묶음을 이 저장소에 들이자 블랙홀 데모와 셋이 겹쳤다. 묶음의 화면 · 위젯마다 `[UIViewKey("<접두사>.<타입>")]`을 붙이고, Presentation 파일 이름 · `presentationId`도 그 키를 따른다. 앱의 검사가 접두사와 `presentationId` = 키를 본다(ked `KedUIValidate`).
 - **asmdef 아래의 `Editor` 폴더는 에디터 전용이 아니다.** 런타임 asmdef가 뿌리에 있으면 묶음 안의 `Editor/`도 그 아래라, `.asmref`로 에디터 asmdef에 붙여야 한다. 실행 쪽과 짝이 맞는다: `Common/Scripts` ↔ `Common/Editor`, `Screens/X/Scripts` ↔ `Screens/X/Editor`, `App/Runtime` ↔ `App/Editor`(앱은 제 asmdef 한 쌍).
 - 그림은 경로가 아니라 이름으로 찾게 하면, 공용과 화면 전용 사이를 옮겨도 명세를 고치지 않는다. 같은 이름은 둘 두지 않는다.
 

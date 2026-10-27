@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace Ked.Samples.UI
 {
     /// <summary>07 설정 · 음량 탭. UIPF Page(SettingsPanel의 PageRoot 아래). 값은 0–100으로 보이고 0–1로 넘긴다.</summary>
+    [UIViewKey("Ked.AudioSettingsPage")]
     public sealed class AudioSettingsPage : UIPage<AudioSettingsPage.Refs>
     {
         public enum Channel

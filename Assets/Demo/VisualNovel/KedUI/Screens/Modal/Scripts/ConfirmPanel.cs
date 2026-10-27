@@ -12,6 +12,7 @@ namespace Ked.Samples.UI
     /// 처음 하나만 처리한다 — 두 번 누르거나 Esc와 겹쳐도 콜백은 한 번이다.
     /// 버튼은 OnInitialize에서 한 번만 묶는다. 다시 열어도 리스너가 늘지 않는다.
     /// </summary>
+    [UIViewKey("Ked.ConfirmPanel")]
     public sealed class ConfirmPanel : UIPanel<ConfirmPanel.Refs>
     {
         public enum Refs

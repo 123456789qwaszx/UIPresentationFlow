@@ -11,6 +11,7 @@ namespace Ked.Samples.UI
     /// 저장·불러오기는 저장 슬롯이 있는 예제에만 보인다. 저장은 지금 저장할 수 없으면 막는다.
     /// "이 에피소드 건너뛰기"는 시안에 없지만 옛 화면의 기능(에피소드 스킵)을 잃지 않으려고 둔다.
     /// </summary>
+    [UIViewKey("Ked.SystemMenuPanel")]
     public sealed class SystemMenuPanel : UIPanel<SystemMenuPanel.Refs>
     {
         public enum Refs

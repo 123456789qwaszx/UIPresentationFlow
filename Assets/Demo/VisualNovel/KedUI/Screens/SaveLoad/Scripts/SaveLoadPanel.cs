@@ -10,6 +10,7 @@ namespace Ked.Samples.UI
     ///
     /// 뒤로(←)는 한 층 위로(메뉴), 닫기(×)는 메뉴까지 모두 닫는다. Esc는 뒤로와 같다.
     /// </summary>
+    [UIViewKey("Ked.SaveLoadPanel")]
     public sealed class SaveLoadPanel : UIPanel<SaveLoadPanel.Refs>
     {
         public const int SlotsPerPage = 6;

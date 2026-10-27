@@ -10,12 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 25e7e5a14ac8deb42a75b4539f9884c3, type: 3}
-  m_Name: SystemMenuPanelPresentation
+  m_Name: Ked.PlayScreenPresentation
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIPresentationSpec
-  presentationId: SystemMenuPanel
+  presentationId: Ked.PlayScreen
   baseTheme: {fileID: 0}
   baseLayout: {fileID: 0}
   baseImageTheme: {fileID: 0}
   imageThemes: []
   textBindings: {fileID: 0}
-  variants: []
+  variants:
+  - variantId: UltraWide_HudInBoard
+    priority: 10
+    condition:
+      themeId: 
+      localeId: 
+      usePlatform: 0
+      platform: 1
+      useLayoutClass: 1
+      layoutClass: 3
+      useAspectRatio: 0
+      aspectRule: 0
+      aspectMin: 1.5
+      aspectMax: 2.5
+    overrideTheme: {fileID: 0}
+    overrideLayout: {fileID: 11400000, guid: a6de7c86feaa4a549838494a84a99cca, type: 2}
+    overrideImageTheme: {fileID: 0}

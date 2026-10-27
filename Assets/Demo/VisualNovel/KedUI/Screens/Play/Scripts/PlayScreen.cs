@@ -17,6 +17,7 @@ namespace Ked.Samples.UI
     /// 대사창과 선택지 상자는 UI 쪽 부품(PlayDialogueBox · PlayOptionsBox)으로 내준다. 이 화면은 재생 런타임을 모르고,
     /// 재생 쪽 계약은 앱이 그 부품 위에 구현한다(ked: App/Runtime/Play). 재생 쪽도 화면을 모른다.
     /// </summary>
+    [UIViewKey("Ked.PlayScreen")]
     public sealed class PlayScreen : UIRoot<PlayScreen.Refs>, ILocalizedView
     {
         public enum Refs

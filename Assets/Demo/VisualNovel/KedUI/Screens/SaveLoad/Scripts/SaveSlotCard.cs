@@ -12,6 +12,7 @@ namespace Ked.Samples.UI
     /// 그림 창: 지금 저장은 화면을 찍지 않는다. 그래서 save_slot 그림의 밝은 자리(알려진 자리 그림)를 그대로 두고,
     /// 그 위에 실제 메타데이터(장면·플레이 시간)를 적는다. 화면 캡처는 별도 작업이다.
     /// </summary>
+    [UIViewKey("Ked.SaveSlotCard")]
     public sealed class SaveSlotCard : UIBase<SaveSlotCard.Refs>
     {
         public enum Refs

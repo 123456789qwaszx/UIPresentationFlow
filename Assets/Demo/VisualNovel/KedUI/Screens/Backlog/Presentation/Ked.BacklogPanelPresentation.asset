@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 25e7e5a14ac8deb42a75b4539f9884c3, type: 3}
-  m_Name: NoticePanelPresentation
+  m_Name: Ked.BacklogPanelPresentation
   m_EditorClassIdentifier: UIPresentationFlow.Runtime::UIPresentationSpec
-  presentationId: NoticePanel
+  presentationId: Ked.BacklogPanel
   baseTheme: {fileID: 0}
   baseLayout: {fileID: 0}
   baseImageTheme: {fileID: 0}

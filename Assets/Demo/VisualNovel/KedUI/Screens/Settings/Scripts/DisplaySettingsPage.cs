@@ -8,6 +8,7 @@ namespace Ked.Samples.UI
     /// 키 목록은 재생 입력(VNAdvanceInputBindings)의 기본 키다 — 인스펙터에서 키를 바꾸면 이 안내도 같이 고쳐야 한다.
     /// 에디터의 게임 창은 화면 모드를 바꾸지 않는다(빌드에서만). 그 사실을 화면에 적는다.
     /// </summary>
+    [UIViewKey("Ked.DisplaySettingsPage")]
     public sealed class DisplaySettingsPage : UIPage<DisplaySettingsPage.Refs>
     {
         public enum Refs

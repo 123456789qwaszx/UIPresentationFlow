@@ -6,6 +6,7 @@ namespace Ked.Samples.UI
     /// 10 안내 팝업 — 확인 버튼 하나. 확인 팝업과 같은 Panel 규칙(모달·한 번만 처리).
     /// 성공 표시(체크)는 실제로 끝난 일에만 쓴다(저장 완료 등). 실패는 체크 대신 경고 표시와 실제 이유.
     /// </summary>
+    [UIViewKey("Ked.NoticePanel")]
     public sealed class NoticePanel : UIPanel<NoticePanel.Refs>
     {
         public enum Refs

@@ -10,6 +10,7 @@ namespace Ked.Samples.UI
     /// 줄은 ScrollRect 안의 VerticalLayoutGroup에 견본(LogRowTemplate)을 복제해 쌓는다. 열면 맨 아래(지금 줄)로 간다.
     /// 지금 줄은 옅은 청록 바탕으로 표시한다.
     /// </summary>
+    [UIViewKey("Ked.BacklogPanel")]
     public sealed class BacklogPanel : UIPanel<BacklogPanel.Refs>
     {
         public enum Refs

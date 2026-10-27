@@ -9,6 +9,7 @@ namespace Ked.Samples.UI
     /// 11 설정 · 대사 탭. 글자 크기 · 글자 출력 속도 · 대사창 불투명도. 미리보기는 고른 속도로 글자를 찍고
     /// 고른 불투명도로 바탕을 칠한다(글자 크기는 UIPF가 미리보기 글자에도 곱한다 — Styled 등록).
     /// </summary>
+    [UIViewKey("Ked.TextSettingsPage")]
     public sealed class TextSettingsPage : UIPage<TextSettingsPage.Refs>
     {
         private const float PreviewHoldSeconds = 1.2f;

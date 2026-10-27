@@ -7,6 +7,7 @@ namespace Ked.Samples.UI
     /// 07 설정(+ 11 대사 · 12 재생 · 13 화면·조작). UIPF Panel이자 Page Owner — 탭 넷이 PageRoot 아래의 Page 넷을
     /// UIManager.SwitchPage로 바꿔 낀다. 바깥(제목·탭·기본값 복원·적용 안내)은 이 Panel이, 탭 안은 각 Page가 그린다.
     /// </summary>
+    [UIViewKey("Ked.SettingsPanel")]
     public sealed class SettingsPanel : UIPanel<SettingsPanel.Refs>, IUIPageOwner
     {
         public const int TabCount = 4;
