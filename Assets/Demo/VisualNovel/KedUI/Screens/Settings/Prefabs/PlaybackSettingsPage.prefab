@@ -65,10 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uBE60\uB974\uAC8C \uC7AC\uC0DD\uC740 S \uD0A4\uB85C \uCF1C\uACE0 \uB055\uB2C8\uB2E4.
-    \uBC30\uC18D\uC740 \uB2E4\uC74C\uC5D0 \uCF24 \uB54C\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4.\n\uC77D\uC740
-    \uB300\uC0AC\uB9CC \uB118\uAE30\uAE30\uB294 \uC7AC\uC0DD \uAE30\uB85D\uC5D0 \uC77D\uC74C
-    \uD45C\uC2DC\uAC00 \uC5C6\uC5B4 \uC81C\uACF5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+  m_text: "\uBE60\uB974\uAC8C \uC7AC\uC0DD\uC740 S \uD0A4\uB85C \uCF1C\uACE0 \uB055\uB2C8\uB2E4. \uBC30\uC18D\uC740 \uB2E4\uC74C\uC5D0 \uCF24 \uB54C\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4.\n\uC77D\uC740 \uB300\uC0AC\uB9CC \uB118\uAE30\uAE30\uB294 \uC7AC\uC0DD \uAE30\uB85D\uC5D0 \uC77D\uC74C \uD45C\uC2DC\uAC00 \uC5C6\uC5B4 \uC81C\uACF5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 758742af67c1c6843bbfdf0dab324a47, type: 2}
   m_sharedMaterial: {fileID: -4823895645273756883, guid: 758742af67c1c6843bbfdf0dab324a47, type: 2}
@@ -118,7 +115,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -255,7 +252,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -392,7 +389,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -529,7 +526,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -666,7 +663,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -803,7 +800,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -1281,8 +1278,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC790\uB3D9 \uC9C4\uD589\uACFC \uBE60\uB974\uAC8C \uC7AC\uC0DD\uD560
-    \uB54C\uC758 \uB3D9\uC791\uC744 \uC124\uC815\uD569\uB2C8\uB2E4."
+  m_text: "\uC790\uB3D9 \uC9C4\uD589\uACFC \uBE60\uB974\uAC8C \uC7AC\uC0DD\uD560 \uB54C\uC758 \uB3D9\uC791\uC744 \uC124\uC815\uD569\uB2C8\uB2E4."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 758742af67c1c6843bbfdf0dab324a47, type: 2}
   m_sharedMaterial: {fileID: -4823895645273756883, guid: 758742af67c1c6843bbfdf0dab324a47, type: 2}
@@ -1332,7 +1328,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -1823,7 +1819,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -2358,7 +2354,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
