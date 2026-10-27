@@ -184,6 +184,8 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 
 **실행**: 메뉴 **UI Demo > Build BlackHole Demo Scene** → `Assets/Demo/BlackHole/Scenes/BlackHoleDemo` 플레이. 메뉴가 한글 글꼴을 데모 글자만 정적 아틀라스로 굽고, 씬(캔버스·층·화면·참조)을 코드로 만든다.
 
+일시 정지 창은 빌드 명세(`Editor/Screens/PausePanelSpec`)도 있다. **UI Demo > Build BlackHole Screens**가 같은 자리 · 같은 GUID로 프리팹을 다시 짓고 검사한다 — 게임의 손 프리팹을 명세로 옮겨도 같은 화면이 되는지, 화면 짓기 도구(아래)가 다른 게임의 부품 모양으로도 쓰이는지 보는 시험이다. 나머지 여섯 화면은 손 프리팹 그대로다.
+
 | 해 볼 것 | 확인되는 것 |
 |---|---|
 | 설정 → 다크 모드 · 언어 · 글자 크기 | `SetContext`: 테마 그림·색, 번역, 언어별 글꼴, 글자 배율이 열린 창에서 그대로 바뀜 (GIF 1) |
@@ -208,6 +210,23 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 | `Image Bindings/Sync Selected Theme Folder` | Image Theme의 Binding마다 그 폴더에서 Ref 이름과 같은 스프라이트를 찾아 연결 — 그림 파일 이름만 맞추면 테마가 채워진다 |
 | `Image Bindings/Validate Selected Theme` | Image Theme 검사 |
 | `Check View Keys` | 화면 데이터 키 중복, 없는 화면을 가리키는 Binding(스크립트를 다시 읽을 때마다 중복은 자동 검사) |
+| `Validate Screens` | 프로젝트의 화면 프리팹과 Presentation 검사 — Refs 이름이 정확히 하나인가(등록하는 화면은 빠짐도), Presentation 오브젝트 이름 = 파일 이름. 손으로 만든 프리팹도 같이 본다. 배치 모드 `-executeMethod UIScreenValidation.ValidateBatch` |
+
+### 화면 짓기 도구 — `Editor/UI/Authoring`
+
+빌드 명세로 화면 프리팹을 짓는 앱이 쓰는 부품([docs/AUTHORING.md](docs/AUTHORING.md)). 자리 · 저장 · 검사만 맡고, 그림 · 글꼴 · 버튼의 모양은 게임의 부품 키트가 정한다. 화면 목록과 빌드 순서도 앱의 빌드 메뉴가 쥔다.
+
+| | 하는 일 |
+|---|---|
+| `UINode` · `UINodes` · `UIAnchor` | 시안 좌표(왼쪽 위 원점, 판 크기는 게임마다)를 앵커 좌표로 — `Node` · `Fill` · `Stretch` · `StretchX` |
+| `UIPrefabs` · `UISerialized` | 같은 자리에 덮어써 저장(GUID 유지), 플레이 중 빌드 거부, 직렬화 칸 쓰기 |
+| `UIPresentationAssets` | 화면 Presentation을 처음 한 번만 만든다(id = 화면 키, 이름 = 파일 이름) |
+| `UISpriteIndex` | 그림을 경로가 아니라 이름으로 찾는다(겹치는 이름은 찾지 않는다, 폴더 빼기) |
+| `UIScreenUnits` | 화면 묶음 규칙 — 생성물 자리, 묶음 밖을 가리키는지 감사 |
+| `UIScreenValidation` | 위 `Validate Screens`의 검사. 앱이 폴더와 엄한 검사(위젯 Refs · presentationId)를 골라 부른다 |
+| `UIFontAssets` | TMP 동적 글꼴 만들기 · 비우기 · 굵기 표 |
+
+에디터 asmdef `UIPresentationFlow.Editor`에 든다 — asmdef를 쓰는 앱의 빌드 명세가 참조할 수 있게.
 
 ## 실사용: 블랙홀 키우기
 
@@ -222,7 +241,7 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 비주얼 노벨 연출 런타임의 예제 UI 화면 12개(Root 2 · Panel 6 · Page 4)를 이 프레임워크 위에 다시 세웠다. 프레임워크는 복사해 들였고(원본과 차이 0), 화면은 C# **빌드 명세**로 정의해 빌더가 그 프로젝트의 Unity로 프리팹을 짓는다 — AI가 화면 스크립트와 명세를 쓰고, 개발자가 Unity에서 검수했다. 화면 하나의 코드 · 프리팹 · 그림 · Presentation을 한 묶음으로 둔다.
 
 - 원칙으로 정리한 것: [docs/AUTHORING.md](docs/AUTHORING.md) — 명세가 원본, 프리팹은 산출물, 화면 묶음, 특수 화면, 검사, 배포, 사람의 역할
-- 이 레포로 되돌린 것: 버튼 위 끌기를 목록에 넘기기, Panel 아래 Root 입력 막기, Panel을 닫으면 포커스 되돌리기, 복사 안내(아래 "요구 사항"). 범위와 다음 일은 [docs/PLAN_from-ked.md](docs/PLAN_from-ked.md)
+- 이 레포로 되돌린 것: 버튼 위 끌기를 목록에 넘기기, Panel 아래 Root 입력 막기, Panel을 닫으면 포커스 되돌리기, 복사 안내(아래 "요구 사항"), 빌더의 공용 부분(위 "화면 짓기 도구" — ked의 빌더는 그것을 쓰고 부품 모양 · 명세 · 앱 빌드만 남겼다). 범위와 다음 일은 [docs/PLAN_from-ked.md](docs/PLAN_from-ked.md)
 
 ## 설계 결정
 
@@ -247,11 +266,12 @@ Assets/
 │  ├─ Display/        DisplayContext, 화면비 등급, 해상도 변화 감지
 │  ├─ Localization/   Localizer(CSV), ViewTexts
 │  └─ Demo/           Adaptive UI 데모 코드
-├─ Editor/UI/         Binding 스캐너·빌더·검사, View Key 검사
+├─ Editor/UI/         Binding 스캐너·빌더·검사, View Key 검사 (에디터 asmdef UIPresentationFlow.Editor)
+│  └─ Authoring/      화면 짓기 도구 — 시안 좌표 노드, 저장, Presentation, 그림 이름, 화면 묶음, 화면 검사, 동적 글꼴
 ├─ Shaders/           화면 전환 아이리스
 ├─ Demo/
 │  ├─ AdaptiveUI/     Adaptive UI 데모 에셋
-│  └─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더)
+│  └─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더, 일시 정지 창의 빌드 명세)
 └─ UI/                Adaptive UI 데모의 Binding·Theme 에셋
 ```
 
@@ -264,7 +284,7 @@ UPM 패키지가 아니다. 다른 프로젝트에서는 `Scripts/UI` · `Script
 
 복사할 때(ked-presentation-runtime에서 겪은 것):
 
-- **폴더 층을 그대로 둔다** — `Scripts/`와 `Editor/`가 형제여야 한다. `Scripts/` 층을 걷어 런타임 asmdef를 위로 올리면 `Editor/UI`가 그 asmdef 아래로 들어가는데, Unity는 asmdef 아래의 `Editor` 폴더를 에디터 전용으로 보지 않는다. 에디터 코드가 런타임 어셈블리에 섞여 플레이어 빌드가 깨진다.
+- **폴더 층을 그대로 둔다** — `Scripts/`와 `Editor/`가 형제여야 한다. Unity는 asmdef 아래의 `Editor` 폴더를 에디터 전용으로 보지 않는다. ked에서는 `Scripts/` 층을 걷었다가 에디터 코드가 런타임 어셈블리에 섞였다(그때 `Editor/UI`에는 asmdef가 없었다 — 지금은 에디터 asmdef가 있어 섞이지는 않는다). 층을 그대로 두면 원본과 대조도 쉽다.
 - **`.meta`째 복사한다** — GUID가 원본과 같아야 화면 프리팹의 스크립트 참조가 이어진다.
 - **asmdef는 고치지 않는다**(`autoReferenced: true`). 들이는 프로젝트에 같은 전역 이름(`UIBase` · `UIManager` 등)이 이미 있으면 그쪽을 먼저 걷는다.
 - **에셋은 내리지 않는다** — 이 레포(6000.6)에서 직렬화한 프리팹·에셋을 낮은 버전으로 옮기지 않는다. 코드와 셰이더만 들이고 에셋은 그 프로젝트에서 만든다.

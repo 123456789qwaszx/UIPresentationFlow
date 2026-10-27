@@ -25,6 +25,21 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 생성한 에셋은 **오브젝트 이름 = 파일 이름**으로 둔다. 파일 이름만 바꾸면 Unity가 "main object name should match the asset filename" 경고를 낸다. 프레임워크는 Presentation을 오브젝트 이름이 아니라 `presentationId`로 찾으므로 이름을 맞춰도 동작은 같다.
 
+**플레이 중에는 짓지 않는다.** 플레이 중에 만든 오브젝트는 Awake가 돌아서, 실행 중에만 붙는 것(버튼 연출이 붙이는 `UI_EventHandler` 등)이 섞인 채 저장된다. ked에서 이전 빌드가 그렇게 저장된 것을 편집 모드로 다시 지으며 알았다. `UIPrefabs.CanBuild`가 막는다.
+
+## 도구 — 누가 무엇을 맡나
+
+| 맡는 쪽 | 무엇 | 어디 |
+|---|---|---|
+| 이 프레임워크 | 시안 좌표 → 앵커(`UINodes`), 저장 · 플레이 중 거부(`UIPrefabs`), Presentation 한 번 만들기(`UIPresentationAssets`), 그림을 이름으로(`UISpriteIndex`), 화면 묶음 규칙 · 감사(`UIScreenUnits`), 검사(`UIScreenValidation`), 동적 글꼴(`UIFontAssets`) | `Editor/UI/Authoring` (에디터 asmdef `UIPresentationFlow.Editor`) |
+| 게임의 부품 키트 | 그림 · 글꼴 · 색 · 버튼 꼴 — `TextButton`, `IconButton`, 슬라이더 … | 게임의 `Common/Editor` |
+| 화면의 빌드 명세 | 그 화면의 노드와 시안 숫자 — 키트로 짓는다 | `Screens/<묶음>/Editor` |
+| 앱 빌드 | 화면 목록과 순서(Page 다음 그 주인, 항목 다음 캔버스), 캔버스, 앱 데이터, 메뉴 | 게임의 앱 빌드 |
+
+명세를 프레임워크가 스스로 찾지 않는다. 앱의 빌드 메뉴가 명세를 순서대로 부르고 뿌리 경로를 코드 상수로 넘긴다 — 순서와 의존이 코드에 드러나고, 설정 자산이 하나 줄어든다.
+
+시안 판 크기는 게임마다 다르다(ked 1600×900, 블랙홀 1920×1080). 화면 뿌리를 만들 때 판 사각형을 넘기면, 그 아래 노드는 부모의 시안 사각형을 기준으로 앵커 좌표를 계산한다.
+
 ## 화면 묶음
 
 화면 하나를 묶음 하나로 둔다 — 그 화면의 코드 · 프리팹 · 그림 · Presentation이 한 폴더에 있다.
@@ -34,7 +49,7 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 ├─ <런타임 asmdef>             뿌리에 둔다(Common · Screens · 앱 코드를 덮는다)
 ├─ Common/                      여러 화면이 같이 쓰는 것 — 어느 화면도 이름으로 알지 않는다
 │   ├─ Scripts/                 부품 키트(버튼 · 슬라이더 …)
-│   ├─ Editor/                  키트로 짓는 도구 · 묶음 규칙 · 검사 + 에디터 asmdef
+│   ├─ Editor/                  키트로 짓는 도구 · 묶음 설정 + 에디터 asmdef(UIPresentationFlow.Editor를 참조)
 │   ├─ Sprites/                 둘 이상의 화면이 쓰는 그림
 │   └─ Fonts/
 ├─ Screens/<묶음>/
@@ -64,11 +79,11 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 ## 검사
 
-빌드와 따로 돌 수 있어야 한다. 그래야 손으로 만든 프리팹도 같은 그물을 지난다.
+빌드와 따로 돌 수 있어야 한다. 그래야 손으로 만든 프리팹도 같은 그물을 지난다. 메뉴 `Tools/UI Presentation/Validate Screens`는 프로젝트 전체를 보고, 앱은 `UIScreenValidation.Run`에 자기 폴더와 엄한 검사를 골라 넘긴다.
 
-- **Refs** — 화면 · 위젯마다 `Refs`의 이름이 제 아래에 정확히 하나 있다(`UIBase`는 이름으로 첫 번째를 잡는다).
-- **Presentation** — 오브젝트 이름이 파일 이름과 같고, `presentationId`가 비지 않았다.
-- **그림 이름** — 같은 이름이 둘 없다.
+- **Refs** — 화면 · 위젯마다 `Refs`의 이름이 제 아래에 몇 개인가(`UIBase`는 이름으로 첫 번째를 잡는다). 둘 이상이면 문제. 없으면 등록하는 화면(Root · Panel · Page · Overlay)은 문제고, 위젯은 일부만 쓸 수 있어(한 프리팹, 여러 꼴) 기본으로는 넘어간다 — 앱이 엄하게 볼 수 있다.
+- **Presentation** — 오브젝트 이름이 파일 이름과 같다. `presentationId`가 비면 `UIContext.PresentationOverrides`로 Variant를 고를 수 없을 뿐 틀린 것은 아니라, 앱이 고른다(ked는 화면 키를 id로 쓰므로 엄하게).
+- **그림 이름** — 같은 이름이 둘 없다(그림을 이름으로 찾는 앱).
 - **묶음이 닫혀 있다** — 묶음 안의 에셋이 가리키는 것이 제 묶음 · Common · 이 프레임워크 · 게임 쪽 프레임워크 · Unity 패키지뿐이다. 다른 화면 묶음을 가리키지 않는다.
 
 배치 모드 진입점(`-executeMethod`)을 두면 사람이 메뉴를 누르지 않아도 빌드 · 검사를 돌릴 수 있다. Unity가 그 프로젝트를 열고 있으면 배치 모드는 프로젝트를 열지 못한다.
@@ -86,7 +101,12 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 ## 재생성
 
-같은 명세로 다시 빌드하면 산출물이 같다. ked에서 여러 번 빌드한 뒤 묶음의 프리팹 13개(화면 12 · 선택지 항목 1)와 캔버스의 git 변경이 0이었고, Unity가 같은 내용이라 파일을 다시 쓰지도 않았다(2026-10-27, 같은 PC · 같은 버전).
+같은 명세로 다시 빌드하면 산출물의 내용이 같다. 다만 파일이 바이트까지 같지는 않을 수 있다.
+
+- **이름이 겹치는 오브젝트** — Unity는 덮어쓸 때 오브젝트 이름으로 옛 파일 안의 fileID와 짝을 맞춘다. 같은 위젯이 여럿이면(ked 저장/불러오기의 슬롯 카드 여섯 장 — `CardButton` 등이 여섯 개) 짝이 매번 달라 fileID가 바뀐다. 이름이 하나뿐인 오브젝트는 그대로다. 내용과 GUID는 같으므로, 다른 에셋이 프리팹 안쪽 오브젝트를 fileID로 가리키게 두지 않는다(캔버스의 중첩 프리팹 덮어쓰기는 캔버스도 빌드가 다시 만든다).
+- **플레이 중 빌드** — 위 "원본과 산출물". ked의 처음 관찰("여러 번 빌드해도 git 변경 0")은 플레이 중에 돈 빌드끼리였던 것으로 보인다(커밋된 프리팹에 실행 중에만 붙는 `UI_EventHandler`가 있었다). 편집 모드로 두 번 지으니 슬롯 카드가 있는 프리팹만 서로 달랐고 나머지는 같았다(2026-10-27).
+
+이름이 모두 다른 화면은 fileID가 그대로라, 손 프리팹을 같은 자리에 명세로 다시 지으면 git diff가 곧 "명세가 무엇을 다르게 지었나"다.
 
 ## 사람의 역할
 
@@ -98,10 +118,16 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 ## 참고 구현
 
-`ked-presentation-runtime`의 `Assets/Samples/KedUI`:
+**ked-presentation-runtime** `Assets/Samples/KedUI` — 12화면, 화면 묶음 구조:
 
-- `Common/Editor` — 키트로 짓는 도구(`KedUIKit`), 묶음 규칙 · 그림 색인 · 묶음 감사(`KedUIUnits`), 검사 메뉴(`KedUIValidate`), 동적 글꼴 비우기(`KedUIFonts`)
+- `Common/Editor` — 부품 키트(`KedUIKit` — KedUI의 그림 · 글꼴 · 버튼 꼴), 묶음 설정(`KedUIUnits` — 뿌리 · 허용한 곳), 검사 메뉴(`KedUIValidate` — 이 프레임워크의 검사를 엄하게 + 묶음 감사 + 그림 이름), 글꼴(`KedUIFonts`)
 - `Screens/*/Editor` — 화면 빌드 명세 8개
 - `Editor` — 화면 목록과 캔버스를 짓는 앱 빌드(`KedUIBuild`)
 
-이 가운데 어느 게임에도 쓸 수 있는 부분을 이 저장소로 옮기는 일은 [PLAN_from-ked](PLAN_from-ked.md)의 B다.
+**이 저장소의 블랙홀 데모** `Assets/Demo/BlackHole` — 묶음 구조가 아닌 폴더에서 같은 도구를 쓴다:
+
+- `Editor/BlackHoleScreenKit` — 블랙홀의 부품 꼴(Sprite Swap 그림 버튼, 먹색 글자). 그림은 `Art/GUI`에서 이름으로 찾되 `Dark/`(같은 이름의 어두운 판)는 뺀다
+- `Editor/Screens/PausePanelSpec` — 게임의 손 프리팹을 명세로 옮긴 것. 시안 판 1920×1080
+- `Editor/BlackHoleScreenBuild` — 메뉴 `UI Demo/Build BlackHole Screens`(지금은 일시 정지 창 하나)
+
+옮겨 온 경위와 남은 일은 [PLAN_from-ked](PLAN_from-ked.md)의 B.
