@@ -36,6 +36,7 @@ public sealed partial class UIManager
         ApplyPresentation(root, presentation, UnityDisplayContextProvider.GetCurrent());
 
         SetVisible(root, true);
+        ApplyRootInputState();
 
         afterPresented?.Invoke(root);
 

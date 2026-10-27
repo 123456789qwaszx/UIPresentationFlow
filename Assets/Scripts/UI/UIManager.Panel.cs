@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public sealed partial class UIManager
 {
@@ -21,12 +22,17 @@ public sealed partial class UIManager
 
         T panel = Require<T>();
 
-        if (_panelStack.Contains(panel))
+        // 되돌아가기면 그 Panel 안의 선택(바로 위 Panel을 쌓던 순간)을, 새로 쌓으면 지금 선택을 기억한다.
+        GameObject returnSelection = null;
+        bool returning = _panelStack.Contains(panel);
+
+        if (returning)
         {
-            PopUntil(panel, afterClosed);
+            returnSelection = PopUntil(panel, afterClosed);
         }
         else
         {
+            RememberSelection(panel);
             _panelStack.Push(panel);
         }
 
@@ -38,12 +44,46 @@ public sealed partial class UIManager
         ApplyPresentation(panel, presentation, display);
 
         ApplyPanelStackState();
+        ApplyRootInputState();
+
+        if (returning)
+            RestoreSelection(returnSelection);
 
         afterPresented?.Invoke(panel);
         return panel;
     }
 
     public UIBase PopPanel(Action<UIBase> afterClosed = null)
+    {
+        UIBase popped = PopTopPanel(afterClosed);
+        if (popped == null)
+            return null;
+
+        ApplyRootInputState();
+        RestoreSelection(TakeSelection(popped));
+
+        return popped;
+    }
+
+    // 전부 꺼내면 맨 처음 Panel을 쌓기 전의 선택으로 돌아간다(중간 선택을 거치지 않는다).
+    public void PopAllPanels(Action<UIBase> afterClosed = null)
+    {
+        if (_panelStack.Count == 0)
+            return;
+
+        GameObject firstSelection = null;
+
+        while (_panelStack.Count > 0)
+        {
+            UIBase popped = PopTopPanel(afterClosed);
+            firstSelection = TakeSelection(popped);
+        }
+
+        ApplyRootInputState();
+        RestoreSelection(firstSelection);
+    }
+
+    private UIBase PopTopPanel(Action<UIBase> afterClosed)
     {
         if (_panelStack.Count == 0)
             return null;
@@ -72,12 +112,6 @@ public sealed partial class UIManager
         return popped;
     }
 
-    public void PopAllPanels(Action<UIBase> afterClosed = null)
-    {
-        while (_panelStack.Count > 0)
-            PopPanel(afterClosed);
-    }
-
     public void ReapplyVisible(in DisplayContext display)
     {
         ReapplyCurrentRoot(display);
@@ -91,14 +125,18 @@ public sealed partial class UIManager
         ReapplyOverlays(display);
     }
 
-    private void PopUntil(
+    // 돌려주는 것: target 바로 위 Panel을 쌓던 순간의 선택(target 안의 것). 꺼낸 것이 없으면 null.
+    private GameObject PopUntil(
         UIBase target,
         Action<UIBase> afterClosed = null)
     {
+        GameObject selectionInTarget = null;
+
         while (_panelStack.Count > 0 &&
                _panelStack.Peek() != target)
         {
             UIBase popped = _panelStack.Pop();
+            selectionInTarget = TakeSelection(popped);
 
             ClosePage(popped);
 
@@ -112,6 +150,8 @@ public sealed partial class UIManager
 
             afterClosed?.Invoke(popped);
         }
+
+        return selectionInTarget;
     }
 
     // Keep live panels in sync with the current display.

@@ -65,7 +65,7 @@ flowchart LR
 | 층 | 역할 | 코드 |
 |---|---|---|
 | **View** | `UIBase<TRefs>`. `Refs` 열거형의 이름 = 프리팹 자식 이름(계약). `View.Button(Refs.X)`처럼 꺼내 쓰고, 사건을 알린다. 코드로 만든 글자·그림은 `Styled`에 등록 | `Scripts/UI` |
-| **UIManager** | 네 층의 수명과 표시. Root(한 장) · Panel(쌓임: 아래 창은 흐려지고 입력을 받지 않으며, 정한 깊이를 넘으면 꺼진다) · Page(Owner 안의 교체 영역, Owner가 닫히면 같이 닫힘) · Overlay(쌓이지 않음, 여럿 동시에 — 알림·엔딩). 컨텍스트·디스플레이가 바뀌면 보이는 것만 다시 적용 | `Scripts/UI/UIManager.*.cs` |
+| **UIManager** | 네 층의 수명과 표시. Root(한 장) · Panel(쌓임: 아래 창은 흐려지고 입력을 받지 않으며, 정한 깊이를 넘으면 꺼진다. Panel이 열린 동안 Root도 키보드·패드 입력을 받지 않고, 닫으면 연 순간의 포커스로 돌아간다) · Page(Owner 안의 교체 영역, Owner가 닫히면 같이 닫힘) · Overlay(쌓이지 않음, 여럿 동시에 — 알림·엔딩). 컨텍스트·디스플레이가 바뀌면 보이는 것만 다시 적용 | `Scripts/UI/UIManager.*.cs` |
 | **Presentation** | 화면 하나가 *어떻게 보이는지*의 데이터: 기본값 + 조건부 Variant 규칙 | `Scripts/Presentation` |
 | **Resolver** | `(Presentation, UIContext, DisplayContext) → Resolved → Patch 목록`. Unity 전역 상태(`Screen`, `Application`)를 읽지 않아 같은 입력은 같은 결과. 선택 과정을 Trace로 남긴다 | `Scripts/Presentation/UIResolver.cs`, `Rules/` |
 | **Applier** | 패치가 바꾸는 값(폰트·크기·색·앵커·그림·버튼 상태 그림)의 원래 값을 기억했다가, 다시 적용할 때 먼저 되돌린다. 테마를 오가도 값이 누적되지 않는다 | `Scripts/Presentation/Patches` |
@@ -112,7 +112,7 @@ flowchart LR
 
 ### 버튼 사건
 
-`UI_EventHandler`가 EventSystem 콜백을 일관된 사건으로 바꾼다: 드래그·길게 누름은 클릭을 막고, 들어감/나감은 항상 짝이며(비활성화되면 나감을 보냄), `Selectable`이 막혀 있으면 클릭을 보내지 않는다. `ButtonFeedback.Bind` 한 줄이 클릭 처리 + 크기 연출 + 소리(앱이 `IButtonSounds`로 넣음)를 묶는다.
+`UI_EventHandler`가 EventSystem 콜백을 일관된 사건으로 바꾼다: 드래그·길게 누름은 클릭을 막고, 들어감/나감은 항상 짝이며(비활성화되면 나감을 보냄), `Selectable`이 막혀 있으면 클릭을 보내지 않는다. 끌기를 받는 쪽이 없는 버튼은 끌기를 부모(스크롤 목록 등)에 넘긴다 — 목록 안의 버튼 위에서 끌어도 목록이 끌린다. `ButtonFeedback.Bind` 한 줄이 클릭 처리 + 크기 연출 + 소리(앱이 `IButtonSounds`로 넣음)를 묶는다.
 
 ## 사용법
 
@@ -217,6 +217,13 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 - 버튼 연출·소리를 `ButtonFeedback` 한 길로, 화면 전환(아이리스)을 공용 부속으로 통일
 - 게임에서 생긴 것들을 이 레포로 되돌렸다: Overlay 층, 공유 디자인 에셋(FontSet·Palette·SpriteSet), 코드 요소 스타일(Styled), 버튼 상태 그림 테마, 현지화, 데이터 키, 공용 연출·위젯
 
+## 실사용: ked-presentation-runtime
+
+비주얼 노벨 연출 런타임의 예제 UI 화면 12개(Root 2 · Panel 6 · Page 4)를 이 프레임워크 위에 다시 세웠다. 프레임워크는 복사해 들였고(원본과 차이 0), 화면은 C# **빌드 명세**로 정의해 빌더가 그 프로젝트의 Unity로 프리팹을 짓는다 — AI가 화면 스크립트와 명세를 쓰고, 개발자가 Unity에서 검수했다. 화면 하나의 코드 · 프리팹 · 그림 · Presentation을 한 묶음으로 둔다.
+
+- 원칙으로 정리한 것: [docs/AUTHORING.md](docs/AUTHORING.md) — 명세가 원본, 프리팹은 산출물, 화면 묶음, 특수 화면, 검사, 배포, 사람의 역할
+- 이 레포로 되돌린 것: 버튼 위 끌기를 목록에 넘기기, Panel 아래 Root 입력 막기, Panel을 닫으면 포커스 되돌리기, 복사 안내(아래 "요구 사항"). 범위와 다음 일은 [docs/PLAN_from-ked.md](docs/PLAN_from-ked.md)
+
 ## 설계 결정
 
 - **결정은 순수하게.** Variant 선택은 `Screen`·`Application`을 읽지 않고 `DisplayContext` 스냅샷을 받는다. 같은 입력은 어느 기기에서든 같은 결과이고, `TraceEnabled`를 켜면 왜 그 Variant를 골랐는지 줄 단위로 남는다. 출시 빌드에서는 끈다.
@@ -226,6 +233,7 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 - **프리팹 이름이 계약.** `Refs` 열거형과 자식 이름이 1:1이고, 어긋나면 등록할 때 바로 알린다. 바인딩 에셋도 같은 이름을 쓴다.
 - **화면비는 등급으로.** 규칙마다 숫자를 적지 않고 `DisplayLayoutClassifier`의 네 등급을 쓴다. 문턱값이 한 곳에 있어 정책을 바꿔도 규칙은 그대로다.
 - **공유 값은 한 곳에.** 글꼴·색·스프라이트 변형은 `UIThemeAssets` 하나. 화면의 ThemeSpec에는 역할 크기만 남는다.
+- **화면은 명세로 짓는다.** 화면 스크립트와 빌드 명세가 원본이고, 프리팹은 빌더가 그 프로젝트의 Unity로 만드는 산출물이다. AI도 사람도 프리팹의 직렬화 데이터를 손으로 쓰지 않고, 사람은 결과를 보고 판정한다. 명세로 나타내기 어려운 화면만 프리팹을 직접 만들되 같은 `UIBase<TRefs>`와 같은 검사를 쓴다 — [docs/AUTHORING.md](docs/AUTHORING.md)
 
 ## 폴더
 
@@ -252,7 +260,15 @@ Assets/
 - Unity **6000.6.2f1**, `com.unity.ugui` 2.6.0(TextMeshPro 포함)
 - 블랙홀 데모: Input System 1.20.0, URP 17.6.0(배경 셰이더)
 
-UPM 패키지가 아니다. 다른 프로젝트에서는 `Scripts/UI` · `Scripts/Presentation` · `Scripts/Display` · `Scripts/Localization` · `Editor/UI` · `Shaders`를 복사해 쓴다(런타임 asmdef `UIPresentationFlow.Runtime`). 데모 폴더는 필요 없다.
+UPM 패키지가 아니다. 다른 프로젝트에서는 `Scripts/UI` · `Scripts/Presentation` · `Scripts/Display` · `Scripts/Localization` · `Scripts/UIPresentationFlow.Runtime.asmdef` · `Editor/UI` · `Shaders`를 복사해 쓴다. 데모 폴더는 필요 없다. 코드는 Unity 6000.3(ugui 2.0)에서도 컴파일된다(ked-presentation-runtime에서 확인).
+
+복사할 때(ked-presentation-runtime에서 겪은 것):
+
+- **폴더 층을 그대로 둔다** — `Scripts/`와 `Editor/`가 형제여야 한다. `Scripts/` 층을 걷어 런타임 asmdef를 위로 올리면 `Editor/UI`가 그 asmdef 아래로 들어가는데, Unity는 asmdef 아래의 `Editor` 폴더를 에디터 전용으로 보지 않는다. 에디터 코드가 런타임 어셈블리에 섞여 플레이어 빌드가 깨진다.
+- **`.meta`째 복사한다** — GUID가 원본과 같아야 화면 프리팹의 스크립트 참조가 이어진다.
+- **asmdef는 고치지 않는다**(`autoReferenced: true`). 들이는 프로젝트에 같은 전역 이름(`UIBase` · `UIManager` 등)이 이미 있으면 그쪽을 먼저 걷는다.
+- **에셋은 내리지 않는다** — 이 레포(6000.6)에서 직렬화한 프리팹·에셋을 낮은 버전으로 옮기지 않는다. 코드와 셰이더만 들이고 에셋은 그 프로젝트에서 만든다.
+- **원본 커밋의 blob을 풀어 `diff -r`로 차이 0을 확인한다.** 작업 트리에는 커밋하지 않은 변경이 섞일 수 있다.
 
 ## 글꼴
 
