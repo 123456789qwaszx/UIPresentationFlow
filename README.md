@@ -196,10 +196,6 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 | 일시 정지 → 설정 | 창 위에 창(아래 창 흐림·입력 차단) |
 | 설정 → 음량 | 버튼 소리(ButtonFeedback) |
 
-### Adaptive UI 데모 — `Assets/Scenes/AdaptiveUIDemo`
-
-비주얼 노벨 형태의 화면(타이틀 · 게임플레이 · 앨범 · 시스템 메뉴의 저장/불러오기 **Page**). Root·Panel·Page 흐름과 화면비 등급별 레이아웃 Variant(Compact · Wide · UltraWide), Image Theme, Text Binding을 보여 준다. 다른 프로젝트에서 화면을 만들 때 참고하도록 다듬는 중이다.
-
 ## 에디터 도구 — `Tools/UI Presentation/…`
 
 | 메뉴 | 하는 일 |
@@ -264,15 +260,12 @@ Assets/
 │  │  └─ Widgets/     코드 UI 도우미, 끌기·확대 뷰, 행 툴팁
 │  ├─ Presentation/   Spec, Resolver, Variant 규칙, Patch(Theme·Layout·Image), Text/Image Binding, Styled, 공유 디자인 에셋
 │  ├─ Display/        DisplayContext, 화면비 등급, 해상도 변화 감지
-│  ├─ Localization/   Localizer(CSV), ViewTexts
-│  └─ Demo/           Adaptive UI 데모 코드
+│  └─ Localization/   Localizer(CSV), ViewTexts
 ├─ Editor/UI/         Binding 스캐너·빌더·검사, View Key 검사 (에디터 asmdef UIPresentationFlow.Editor)
 │  └─ Authoring/      화면 짓기 도구 — 시안 좌표 노드, 저장, Presentation, 그림 이름, 화면 묶음, 화면 검사, 동적 글꼴
 ├─ Shaders/           화면 전환 아이리스
-├─ Demo/
-│  ├─ AdaptiveUI/     Adaptive UI 데모 에셋
-│  └─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더, 일시 정지 창의 빌드 명세)
-└─ UI/                Adaptive UI 데모의 Binding·Theme 에셋
+└─ Demo/
+   └─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더, 일시 정지 창의 빌드 명세)
 ```
 
 ## 요구 사항
