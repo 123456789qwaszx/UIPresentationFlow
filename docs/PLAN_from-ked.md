@@ -20,7 +20,7 @@
 |---|---|---|
 | **C. 문서** | `docs/AUTHORING.md`(화면 제작 원칙). README에 복사 안내 · ked 실사용 · 설계 결정 한 줄 · A 반영 | `dev`에 합침(`4a4af6f`) |
 | **A. 런타임 빈틈** | 실제로 쓰다 드러난 셋(아래) | `dev`에 합침(`4a4af6f`) |
-| **B. 도구 추출** | ked 빌더 가운데 어느 게임에도 쓸 부분을 이 레포의 에디터 도구로 옮긴다(아래) | 2026-10-27 — Unity 확인 남음 |
+| **B. 도구 추출** | ked 빌더 가운데 어느 게임에도 쓸 부분을 이 레포의 에디터 도구로 옮긴다(아래) | 2026-10-27, Unity 확인(10-27) |
 | **D. ked에 남는 것** | 화면 명세 8개, KedUI 그림과 부품 모양(버튼 스타일 · 그림 이름), 화면 흐름 · 호스트 포트, 앱 빌드(화면 목록 · 캔버스) | — |
 
 ## A. 런타임 빈틈
@@ -78,7 +78,7 @@ ked의 빌더(`Assets/Samples/KedUI/Common/Editor`) 가운데 게임에 매이�
 | 경계 | 게임에 매이지 않은 것만 — 시안 좌표 노드, 저장 · 플레이 중 거부, Presentation 한 번 만들기, 그림 이름 색인, 화면 묶음 규칙 · 감사, 검사, 동적 글꼴. 버튼 · 슬라이더 꼴은 게임에 남긴다 | 사례 하나(ked)로 부품 꼴을 정하면 다음 게임에 맞지 않는다 |
 | 명세 찾기 | 앱의 빌드 메뉴가 명세를 순서대로 부르고 뿌리를 코드 상수로 넘긴다. 이 레포는 부품만 준다 | 순서 · 의존(Page 다음 그 주인, 항목 다음 캔버스)이 코드에 드러난다. 설정 자산이 없다 |
 | 경로 | 묶음 하위 폴더 이름(Scripts · Prefabs · Presentation · Sprites · Data · Editor)은 고정, 뿌리와 "묶음 밖에서 가리켜도 되는 곳"은 앱이 넘긴다. 묶음이 아닌 앱은 자리를 직접 적는다 | |
-| 증명 | 블랙홀 일시 정지 창을 명세로 다시 짓는다 — 같은 자리 · 같은 GUID, 데모 폴더는 그대로 | 원본(손 프리팹)이 git에 있어 비교된다. 이름이 모두 달라 fileID가 그대로라 git diff가 곧 차이다 |
+| 증명 | 블랙홀 일시 정지 창을 명세로 다시 짓는다 — 같은 자리 · 같은 GUID, 데모 폴더는 그대로 | 원본(손 프리팹)이 git에 있어 비교된다 |
 | 에디터 asmdef | `Editor/UI`에 `UIPresentationFlow.Editor`를 둔다 | asmdef를 쓰는 앱(ked의 `Ked.Samples.UI.Editor`)은 `Assembly-CSharp-Editor`를 참조할 수 없다. 기존 `Editor/UI` 코드는 데모에 매이지 않아 그대로 든다 |
 
 ### 한 것
@@ -90,20 +90,21 @@ ked의 빌더(`Assets/Samples/KedUI/Common/Editor`) 가운데 게임에 매이�
 - ked: 다시 들여와 빌더를 갈아탔다 — `KedNode` · `KedAnchor` · 자리 계산 · 저장 · Presentation 만들기 · 그림 색인 · 묶음 규칙 · 감사 · 검사 · 글꼴 만들기 · 비우기를 지우고 이 레포의 것을 부른다. 남은 것은 부품 꼴(`KedUIKit`), 설정(`KedUIUnits` · `KedUIFonts`의 자리), 엄한 검사 메뉴, 명세, 앱 빌드
 - 오프라인 컴파일(6000.3 참조 어셈블리, ked 기준): 오류 0 · 경고 0. 블랙홀 명세 셋도 같은 기준으로 따로 확인
 
-### 이 레포의 검사 결과(오프라인으로 미리 센 것 — Unity 메뉴로 확인 남음)
+### 이 레포의 검사 결과
 
 - 블랙홀 프리팹 7: 문제 0(설정 창의 `SettingRow` 템플릿은 위젯이라 Refs 일부만 있어도 된다)
 - Adaptive UI 데모: `TitleUIRoot`에 Refs 넷(`LoadBtn_*` · `AlbumBtn_*`), `AdaptiveDemoScreen`에 `SafeAreaRoot`가 없다 — 등록할 때도 경고가 나는 것이고, 화면 코드는 없을 때 경고하고 넘어간다. 손 프리팹이라 이번에는 두었다
 - Adaptive UI 데모 Presentation 넷은 `presentationId`가 비었다 — 기본 검사에서는 문제가 아니다
 
-### 확인
+### 확인 (2026-10-27, 아미야 "문제 없는 것을 확인함")
 
-- 블랙홀 — `UI Demo/Build BlackHole Screens`를 편집 모드로 돌린 뒤
-  - 보고 문제 0
-  - `git diff Assets/Demo/BlackHole/Prefabs/PausePanel.prefab` — 이름이 모두 달라 fileID가 그대로이므로, 남는 차이가 곧 명세와 손 프리팹의 차이다. TMP가 새 컴포넌트에 채우는 기본값 몇 칸이 다를 수 있다
-  - 데모 씬에서 일시 정지 창이 전과 같게 보이고 동작한다(테마 · 언어 바꾸기 포함)
-- `Tools/UI Presentation/Validate Screens` — 위 Adaptive UI 다섯 줄만 나온다
-- ked — `Build Sample UI` 뒤 슬롯 카드 프리팹 말고 git 변경 0, `Validate Sample UI` 문제 0
+- 블랙홀 `UI Demo/Build BlackHole Screens`(편집 모드): 보고 문제 0. 데모 씬의 일시 정지 창이 전과 같다
+- 일시 정지 창의 프리팹 비교: 파일 안 fileID가 모두 새로 매겨져 git diff로는 보이지 않는다(손 프리팹을 처음 다시 지은 경우 — AUTHORING "재생성"). 이름 경로 · 컴포넌트 종류로 짝지어 fileID를 뺀 값끼리 비교하니 구조가 같고, 값은 셋만 달랐다
+  - 레이어 Default → UI(빌더는 UI 레이어에 짓는다)
+  - 버튼의 Selected 색 1 → 0.96(Unity 기본값. Sprite Swap 버튼이라 쓰지 않는다)
+  - TMP의 `m_Color` · `m_fontColor32` · 글자 스타일 해시 — 그릴 때 TMP가 다시 채우는 칸이다. 보이는 색(`m_fontColor`)은 같다
+- `Tools/UI Presentation/Validate Screens`: 위 Adaptive UI 다섯 줄
+- ked: `Build Sample UI`(편집 모드) 뒤 git 변경은 저장/불러오기 패널의 fileID뿐, `Validate Sample UI` 문제 0
 
 ## 그 다음
 
