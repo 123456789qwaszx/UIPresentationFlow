@@ -108,5 +108,6 @@ ked의 빌더(`Assets/Samples/KedUI/Common/Editor`) 가운데 게임에 매이�
 
 ## 그 다음
 
+- 비주얼 노벨 UI 샘플 — ked의 VN UI 묶음을 이 레포의 샘플로 들이고 Adaptive UI 데모를 걷었다(위 Adaptive UI 줄들은 그 전의 것). [PLAN_vn-sample](PLAN_vn-sample.md)
 - 독립 저장소에서 화면 묶음을 만들어 게임에 반입하기
 - 효율 측정 — 저장소 분리의 효과, 프리팹 생성 방식의 효과. 처음 만들 때와 고칠 때를 함께 잰다.

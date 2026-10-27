@@ -196,6 +196,25 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 | 일시 정지 → 설정 | 창 위에 창(아래 창 흐림·입력 차단) |
 | 설정 → 음량 | 버튼 소리(ButtonFeedback) |
 
+### 비주얼 노벨 UI 샘플 — `Assets/Demo/VisualNovel/`
+
+ked-presentation-runtime(아래 "실사용")의 비주얼 노벨 UI 화면 12개(Root 2 · Panel 6 · Page 4)를 재생 런타임 없이 돌리는 샘플. 블랙홀 데모가 보이지 않는 것 — 설정 창 안의 **Page** 넷, 쪽을 넘기는 저장 슬롯, 끌어서 넘기는 대화 기록, 화면비 Variant, **빌드 명세로 지은 화면 전부** — 을 담는다.
+
+- `KedUI/` — ked의 "VN UI 묶음"(화면 스크립트 · 빌드 명세 · 부품 키트 · 그림 · 글꼴 · Presentation)의 **복사본**. 원본은 ked이고, 고칠 일은 ked에서 고쳐 다시 들인다(`Documentation~/vendoring.md`). 묶음은 재생 런타임을 모른다 — ked가 런타임에 매인 것을 앱 쪽(`KedUI/App/`)으로 빼 두었고, 그것은 들이지 않는다
+- `App/` — 이 레포가 원본인 데모 앱. 화면 흐름(`VNDemoFlow`), 가짜 재생(대본 · 타자기 · 자동 · 빨리 넘기기 · 되감기), 메모리 저장, 선택지 항목, 글자 표, 빌드 메뉴
+
+**실행**: 메뉴 **UI Demo > Build Visual Novel Demo** → `Assets/Demo/VisualNovel/App/Scenes/VisualNovelDemo` 플레이. 메뉴가 묶음의 명세로 화면 프리팹을 이 프로젝트의 Unity로 다시 짓고, Presentation(처음 한 번), 씬(캔버스 · 층 · 화면 · 참조)을 만들고, 묶음 검사(Refs · Presentation · 묶음 감사 · 그림 이름)를 돌린다.
+
+| 해 볼 것 | 확인되는 것 |
+|---|---|
+| 타이틀 → 처음부터 → 메뉴 → 타이틀로 → 이어하기 | `SwitchRoot` 두 장, 확인 창(모달 Panel), 나간 자리에서 이어하기 |
+| 메뉴 → 저장 → 불러오기, 저장 위에 확인 창 | Panel 쌓기(아래 창 흐림 · 입력 차단), Esc는 맨 위 한 층만, 닫으면 연 순간의 포커스로 |
+| 설정의 탭 넷 | `SwitchPage` — 창(Page Owner)은 그대로, 안의 Page만 바뀐다. 창을 닫으면 Page도 닫힌다 |
+| 설정 → 대사 → 글자 크기 | `SetContext`의 글자 배율이 대사창 · 선택지 · 열린 창에 바로 |
+| 기록 → 목록을 버튼 위에서 끌기 → 줄의 이동 버튼 | 버튼 위 끌기가 목록으로 넘어간다(`UI_EventHandler`), 그 줄부터 다시 |
+| 게임 창을 21:9로 | 재생 화면의 Variant `UltraWide_HudInBoard` — 장면 꼬리표와 퀵메뉴가 1600×900 판 안쪽으로. 16:9로 돌리면 제자리 |
+| 선택지를 방향키 · Enter로, Space · A · S · R · Ctrl · Esc | 키보드만으로 진행 · 고르기 · 창 닫기(설정의 "키보드 조작"과 같은 키) |
+
 ## 에디터 도구 — `Tools/UI Presentation/…`
 
 | 메뉴 | 하는 일 |
@@ -238,6 +257,7 @@ public sealed class SettlementScreen : UIRoot<SettlementScreen.Refs>
 
 - 원칙으로 정리한 것: [docs/AUTHORING.md](docs/AUTHORING.md) — 명세가 원본, 프리팹은 산출물, 화면 묶음, 특수 화면, 검사, 배포, 사람의 역할
 - 이 레포로 되돌린 것: 버튼 위 끌기를 목록에 넘기기, Panel 아래 Root 입력 막기, Panel을 닫으면 포커스 되돌리기, 복사 안내(아래 "요구 사항"), 빌더의 공용 부분(위 "화면 짓기 도구" — ked의 빌더는 그것을 쓰고 부품 모양 · 명세 · 앱 빌드만 남겼다). 범위와 다음 일은 [docs/PLAN_from-ked.md](docs/PLAN_from-ked.md)
+- 그 화면 묶음을 이 레포의 샘플로 들였다(위 "비주얼 노벨 UI 샘플"). 묶음과 재생 런타임에 매인 앱 부분을 ked에서 먼저 나눴고, Adaptive UI 데모는 그 자리를 내주고 걷었다 — [docs/PLAN_vn-sample.md](docs/PLAN_vn-sample.md)
 
 ## 설계 결정
 
@@ -265,13 +285,17 @@ Assets/
 │  └─ Authoring/      화면 짓기 도구 — 시안 좌표 노드, 저장, Presentation, 그림 이름, 화면 묶음, 화면 검사, 동적 글꼴
 ├─ Shaders/           화면 전환 아이리스
 └─ Demo/
-   └─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더, 일시 정지 창의 빌드 명세)
+   ├─ BlackHole/      블랙홀 키우기 UI 데모(화면·프리팹·에셋·흐름·씬 빌더, 일시 정지 창의 빌드 명세)
+   └─ VisualNovel/    비주얼 노벨 UI 샘플
+      ├─ KedUI/       ked의 VN UI 묶음 복사본(Common · Screens/{화면}/Scripts·Editor·Prefabs·Presentation·Sprites)
+      └─ App/         데모 앱(흐름 · 가짜 재생 · 선택지 항목 · 글자 표 · 빌드 메뉴 · 씬)
 ```
 
 ## 요구 사항
 
 - Unity **6000.6.2f1**, `com.unity.ugui` 2.6.0(TextMeshPro 포함)
 - 블랙홀 데모: Input System 1.20.0, URP 17.6.0(배경 셰이더)
+- 비주얼 노벨 샘플: Input System 1.20.0
 
 UPM 패키지가 아니다. 다른 프로젝트에서는 `Scripts/UI` · `Scripts/Presentation` · `Scripts/Display` · `Scripts/Localization` · `Scripts/UIPresentationFlow.Runtime.asmdef` · `Editor/UI` · `Shaders`를 복사해 쓴다. 데모 폴더는 필요 없다. 코드는 Unity 6000.3(ugui 2.0)에서도 컴파일된다(ked-presentation-runtime에서 확인).
 
@@ -286,3 +310,5 @@ UPM 패키지가 아니다. 다른 프로젝트에서는 `Scripts/UI` · `Script
 ## 글꼴
 
 블랙홀 데모의 한글 글꼴은 수정하지 않은 원본이다. 본문 **넥슨 Lv1 고딕**(ⓒ NEXON, 저작권 안내 포함 배포 조건), 제목 **나눔휴먼 Bold**(SIL Open Font License 1.1). 게임의 제목 글꼴은 재배포 제한이 있어 넣지 않았다. 자세한 내용은 `Assets/Demo/BlackHole/Fonts/FONTS_NOTICE.txt`.
+
+비주얼 노벨 샘플의 글꼴은 **Noto Sans KR** Medium · Bold(SIL Open Font License 1.1, `Assets/Demo/VisualNovel/KedUI/Common/Fonts/OFL.txt`).

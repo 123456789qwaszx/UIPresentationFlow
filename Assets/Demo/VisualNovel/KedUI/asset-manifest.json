@@ -1,0 +1,1103 @@
+{
+  "version": 1,
+  "referenceResolution": [
+    1600,
+    900
+  ],
+  "assets": [
+    {
+      "name": "dialogue_box",
+      "file": "Art/dialogue_box.png",
+      "width": 1608,
+      "height": 242,
+      "role": "대사창",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-b911136b-60fa-4abc-87d5-0d53eada4263.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "speaker_nameplate",
+      "file": "Art/speaker_nameplate.png",
+      "width": 528,
+      "height": 72,
+      "role": "화자 이름표",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-1c812eeb-26a1-40d4-9162-b14019ae9a77.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "choice_normal",
+      "file": "Art/choice_normal.png",
+      "width": 1108,
+      "height": 141,
+      "role": "선택지",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-9eb0322a-5ae1-4dd1-8705-a4d86bb97623.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_primary",
+      "file": "Art/button_primary.png",
+      "width": 608,
+      "height": 99,
+      "role": "주요 버튼",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-915cc532-a5de-4c50-bb40-7feb65dfecda.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_secondary",
+      "file": "Art/button_secondary.png",
+      "width": 608,
+      "height": 113,
+      "role": "보조 버튼",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-fa85d019-a27a-4543-bedb-e07b1d547394.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "panel_popup",
+      "file": "Art/panel_popup.png",
+      "width": 1008,
+      "height": 423,
+      "role": "확인·안내 팝업",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-3d46e729-025a-420b-8d33-6df976643673.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "panel_settings",
+      "file": "Art/panel_settings.png",
+      "width": 1516,
+      "height": 883,
+      "role": "설정 바탕",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-ddc306de-51b6-40b9-807b-f385c39c2167.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "panel_backlog",
+      "file": "Art/panel_backlog.png",
+      "width": 1544,
+      "height": 790,
+      "role": "백로그 바탕",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-0b52fa03-0d8c-4dff-bd0c-0af5cc70c207.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "panel_menu",
+      "file": "Art/panel_menu.png",
+      "width": 708,
+      "height": 1335,
+      "role": "시스템 메뉴 바탕",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-0f44f1e9-cd16-4058-a296-16c3328e6087.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "save_slot",
+      "file": "Art/save_slot.png",
+      "width": 908,
+      "height": 370,
+      "role": "저장 슬롯",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c3c6bef8-2c0d-4832-8f06-99ee131df96e.png",
+      "sourceCrop": "alpha bounds",
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_danger",
+      "file": "Art/button_danger.png",
+      "width": 408,
+      "height": 124,
+      "role": "삭제·위험 동작",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        910,
+        525,
+        1323,
+        661
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_disabled",
+      "file": "Art/button_disabled.png",
+      "width": 400,
+      "height": 125,
+      "role": "비활성 버튼",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        1338,
+        525,
+        1742,
+        661
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_circle",
+      "file": "Art/button_circle.png",
+      "width": 168,
+      "height": 174,
+      "role": "원형 버튼",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        66,
+        677,
+        244,
+        862
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "button_circle_selected",
+      "file": "Art/button_circle_selected.png",
+      "width": 168,
+      "height": 171,
+      "role": "원형 선택 버튼",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        471,
+        677,
+        653,
+        863
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "header_navy",
+      "file": "Art/header_navy.png",
+      "width": 508,
+      "height": 87,
+      "role": "제목 리본",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        30,
+        410,
+        538,
+        508
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "header_teal",
+      "file": "Art/header_teal.png",
+      "width": 458,
+      "height": 87,
+      "role": "제목 리본",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-c458c664-8875-4547-9003-fc4d4cb1501d.png",
+      "sourceCrop": [
+        539,
+        410,
+        994,
+        508
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "next_marker",
+      "file": "Art/next_marker.png",
+      "width": 80,
+      "height": 85,
+      "role": "다음 줄 표시",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-d83012a1-e6b8-48e0-8f42-82eae366301c.png",
+      "sourceCrop": [
+        603,
+        270,
+        697,
+        368
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_auto",
+      "file": "Art/icon_auto.png",
+      "width": 136,
+      "height": 156,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        0,
+        0,
+        362,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_fast_forward",
+      "file": "Art/icon_fast_forward.png",
+      "width": 136,
+      "height": 96,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        362,
+        0,
+        724,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_rollback",
+      "file": "Art/icon_rollback.png",
+      "width": 136,
+      "height": 152,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        724,
+        0,
+        1086,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_backlog",
+      "file": "Art/icon_backlog.png",
+      "width": 136,
+      "height": 162,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1086,
+        0,
+        1448,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_hide_ui",
+      "file": "Art/icon_hide_ui.png",
+      "width": 136,
+      "height": 115,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1448,
+        0,
+        1810,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_menu",
+      "file": "Art/icon_menu.png",
+      "width": 136,
+      "height": 111,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1810,
+        0,
+        2172,
+        362
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_save",
+      "file": "Art/icon_save.png",
+      "width": 136,
+      "height": 131,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        0,
+        362,
+        362,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_load",
+      "file": "Art/icon_load.png",
+      "width": 136,
+      "height": 103,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        362,
+        362,
+        724,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_settings",
+      "file": "Art/icon_settings.png",
+      "width": 136,
+      "height": 131,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        724,
+        362,
+        1086,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_close",
+      "file": "Art/icon_close.png",
+      "width": 136,
+      "height": 135,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1086,
+        362,
+        1448,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_back",
+      "file": "Art/icon_back.png",
+      "width": 136,
+      "height": 215,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1448,
+        362,
+        1810,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "icon_next",
+      "file": "Art/icon_next.png",
+      "width": 136,
+      "height": 213,
+      "role": "퀵메뉴 아이콘",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-8bd0bed9-8533-4749-8f1f-3d94ea08966d.png",
+      "sourceCrop": [
+        1810,
+        362,
+        2172,
+        724
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "slider_track",
+      "file": "Art/slider_track.png",
+      "width": 408,
+      "height": 54,
+      "role": "설정 조작 부품",
+      "imageType": "Sliced",
+      "border": [
+        25,
+        10,
+        25,
+        10
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        70,
+        150,
+        500,
+        225
+      ],
+      "notes": "Border order left,bottom,right,top in source pixels."
+    },
+    {
+      "name": "slider_fill",
+      "file": "Art/slider_fill.png",
+      "width": 408,
+      "height": 51,
+      "role": "설정 조작 부품",
+      "imageType": "Sliced",
+      "border": [
+        25,
+        10,
+        25,
+        10
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        610,
+        150,
+        1070,
+        225
+      ],
+      "notes": "Border order left,bottom,right,top in source pixels."
+    },
+    {
+      "name": "slider_thumb",
+      "file": "Art/slider_thumb.png",
+      "width": 104,
+      "height": 104,
+      "role": "설정 조작 부품",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        1215,
+        65,
+        1465,
+        313
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "toggle_track_off",
+      "file": "Art/toggle_track_off.png",
+      "width": 188,
+      "height": 85,
+      "role": "설정 조작 부품",
+      "imageType": "Sliced",
+      "border": [
+        45,
+        35,
+        45,
+        35
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        105,
+        425,
+        465,
+        595
+      ],
+      "notes": "Border order left,bottom,right,top in source pixels."
+    },
+    {
+      "name": "toggle_track_on",
+      "file": "Art/toggle_track_on.png",
+      "width": 188,
+      "height": 85,
+      "role": "설정 조작 부품",
+      "imageType": "Sliced",
+      "border": [
+        45,
+        35,
+        45,
+        35
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        665,
+        425,
+        1030,
+        595
+      ],
+      "notes": "Border order left,bottom,right,top in source pixels."
+    },
+    {
+      "name": "toggle_thumb",
+      "file": "Art/toggle_thumb.png",
+      "width": 104,
+      "height": 104,
+      "role": "설정 조작 부품",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        1215,
+        380,
+        1465,
+        632
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "checkbox_off",
+      "file": "Art/checkbox_off.png",
+      "width": 104,
+      "height": 100,
+      "role": "설정 조작 부품",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        155,
+        707,
+        418,
+        963
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "checkbox_on",
+      "file": "Art/checkbox_on.png",
+      "width": 104,
+      "height": 101,
+      "role": "설정 조작 부품",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        717,
+        707,
+        980,
+        963
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "checkmark",
+      "file": "Art/checkmark.png",
+      "width": 104,
+      "height": 79,
+      "role": "설정 조작 부품",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-cf4b072f-177f-4437-9bde-1a706639b7d3.png",
+      "sourceCrop": [
+        1204,
+        730,
+        1464,
+        934
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "tab_normal",
+      "file": "Art/tab_normal.png",
+      "width": 608,
+      "height": 86,
+      "role": "카테고리 탭",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        45,
+        75,
+        1350,
+        272
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "tab_selected",
+      "file": "Art/tab_selected.png",
+      "width": 608,
+      "height": 87,
+      "role": "카테고리 탭",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        45,
+        306,
+        1350,
+        503
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "tab_disabled",
+      "file": "Art/tab_disabled.png",
+      "width": 608,
+      "height": 87,
+      "role": "카테고리 탭",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        45,
+        537,
+        1350,
+        734
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "tab_hover",
+      "file": "Art/tab_hover.png",
+      "width": 608,
+      "height": 86,
+      "role": "카테고리 탭",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        45,
+        768,
+        1350,
+        965
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "selection_underline",
+      "file": "Art/selection_underline.png",
+      "width": 268,
+      "height": 32,
+      "role": "선택 표시",
+      "imageType": "Sliced",
+      "border": [
+        12,
+        6,
+        12,
+        6
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        480,
+        1015,
+        770,
+        1064
+      ],
+      "notes": "Border order left,bottom,right,top in source pixels."
+    },
+    {
+      "name": "selection_diamond",
+      "file": "Art/selection_diamond.png",
+      "width": 56,
+      "height": 55,
+      "role": "선택 표시",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 4,
+      "source": "exec-70e6df80-a0d8-444b-886b-555ee5b686f9.png",
+      "sourceCrop": [
+        805,
+        990,
+        903,
+        1090
+      ],
+      "notes": "Keep aspect ratio close to supplied artwork; do not stretch decoration."
+    },
+    {
+      "name": "background_title",
+      "file": "Art/background_title.png",
+      "width": 1920,
+      "height": 1081,
+      "role": "타이틀 배경",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "source": "exec-8fad13b0-d218-420d-ac07-4afa987818de.png",
+      "notes": "Aspect-fill; see actual file dimensions."
+    },
+    {
+      "name": "surface_white",
+      "file": "Art/surface_white.png",
+      "width": 64,
+      "height": 64,
+      "role": "단색·스크롤 목록 배경",
+      "imageType": "Sliced",
+      "border": [
+        14,
+        14,
+        14,
+        14
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 0,
+      "source": "code-native geometric support primitive",
+      "notes": "Neutral scalable support surface; tint white sprite through Unity Image.color."
+    },
+    {
+      "name": "outline_white",
+      "file": "Art/outline_white.png",
+      "width": 64,
+      "height": 64,
+      "role": "선택·키보드 포커스 테두리",
+      "imageType": "Sliced",
+      "border": [
+        15,
+        15,
+        15,
+        15
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 0,
+      "source": "code-native geometric support primitive",
+      "notes": "Neutral scalable support surface; tint white sprite through Unity Image.color."
+    },
+    {
+      "name": "pixel_white",
+      "file": "Art/pixel_white.png",
+      "width": 4,
+      "height": 4,
+      "role": "딤·구분선·단색 사각형",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "padding": 0,
+      "source": "code-native geometric support primitive",
+      "notes": "Neutral scalable support surface; tint white sprite through Unity Image.color."
+    },
+    {
+      "name": "background_scene_sample",
+      "file": "Art/background_scene_sample.png",
+      "width": 1672,
+      "height": 941,
+      "role": "시안 전용 원본 장면 배경",
+      "imageType": "Simple",
+      "border": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixelsPerUnit": 100,
+      "source": "imagegen original scene for handoff",
+      "notes": "Optional sample background. Never overwrite actual Stage scene."
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+key,ko-KR,en-US
+# 화면 프리팹 글자 — 키 = {화면 타입}.{Ref}. ViewTexts가 시작할 때와 언어가 바뀔 때 넣는다,,
+TitleScreen.BrandSubtitle,UI PRESENTATION FLOW,UI PRESENTATION FLOW
+TitleScreen.Tagline,이야기가 화면이 되는 순간,Where a story becomes the screen
+TitleScreen.NewGameLabel,처음부터,New Game
+TitleScreen.ContinueLabel,이어하기,Continue
+TitleScreen.LoadLabel,불러오기,Load
+TitleScreen.SwitchExampleLabel,다른 예제로,Switch Example
+TitleScreen.OpenSettingsLabel,설정,Settings
+TitleScreen.QuitLabel,종료,Quit
+TitleScreen.BuildLabel,UI Presentation Flow · 비주얼 노벨 샘플,UI Presentation Flow · Visual novel sample
+PlayScreen.QuickLabel_auto,자동,Auto
+PlayScreen.QuickLabel_fast_forward,빨리 넘기기,Skip
+PlayScreen.QuickLabel_rollback,되감기,Rewind
+PlayScreen.QuickLabel_backlog,기록,Log
+PlayScreen.QuickLabel_hide_ui,숨기기,Hide
+PlayScreen.QuickLabel_menu,메뉴,Menu
+PlayScreen.AdvanceHint,Space  다음,Space  Next
+PlayScreen.RestoreHint,누르거나 Space · Esc로 다시 보입니다,Click or press Space / Esc to show the UI
+SystemMenuPanel.MenuTitle,메뉴,Menu
+SystemMenuPanel.MenuContinueLabel,계속하기,Resume
+SystemMenuPanel.MenuSaveLabel,저장,Save
+SystemMenuPanel.MenuLoadLabel,불러오기,Load
+SystemMenuPanel.MenuSettingsLabel,설정,Settings
+SystemMenuPanel.MenuSkipEpisodeLabel,이 에피소드 건너뛰기,Skip this episode
+SystemMenuPanel.MenuTitleReturnLabel,타이틀로,Return to title
+BacklogPanel.BacklogTitle,대화 기록,Dialogue Log
+BacklogPanel.LogEmpty,아직 기록이 없습니다.,Nothing has been said yet.
+BacklogPanel.BacklogHint,줄 옆의 버튼으로 그 대사부터 다시 봅니다.,The button beside a line replays from that line.
+SettingsPanel.SettingsTitle,설정,Settings
+SettingsPanel.SettingsTabText_0,음량,Sound
+SettingsPanel.SettingsTabText_1,대사,Text
+SettingsPanel.SettingsTabText_2,재생,Playback
+SettingsPanel.SettingsTabText_3,화면 · 조작,Display & Keys
+SettingsPanel.ApplyNote,변경한 설정은 즉시 적용됩니다. 샘플이라 저장하지 않습니다.,Changes apply immediately. The sample does not save them.
+SettingsPanel.ResetSettingsLabel,기본값 복원,Restore defaults
+AudioSettingsPage.AudioHeading,음량,Sound
+AudioSettingsPage.AudioDescription,이야기에 집중할 수 있도록 소리를 조절하세요.,Adjust the sound so you can focus on the story.
+AudioSettingsPage.AudioLabel_0,전체 음량,Master
+AudioSettingsPage.AudioLabel_1,배경음,Music
+AudioSettingsPage.AudioLabel_2,효과음,Effects
+AudioSettingsPage.AudioLabel_3,음성,Voice
+AudioSettingsPage.MuteLabel,음소거,Mute
+TextSettingsPage.TextHeading,대사 표시,Dialogue text
+TextSettingsPage.TextDescription,편안하게 읽을 수 있는 크기와 속도를 선택하세요.,Choose a size and speed that are comfortable to read.
+TextSettingsPage.TextLabel_0,글자 크기,Text size
+TextSettingsPage.TextLabel_1,글자 출력 속도,Text speed
+TextSettingsPage.TextLabel_2,대사창 불투명도,Box opacity
+TextSettingsPage.TextPreviewCaption,미리보기,Preview
+TextSettingsPage.TextPreviewText,이야기가 화면이 되는 순간. 함께 시작해 볼까요?,The moment a story becomes the screen. Shall we begin?
+PlaybackSettingsPage.PlaybackHeading,재생,Playback
+PlaybackSettingsPage.PlaybackDescription,자동 진행과 빠르게 재생할 때의 동작을 설정합니다.,Set how auto mode and fast playback behave.
+PlaybackSettingsPage.AutoDelayLabel,자동 진행 대기,Auto delay
+PlaybackSettingsPage.SpeedLabel,빠르게 재생,Fast playback
+PlaybackSettingsPage.PlaybackHelp,"빠르게 재생은 S 키로 켜고 끕니다. 선택지가 나오면 멈춥니다.
+누르는 동안만 빨리 넘기려면 Ctrl을 누르고 있습니다.","Press S to toggle fast playback. It stops at choices.
+Hold Ctrl to skip only while held."
+DisplaySettingsPage.DisplayHeading,화면 · 조작,Display & Keys
+DisplaySettingsPage.DisplayDescription,실행 환경에 맞는 화면 모드와 조작 방법을 확인합니다.,Choose a window mode and check the keyboard controls.
+DisplaySettingsPage.WindowModeLabel,화면 모드,Window mode
+DisplaySettingsPage.WindowedLabel,창 모드,Windowed
+DisplaySettingsPage.FullscreenLabel,전체 화면,Fullscreen
+DisplaySettingsPage.ShortcutHeading,키보드 조작,Keyboard
+DisplaySettingsPage.Shortcut_0,다음 대사,Next line
+DisplaySettingsPage.Shortcut_1,누르는 동안 빨리 넘기기,Skip while held
+DisplaySettingsPage.Shortcut_2,자동 진행 켜고 끄기,Toggle auto mode
+DisplaySettingsPage.Shortcut_3,빠르게 재생 켜고 끄기,Toggle fast playback
+DisplaySettingsPage.Shortcut_4,한 줄 되감기,Rewind one line
+DisplaySettingsPage.Shortcut_5,현재 창 닫기 · 숨긴 UI 다시 보기,Close the current window / show hidden UI
+# 코드가 쓰는 글자 — 소문자로 시작. {0}은 값,,
+common.ok,확인,OK
+common.cancel,취소,Cancel
+title.currentExample,현재 예제  /  {0},Current example  /  {0}
+play.chapterTag,{0} · {1},{0} · {1}
+confirm.title.title,타이틀로 돌아가기,Return to title
+confirm.title.body,"타이틀 화면으로 돌아갈까요?
+이어하기를 누르면 마지막으로 본 대사부터 다시 이어집니다.","Return to the title screen?
+Continue picks up from the last line you saw."
+confirm.title.accept,타이틀로,Title
+confirm.title.cancel,계속하기,Keep playing
+slots.save.title,저장,Save
+slots.load.title,불러오기,Load
+slots.save.subtitle,지금 장면을 수동 저장 슬롯에 남깁니다.,Keep the current scene in a manual save slot.
+slots.load.subtitle,저장한 기록에서 이야기를 이어갑니다.,Continue the story from a saved record.
+slots.tab.manual,수동 저장,Manual saves
+slots.pageInfo,PAGE  {0} / {1},PAGE  {0} / {1}
+slots.hint.save,선택한 슬롯에 현재 장면을 저장합니다. 최근 저장이 01번입니다.,Saves the current scene to the selected slot. The latest save is 01.
+slots.hint.load,선택한 기록에서 이야기를 이어갑니다.,Continues the story from the selected record.
+slots.hint.none,아직 저장한 기록이 없습니다.,There are no saves yet.
+slots.save.action,이 슬롯에 저장,Save here
+slots.load.action,불러오기,Load
+slots.playTime,플레이 {0},Played {0}
+slots.empty,빈 슬롯,Empty slot
+slots.empty.hint,새 기록을 저장할 수 있습니다,A new save goes here
+confirm.overwrite.title,덮어쓰기,Overwrite
+confirm.overwrite.body,"{0}번 슬롯의 기록을 지금 장면으로 덮어쓸까요?
+덮어쓴 기록은 되돌릴 수 없습니다.","Overwrite slot {0} with the current scene?
+The old record cannot be restored."
+confirm.overwrite.accept,덮어쓰기,Overwrite
+confirm.load.title,불러오기,Load
+confirm.load.body,"{0}번 기록을 불러올까요?
+지금 보던 자리는 저장하지 않으면 사라집니다.","Load record {0}?
+The current spot is lost unless you save it."
+confirm.load.accept,불러오기,Load
+notice.saved.title,저장 완료,Saved
+notice.saved.body,현재 장면을 {0}번 슬롯에 저장했습니다.,The current scene was saved to slot {0}.
+settings.playback.seconds,{0}초,{0}s
+settings.display.editorNote,에디터의 게임 창에서는 화면 모드가 바뀌지 않습니다(빌드에서 적용).,The editor Game view ignores window mode (applies in builds).
+# 샘플 — 대본 · 장면 · 타이틀 카드 · 종료 안내,,
+demo.example.name,UIPF 샘플,UIPF sample
+demo.example.title,비주얼 노벨 UI,Visual novel UI
+demo.example.summary,Root · Panel · Page · 모달 · 글자 크기 · 화면비 Variant,Root · Panel · Page · Modals · Text size · Aspect variant
+notice.quit.title,에디터에서는 끝내지 않음,Not quitting in the editor
+notice.quit.body,"빌드에서는 여기서 앱을 끝냅니다.
+에디터에서는 플레이를 멈추세요.","A build quits here.
+In the editor, stop play mode instead."
+scene.start,안내,Guide
+scene.save,저장,Saves
+scene.end,끝,End
+speaker.harin,하린,Harin
+speaker.shigure,시구레,Shigure
+script.intro,UIPF 비주얼 노벨 샘플입니다. Space · Enter를 누르거나 화면을 눌러 다음 줄로 넘어갑니다.,"This is the UIPF visual novel sample. Press Space or Enter, or click, for the next line."
+script.root,지금 이 화면이 Root예요. 타이틀과 재생 화면은 SwitchRoot로 서로 바뀌어요.,This screen is a Root. The title and this play screen replace each other with SwitchRoot.
+script.panel,"오른쪽 위 메뉴를 열면 Panel이 위에 쌓여. 저장 · 불러오기 · 확인 창도 같은 스택이고, Esc는 맨 위 한 층만 닫아.","Open the menu at the top right and a Panel stacks on top. Save, load and confirm windows share that stack, and Esc closes only the top one."
+script.backlog,기록 버튼은 지금까지 본 줄을 보여 줘요. 줄 옆의 버튼으로 그 줄부터 다시 볼 수 있어요.,The Log button shows the lines so far. The button beside a line replays from there.
+script.page,설정 창의 탭 넷은 Page야. 창은 그대로 두고 안의 Page만 SwitchPage로 갈아 끼워.,The four tabs in Settings are Pages. The window stays and SwitchPage swaps only the page inside.
+script.textScale,설정의 글자 크기는 UIContext의 TextScale이에요. 바꾸면 열린 화면 모두에 바로 적용돼요.,Text size in Settings is the TextScale of the UIContext. A change applies at once to every open screen.
+script.variant,게임 창을 21:9로 넓혀 봐. 장면 꼬리표와 퀵메뉴가 판 안쪽으로 들어와. Presentation Variant 하나가 하는 일이야.,Widen the Game view to 21:9. The scene tag and quick menu move inside the board. One Presentation Variant does that.
+script.choose,이제 골라 볼까요? 방향키와 Enter로도 고를 수 있어요.,Shall we choose? Arrow keys and Enter work too.
+script.choice.save,저장과 불러오기를 해 본다,Try saving and loading
+script.choice.again,처음부터 다시 듣는다,Hear it from the start
+script.save1,메뉴의 저장으로 지금 줄을 슬롯에 남겨 봐. 저장은 메모리에만 있어서 플레이를 멈추면 사라져.,Use Save in the menu to keep this line in a slot. Saves live in memory and vanish when play stops.
+script.save2,불러오기를 고르면 그 줄로 돌아와요. 타이틀로 나갔다가 이어하기를 눌러도 돼요.,Load brings you back to that line. You can also go to the title and press Continue.
+script.end,샘플은 여기까지입니다. 다음 줄에서 처음으로 돌아갑니다.,That is the end of the sample. The next line returns to the start.

@@ -46,7 +46,7 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 ```text
 <UI 뿌리>/
-├─ <런타임 asmdef>             뿌리에 둔다(Common · Screens · 앱 코드를 덮는다)
+├─ <런타임 asmdef>             뿌리에 둔다(Common · Screens를 덮는다)
 ├─ Common/                      여러 화면이 같이 쓰는 것 — 어느 화면도 이름으로 알지 않는다
 │   ├─ Scripts/                 부품 키트(버튼 · 슬라이더 …)
 │   ├─ Editor/                  키트로 짓는 도구 · 묶음 설정 + 에디터 asmdef(UIPresentationFlow.Editor를 참조)
@@ -58,13 +58,16 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 │   ├─ Presentation/            <화면>Presentation.asset
 │   ├─ Sprites/                 그 화면만 쓰는 그림(없으면 폴더도 없다)
 │   └─ Editor/                  빌드 명세 + 에디터 asmdef를 가리키는 .asmref
-├─ <앱 코드>/                   화면 흐름 · 호스트(어느 화면을 언제 여는지)
-└─ <앱 빌드>/                   화면 목록 · 캔버스를 짓는 빌드 + .asmref
+└─ App/                         화면을 쓰는 앱 — 제 asmdef 한 쌍(런타임 · 에디터)
+    ├─ Runtime/                 화면 흐름 · 호스트(어느 화면을 언제 여는지), 게임 런타임에 잇는 것
+    └─ Editor/                  화면 목록 · 캔버스를 짓는 앱 빌드
 ```
 
 - Page는 주인 Panel의 묶음에 둔다. 명세 하나가 여러 화면을 만들면(확인 · 안내 창) 한 묶음에 둔다.
 - 화면 흐름, 앱 설정 값, 화면을 모은 캔버스, 글자 표(CSV 하나)는 묶음에 넣지 않는다. 화면을 쓰는 앱의 몫이다.
-- **asmdef 아래의 `Editor` 폴더는 에디터 전용이 아니다.** 런타임 asmdef가 뿌리에 있으면 묶음 안의 `Editor/`도 그 아래라, `.asmref`로 에디터 asmdef에 붙여야 한다. 실행 쪽과 짝이 맞는다: `Common/Scripts` ↔ `Common/Editor`, 앱 코드 ↔ 앱 빌드, `Screens/X/Scripts` ↔ `Screens/X/Editor`.
+- **게임 런타임에 매인 것은 앱에만 둔다.** 런타임 형식을 받는 항목 프리팹, 런타임 계약을 구현하는 어댑터, 런타임 형식의 데이터 — 묶음의 화면은 UI 부품(대사창 · 선택지 상자의 그리기)만 내놓고, 앱이 그 위에 계약을 잇는다. 코드는 묶음 asmdef가 이 프레임워크와 Unity 패키지만 참조해서, 에셋은 묶음 감사(`UIScreenUnits.Audit`)가 바깥을 가리키는 GUID를 찾아서 막는다.
+- **묶음은 옮겨도 돈다.** 뿌리를 고정 경로로 쓰지 않고 런타임 asmdef가 있는 폴더로 찾는다(이 프레임워크 코드의 자리도 asmdef로). 그래서 `Common` · `Screens`만 다른 저장소로 복사하면, 그 저장소의 앱이 같은 명세로 그 저장소의 Unity에서 다시 짓는다 — 이 저장소의 비주얼 노벨 샘플이 그렇게 들였다(아래 "참고 구현").
+- **asmdef 아래의 `Editor` 폴더는 에디터 전용이 아니다.** 런타임 asmdef가 뿌리에 있으면 묶음 안의 `Editor/`도 그 아래라, `.asmref`로 에디터 asmdef에 붙여야 한다. 실행 쪽과 짝이 맞는다: `Common/Scripts` ↔ `Common/Editor`, `Screens/X/Scripts` ↔ `Screens/X/Editor`, `App/Runtime` ↔ `App/Editor`(앱은 제 asmdef 한 쌍).
 - 그림은 경로가 아니라 이름으로 찾게 하면, 공용과 화면 전용 사이를 옮겨도 명세를 고치지 않는다. 같은 이름은 둘 두지 않는다.
 
 ## 특수 화면 — 프리팹을 직접 만들 때
@@ -121,7 +124,13 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 - `Common/Editor` — 부품 키트(`KedUIKit` — KedUI의 그림 · 글꼴 · 버튼 꼴), 묶음 설정(`KedUIUnits` — 뿌리 · 허용한 곳), 검사 메뉴(`KedUIValidate` — 이 프레임워크의 검사를 엄하게 + 묶음 감사 + 그림 이름), 글꼴(`KedUIFonts`)
 - `Screens/*/Editor` — 화면 빌드 명세 8개
-- `Editor` — 화면 목록과 캔버스를 짓는 앱 빌드(`KedUIBuild`)
+- `App/` — 재생 런타임에 잇는 앱: 흐름 · 호스트, 대사창 · 선택지 상자의 런타임 계약 어댑터, 선택지 항목(본체 형식), 연출 배치 DB, 글자 표. 화면 목록과 캔버스를 짓는 앱 빌드(`App/Editor/KedUIBuild`)
+
+**이 저장소의 비주얼 노벨 샘플** `Assets/Demo/VisualNovel` — 위 묶음(`Common` · `Screens`)의 복사본과 이 저장소의 앱:
+
+- `KedUI/` — 복사본. 명세 · 키트 · 그림은 여기서 고치지 않는다(ked에서 고쳐 다시 들인다 — `Documentation~/vendoring.md`). 프리팹 · 글꼴 SDF는 이 저장소의 Unity로 다시 짓는 산출물이다
+- `App/Editor/VNDemoBuild` — 메뉴 `UI Demo/Build Visual Novel Demo`. 묶음의 명세를 ked 앱 빌드와 같은 순서로 불러 짓고, 캔버스 대신 씬을 만든다. 선택지 항목은 데모 형식(`VNDemoOptionItemSpec`)
+- `App/Runtime` — 재생 런타임 대신 가짜 재생(`VNDemoPlayer` — 대본 · 타자기 · 자동 · 빨리 넘기기 · 되감기)과 메모리 저장. 흐름(`VNDemoFlow`)은 ked의 흐름과 같은 자리다
 
 **이 저장소의 블랙홀 데모** `Assets/Demo/BlackHole` — 묶음 구조가 아닌 폴더에서 같은 도구를 쓴다:
 
@@ -129,4 +138,4 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 - `Editor/Screens/PausePanelSpec` — 게임의 손 프리팹을 명세로 옮긴 것. 시안 판 1920×1080
 - `Editor/BlackHoleScreenBuild` — 메뉴 `UI Demo/Build BlackHole Screens`(지금은 일시 정지 창 하나)
 
-옮겨 온 경위와 남은 일은 [PLAN_from-ked](PLAN_from-ked.md)의 B.
+옮겨 온 경위와 남은 일은 [PLAN_from-ked](PLAN_from-ked.md)의 B, 비주얼 노벨 샘플은 [PLAN_vn-sample](PLAN_vn-sample.md).

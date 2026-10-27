@@ -1,0 +1,25 @@
+{
+    "name": "VisualNovelDemo.Editor",
+    "rootNamespace": "VisualNovelDemo.EditorTools",
+    "references": [
+        "VisualNovelDemo",
+        "Ked.Samples.UI",
+        "Ked.Samples.UI.Editor",
+        "UIPresentationFlow.Runtime",
+        "UIPresentationFlow.Editor",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,5 +1,7 @@
 # UIPresentationFlow 개선 PLAN
 
+> 지난 계획이다. 여기의 예시 화면(`TitleUIRoot` · `AlbumUIRoot` · `VNScreenBindings` …)은 Adaptive UI 데모였고, 2026-10-27에 걷었다. Root · Panel · Page를 보이는 자리는 비주얼 노벨 UI 샘플(`Assets/Demo/VisualNovel`)이 이었다 — [PLAN_vn-sample](PLAN_vn-sample.md).
+
 ## 1. 목표
 
 이번 개선의 목표는 두 가지다.
