@@ -84,12 +84,14 @@ UIPF Unity(6000.6)로 처음 열자 경고가 넷 났다.
 - **화면 키 셋이 겹쳤다** — `TitleScreen` · `ConfirmPanel` · `SettingsPanel`이 블랙홀 데모에도 있다. 데모마다 제 화면만 등록해서 실행에는 지장이 없었지만, 규칙("데이터 키는 프로젝트에서 하나")을 어긴다. **ked 원본에서 묶음의 키를 `Ked.`로 고정했다**(아미야 결정). 블랙홀 쪽은 게임 파일 그대로라는 전제가 있고, 묶음은 옮겨 다니니 흔한 이름은 어디서든 부딪힌다. ked `e340d72a`에서 화면 12 · 위젯 2에 `[UIViewKey("Ked.{타입}")]`를 붙이고, Presentation 12개의 파일 · 오브젝트 이름과 `presentationId`를 옮기고(GUID 그대로), 키 검사를 더했다. 그 커밋에서 다시 떴다. 글자 표 키(`{타입}.{Ref}`)는 그대로다 — `ViewTexts`는 타입 이름을 쓴다
 - **UAC1001 — 실제 버그였다.** Variant 조건의 실험 칸 둘(`experimentKey` · `experimentVariantId`)이 에셋에 저장되지 않았다. `VariantId`에는 `[Serializable]`이 없었고, `ExperimentKey`는 있었지만 값 칸이 readonly라 Unity가 건너뛰었다. README가 말하는 "실험 배정" 조건은 코드로 만든 규칙에서만 돌았던 것이다. `7da70e6`에서 값을 비공개 `[SerializeField]` 칸으로 옮겼다(쓰는 쪽 코드는 그대로). ked 사본도 다시 들였다
 
-## 확인
+## 확인 (10-27, Unity 6000.6.2f1, 아미야 "문제 없음")
 
-Unity(6000.6.2f1)에서 한다. 결과는 확인한 뒤 여기에 적는다.
-
-1. Unity를 닫은 채 받는다(파일이 옮겨지고 빌드 설정이 바뀐다)
-2. 메뉴 **UI Demo > Build Visual Novel Demo**(편집 모드) → 보고 문제 0
-3. 플레이 → README "비주얼 노벨 UI 샘플"의 표대로
-4. `Tools/Ked UI/Validate Sample UI` → 문제 0, `Tools/UI Presentation/Validate Screens` → Adaptive UI 줄이 없다, 키 경고 · UAC1001이 없다
-5. 블랙홀 데모가 전과 같다
+- 처음 열었을 때 난 경고 넷은 위 절에서 고쳤다(키 고정 · 실험 칸 직렬화). 고친 뒤 다시 받아 열었다
+- **UI Demo > Build Visual Novel Demo**(편집 모드): 검사 통과 — 화면 묶음 7 · 프리팹 12(화면 · 위젯 23) · Presentation 12 · 화면 키 14
+- 플레이: README "비주얼 노벨 UI 샘플"의 표대로 — 키보드 조작까지
+- 산출물 `b6a1e53`
+  - 화면 프리팹 12, 선택지 항목, 씬, 빌드 설정의 첫 씬
+  - 그림 `.meta` 35: 6000.6이 임포트 설정을 다시 썼다. 값은 같고, 새 칸과 플랫폼 줄(WebGL · iOS)이 붙었다
+  - 프리팹은 TMP 직렬화 차이(`m_ActiveFontFeatures`)이고, 저장/불러오기 패널은 fileID도 새로 매겨졌다(AUTHORING "재생성")
+  - 플레이로 찬 글꼴 SDF는 되돌렸다
+- 남은 것: 빈 폴더 `Assets/Scripts/Demo/Views`가 지워지지 않는다. Windows에서 다른 프로그램(IDE 등)이 지운 파일을 아직 열고 있으면 폴더가 비어 보여도 지울 수 없다. Unity가 거기에 만든 `Demo.meta` · `Views.meta`는 커밋하지 않았다 — 잡고 있는 것이 풀리면 폴더째 지운다
