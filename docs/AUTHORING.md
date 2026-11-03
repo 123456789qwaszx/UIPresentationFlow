@@ -31,7 +31,7 @@ AI가 Unity 밖에서 프리팹을 만든다는 것은 YAML을 손으로 쓴다�
 
 | 맡는 쪽 | 무엇 | 어디 |
 |---|---|---|
-| 이 프레임워크 | 시안 좌표 → 앵커(`UINodes`), 저장 · 플레이 중 거부(`UIPrefabs`), Presentation 한 번 만들기(`UIPresentationAssets`), 그림을 이름으로(`UISpriteIndex`), 화면 묶음 규칙 · 감사(`UIScreenUnits`), 검사(`UIScreenValidation`), 동적 글꼴(`UIFontAssets`) | `Editor/UI/Authoring` (에디터 asmdef `UIPresentationFlow.Editor`) |
+| 이 프레임워크 | 시안 좌표 → 앵커(`UINodes`), 저장 · 플레이 중 거부(`UIPrefabs`), Presentation 한 번 만들기(`UIPresentationAssets`), 그림을 이름으로(`UISpriteIndex`), 화면 묶음 규칙 · 감사(`UIScreenUnits`), 검사(`UIScreenValidation`), 동적 글꼴(`UIFontAssets`, 저장 직전에 비우기 `UIDynamicFontGuard`) | `Editor/UI/Authoring` (에디터 asmdef `UIPresentationFlow.Editor`) |
 | 게임의 부품 키트 | 그림 · 글꼴 · 색 · 버튼 꼴 — `TextButton`, `IconButton`, 슬라이더 … | 게임의 `Common/Editor` |
 | 화면의 빌드 명세 | 그 화면의 노드와 시안 숫자 — 키트로 짓는다 | `Screens/<묶음>/Editor` |
 | 앱 빌드 | 화면 목록과 순서(Page 다음 그 주인, 항목 다음 캔버스), 캔버스, 앱 데이터, 메뉴 | 게임의 앱 빌드 |

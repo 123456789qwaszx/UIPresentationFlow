@@ -226,6 +226,7 @@ ked-presentation-runtime(아래 "실사용")의 비주얼 노벨 UI 화면 12개
 | `Image Bindings/Validate Selected Theme` | Image Theme 검사 |
 | `Check View Keys` | 화면 데이터 키 중복, 없는 화면을 가리키는 Binding(스크립트를 다시 읽을 때마다 중복은 자동 검사) |
 | `Validate Screens` | 프로젝트의 화면 프리팹과 Presentation 검사 — Refs 이름이 정확히 하나인가(등록하는 화면은 빠짐도), Presentation 오브젝트 이름 = 파일 이름. 손으로 만든 프리팹도 같이 본다. 배치 모드 `-executeMethod UIScreenValidation.ValidateBatch` |
+| `Clear Dynamic Font Data` | 디스크에 부푼 채 있는 동적 글꼴(Clear Dynamic Data On Build 켬)을 지금 비우고 저장. 평소에는 저장 직전에 저절로 비운다(`UIDynamicFontGuard`) |
 
 ### 화면 짓기 도구 — `Editor/UI/Authoring`
 
@@ -240,6 +241,7 @@ ked-presentation-runtime(아래 "실사용")의 비주얼 노벨 UI 화면 12개
 | `UIScreenUnits` | 화면 묶음 규칙 — 생성물 자리, 묶음 밖을 가리키는지 감사 |
 | `UIScreenValidation` | 위 `Validate Screens`의 검사. 앱이 폴더와 엄한 검사(위젯 Refs · presentationId)를 골라 부른다 |
 | `UIFontAssets` | TMP 동적 글꼴 만들기 · 비우기 · 굵기 표 |
+| `UIDynamicFontGuard` | 동적 글꼴이 채운 글자를 저장 직전 · 종료 때 비운다(Clear Dynamic Data On Build가 켜진 것만) — 편집 모드에서 그린 글자도 저장에 실려 글꼴 자산이 수 MB 변경으로 잡히던 것 |
 
 에디터 asmdef `UIPresentationFlow.Editor`에 든다 — asmdef를 쓰는 앱의 빌드 명세가 참조할 수 있게.
 

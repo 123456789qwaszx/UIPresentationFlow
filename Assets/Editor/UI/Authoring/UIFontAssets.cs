@@ -10,6 +10,7 @@ using UnityEngine.TextCore.LowLevel;
 // 동적 SDF는 쓰는 글자를 그때그때 아틀라스에 넣는다. 화면을 세우거나 플레이하면 그 글자가 자산에 저장되어,
 // 글자 몇 개만 들어가도 2048² 아틀라스가 통째로(수 MB) 변경으로 잡힌다. 빌드 끝에 ClearDynamicData로 비우면
 // 아틀라스가 1×1로 줄어 몇 KB다. 실행 중 쓰는 글자는 다시 채워진다(원본 TTF가 자산에 걸려 있다).
+// 빌드 사이의 저장(Ctrl+S · 종료)은 UIDynamicFontGuard가 저장 직전에 비운다.
 // 쓸 글자가 정해져 있으면(데모처럼) 정적 글꼴을 구워 이 문제를 처음부터 피할 수 있다.
 public static class UIFontAssets
 {
